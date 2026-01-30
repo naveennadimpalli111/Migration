@@ -225,7 +225,7 @@ public class ViewerService {
 
         byte[] rec = Files.readAllBytes(path); // For very large files, replace with FileChannel
         if (offset < 0 || offset + recLen > rec.length) {
-            throw new IllegalArgumentException("recordNumber " + recordNumber + " is out of range");
+            throw new IllegalArgumentException("Record Number " + recordNumber + " is out of range");
         }
         byte[] buf = Arrays.copyOfRange(rec, (int) offset, (int) offset + recLen);
 
