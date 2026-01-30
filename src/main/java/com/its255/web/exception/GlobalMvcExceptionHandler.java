@@ -11,6 +11,7 @@ public class GlobalMvcExceptionHandler {
 	public String illegalArgumentException(IllegalArgumentException ex, Model model) {
 		System.err.println(ex.getMessage());
 		model.addAttribute("title", "Fixed Parser Application");
+		model.addAttribute("issue", "Something went wrong");
 		model.addAttribute("message", ex.getMessage());
 		return "error";
 	}
