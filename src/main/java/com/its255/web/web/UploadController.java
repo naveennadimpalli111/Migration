@@ -42,7 +42,7 @@ public class UploadController {
                           Model model) throws IOException {
 
         if (file == null || file.isEmpty()) {
-            model.addAttribute("error", "Please upload a raw EBCDIC file (fixed 255 bytes per record).");
+            model.addAttribute("error", "Please upload a raw file (fixed 255 bytes per record).");
             return index(model);
         }
 
