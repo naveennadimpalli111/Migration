@@ -81,6 +81,24 @@ public class UploadController {
                 case "80" -> RecordType.RT_80;
                 case "90" -> RecordType.RT_90;
                 case "9D" -> RecordType.RT_9D;
+                case "A5" -> RecordType.RT_A5;
+                case "B0" -> RecordType.RT_B0;
+                case "B5" -> RecordType.RT_B5;
+                case "C0" -> RecordType.RT_C0;
+                case "D0" -> RecordType.RT_D0;
+                case "D1" -> RecordType.RT_D1;
+                case "D2" -> RecordType.RT_D2;
+                case "D3" -> RecordType.RT_D3;
+                case "E0" -> RecordType.RT_E0;
+                case "E1" -> RecordType.RT_E1;
+                case "E2" -> RecordType.RT_E2;
+                case "E6" -> RecordType.RT_E6;
+                case "F0" -> RecordType.RT_F0;
+                case "F1" -> RecordType.RT_F1;
+                case "F5" -> RecordType.RT_F5;
+                case "F6" -> RecordType.RT_F6;
+                case "G0" -> RecordType.RT_G0;
+                case "X0" -> RecordType.RT_X0;
                 default -> RecordType.UNKNOWN;
             };
             if (rt == RecordType.UNKNOWN) {

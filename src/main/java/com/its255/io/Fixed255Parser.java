@@ -81,6 +81,14 @@ public final class Fixed255Parser {
                     break;
                 case NUMERIC_TEXT:
                 	v = slice(rec, f.start1Based, f.lengthBytes).trim();
+                	//TODO: check on this
+                	if(v.chars().count() < 4) {
+                		try {
+                        	v = String.valueOf(parseOverpunchInt(v));
+                        } catch (NullPointerException ne) {
+                        	v = "";
+                        }
+                	}
                 	if(v.chars().count() == 4  && !v.startsWith("X")) {//need to review this
                     	try {
                         	v = String.valueOf(parseOverpunchInt(v));

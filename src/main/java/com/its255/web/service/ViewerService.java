@@ -23,6 +23,7 @@ public class ViewerService {
 
     public enum SortBy { NONE, JULIAN, SERIAL }
     public enum SortDir { ASC, DESC }
+    private Charset cs;
 
     public record TableResult(
             RecordType recordType,
@@ -67,6 +68,24 @@ public class ViewerService {
         out.put("80", "FM180");
         out.put("90", "FM190");
         out.put("9D", "FM9D");
+        out.put("A5", "FM1A5");
+        out.put("B0", "FM1B0");
+        out.put("B5", "FM1B5");
+        out.put("C0", "FM1C0");
+        out.put("D0", "FM1D0");
+        out.put("D1", "FM1D1");
+        out.put("D2", "FM1D2");
+        out.put("D3", "FM1D3");
+        out.put("E0", "FM1E0");
+        out.put("E1", "FM1E1");
+        out.put("E2", "FM1E2");
+        out.put("E6", "FM1E6");
+        out.put("F0", "FM1F0");
+        out.put("F1", "FM1F1");
+        out.put("F5", "FM1F5");
+        out.put("F6", "FM1F6");
+        out.put("G0", "FM1G0");
+        out.put("X0", "FM1X0");
         return out;
     }
 
@@ -101,6 +120,24 @@ public class ViewerService {
             case RT_80 -> "FM180";
             case RT_90 -> "FM190";
             case RT_9D -> "FM9D";
+            case RT_A5 -> "FM1A5";
+            case RT_B0 -> "FM1B0";
+            case RT_B5 -> "FM1B5";
+            case RT_C0 -> "FM1C0";
+            case RT_D0 -> "FM1D0";
+            case RT_D1 -> "FM1D1";
+            case RT_D2 -> "FM1D2";
+            case RT_D3 -> "FM1D3";
+            case RT_E0 -> "FM1E0";
+            case RT_E1 -> "FM1E1";
+            case RT_E2 -> "FM1E2";
+            case RT_E6 -> "FM1E6";
+            case RT_F0 -> "FM1F0";
+            case RT_F1 -> "FM1F1";
+            case RT_F5 -> "FM1F5";
+            case RT_F6 -> "FM1F6";
+            case RT_G0 -> "FM1G0";
+            case RT_X0 -> "FM1X0";
             default -> "Unknown";
         };
     }
@@ -115,7 +152,7 @@ public class ViewerService {
                                SortBy sortBy,
                                SortDir sortDir) throws IOException {
 
-        Charset cs = (charsetName == null || charsetName.isBlank())
+        cs = (charsetName == null || charsetName.isBlank())
                 ? Charset.forName("Cp037")
                 : Charset.forName(charsetName);
 
@@ -253,7 +290,27 @@ public class ViewerService {
             int start = f.start1Based - 1;
             int len   = f.lengthBytes;
             switch (f.type) {
-                case ALPHA, NUMERIC_TEXT -> out.put(f.name, new String(rec, start, len, cs).trim());
+                case ALPHA -> out.put(f.name, new String(rec, start, len, cs).trim());
+                case NUMERIC_TEXT -> {
+                	String v = null;
+                	v = slice(rec, f.start1Based, f.lengthBytes).trim();
+                	//TODO: check on this
+                	if(v.chars().count() < 4) {
+                		try {
+                        	v = String.valueOf(parseOverpunchInt(v));
+                        } catch (NullPointerException ne) {
+                        	v = "";
+                        }
+                	}
+                	if(v.chars().count() == 4  && !v.startsWith("X")) {//need to review this
+                    	try {
+                        	v = String.valueOf(parseOverpunchInt(v));
+                        } catch (NullPointerException ne) {
+                        	v = "";
+                        }
+                    }
+                    out.put(f.name, v);
+                }
                 case PACKED_DECIMAL -> out.put(f.name, decodeComp3(rec, start, len, f.scale).toPlainString());
                 case BINARY -> out.put(f.name, decodeBinary(rec, start, len, f.scale));
             }
@@ -318,4 +375,63 @@ public class ViewerService {
         }
         return -1;
     }
+    
+    private String slice(byte[] rec, int start1Based, int len) {
+        int start = start1Based - 1;
+        if (start < 0 || start + len > rec.length) return "";
+        return new String(rec, start, len, cs);
+    }
+    
+    static int parseOverpunchInt(String s) {
+    	if(s == null || s.isEmpty()) {
+    		return (Integer) null;
+    	}
+    	char last = s.charAt(s.length() - 1);
+    	String body = s.substring(0, s.length() - 1);
+    	
+    	if (last >= '0' && last <= '9') {
+    		return Integer.parseInt(body + last);
+    	}
+    	
+    	Integer d;
+    	boolean neg = false;
+    	if ((d = POS.get(last)) != null) {
+    		neg = false;
+    	} else if ((d = NEG.get(last)) != null) {
+    		neg = true;
+    	} else {
+//    		throw new IllegalArgumentException("Invalid overpunch char: " + last);
+    		System.err.println("Invalid overpunch char: " + last);
+    	}
+    	int value = Integer.parseInt(body + d);
+    	return neg ? -value : value;
+    }
+    
+    static final Map<Character, Integer> POS = Map.ofEntries(
+    		Map.entry('{', 0),
+    		Map.entry('A', 1),
+    		Map.entry('B', 2),
+    		Map.entry('C', 3),
+    		Map.entry('D', 4),
+    		Map.entry('E', 5),
+    		Map.entry('F', 6),
+    		Map.entry('G', 7),
+    		Map.entry('H', 8),
+    		Map.entry('I', 9),
+    		Map.entry('X', 0)//Checking on this char
+    		);
+    
+    static final Map<Character, Integer> NEG = Map.ofEntries(
+    		Map.entry('}', 0),
+    		Map.entry('J', 1),
+    		Map.entry('K', 2),
+    		Map.entry('L', 3),
+    		Map.entry('M', 4),
+    		Map.entry('N', 5),
+    		Map.entry('O', 6),
+    		Map.entry('P', 7),
+    		Map.entry('Q', 8),
+    		Map.entry('R', 9),
+    		Map.entry('X', 0)//Checking on this char
+    		);
 }
