@@ -1,5 +1,6 @@
 package com.its255.web.service;
 
+import com.its255.app.Parse255ToCsv;
 import com.its255.io.Fixed255Parser;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
@@ -7,14 +8,17 @@ import com.its255.schema.Schemas;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Service
 public class ViewerService {
@@ -24,6 +28,8 @@ public class ViewerService {
     public enum SortBy { NONE, JULIAN, SERIAL }
     public enum SortDir { ASC, DESC }
     private Charset cs;
+    private String dataPath = System.getProperty("user.dir") + "\\src\\main\\resources\\data\\";
+    private String targetPath = System.getProperty("user.dir") + "\\target\\data\\";
 
     public record TableResult(
             RecordType recordType,
@@ -198,6 +204,15 @@ public class ViewerService {
         // Temp file backed upload
         Path temp = Files.createTempFile("its255_", ".dat");
         file.transferTo(temp.toFile());
+        
+        File f = new File(dataPath + "input.dat");
+        Files.copy(temp, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        String[] targetArgs = {f.getCanonicalPath(), targetPath};
+        try {
+			Parse255ToCsv.main(targetArgs);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
         try {
             if (recordNumber != null && recordNumber > 0) {
@@ -218,10 +233,12 @@ public class ViewerService {
                 for (String h : headers) {
                 	row.add(sr.values.getOrDefault(h, ""));
                 }
+                
+//                System.out.println(headers.stream().collect(Collectors.joining(",")));
+//                System.out.println(row.toString());//Prints out one record row values
 
                 return new TableResult(sr.type, cs.name(), headers, List.of(row), 1, 1,
                         recordNumber, effSortBy, effSortDir, effFilter);
-
             } else {
                 // --- Multi-record mode: by requestedType ---
                 Map<RecordType, List<FieldSpec>> schemas = Schemas.all();
@@ -273,7 +290,11 @@ public class ViewerService {
                 if (rows.size() > cap) {
                     rows.subList(cap, rows.size()).clear();
                 }
-
+                
+                //This prints out the header then the list in the console
+//                System.out.println(headers.stream().collect(Collectors.joining(",")));
+//                rows.forEach(System.out::println);
+                
                 return new TableResult(requestedType, cs.name(), headers, rows, rows.size(), matched[0],
                         null, effSortBy, effSortDir, effFilter);
             }
