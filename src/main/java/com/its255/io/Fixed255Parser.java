@@ -82,7 +82,7 @@ public final class Fixed255Parser {
                 case NUMERIC_TEXT:
                 	v = slice(rec, f.start1Based, f.lengthBytes).trim();
                 	//TODO: check on this
-                	if(v.chars().count() < 4) {
+                	if(v.chars().count() == 1) {
                 		try {
                         	v = String.valueOf(parseOverpunchInt(v));
                         } catch (NullPointerException ne) {

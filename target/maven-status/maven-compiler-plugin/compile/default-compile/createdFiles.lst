@@ -3,6 +3,7 @@ com\its255\web\service\ViewerService.class
 com\its255\io\Fixed255Parser$1.class
 com\its255\app\Parse255ToCsv$CsvSink.class
 com\its255\schema\FieldType.class
+com\its255\web\FileViewerApplication.class
 com\its255\web\web\UploadController.class
 com\its255\app\Parse255ToCsv.class
 com\its255\io\Fixed255Parser.class
@@ -14,5 +15,4 @@ com\its255\web\service\ViewerService$SortDir.class
 com\its255\schema\RecordType.class
 com\its255\web\service\ViewerService$SingleRecord.class
 com\its255\web\service\ViewerService$1.class
-com\its255\web\EbcdicViewerApplication.class
 com\its255\web\exception\GlobalMvcExceptionHandler.class

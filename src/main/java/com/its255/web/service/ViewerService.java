@@ -86,6 +86,23 @@ public class ViewerService {
         out.put("F6", "FM1F6");
         out.put("G0", "FM1G0");
         out.put("X0", "FM1X0");
+        out.put("1A", "FM21A");
+        out.put("2A", "FM22A");
+        out.put("2B", "FM22B");
+        out.put("2C", "FM22C");
+        out.put("2E", "FM22E");
+        out.put("2F", "FM22F");
+        out.put("2G", "FM22G");
+        out.put("2H", "FM22H");
+        out.put("3A", "FM23A");
+        out.put("3C", "FM23C");
+        out.put("3D", "FM23D");
+        out.put("4A", "FM24A");
+        out.put("4B", "FM24B");
+        out.put("4C", "FM24C");
+        out.put("4D", "FM24D");
+        out.put("8A", "FM28A");
+        out.put("9A", "FM29A");
         return out;
     }
 
@@ -138,6 +155,23 @@ public class ViewerService {
             case RT_F6 -> "FM1F6";
             case RT_G0 -> "FM1G0";
             case RT_X0 -> "FM1X0";
+            case RT_1A -> "FM21A";
+            case RT_2A -> "FM22A";
+            case RT_2B -> "FM22B";
+            case RT_2C -> "FM22C";
+            case RT_2E -> "FM22E";
+            case RT_2F -> "FM22F";
+            case RT_2G -> "FM22G";
+            case RT_2H -> "FM22H";
+            case RT_3A -> "FM23A";
+            case RT_3C -> "FM23C";
+            case RT_3D -> "FM23D";
+            case RT_4A -> "FM24A";
+            case RT_4B -> "FM24B";
+            case RT_4C -> "FM24C";
+            case RT_4D -> "FM24D";
+            case RT_8A -> "FM28A";
+            case RT_9A -> "FM29A";
             default -> "Unknown";
         };
     }
@@ -295,7 +329,7 @@ public class ViewerService {
                 	String v = null;
                 	v = slice(rec, f.start1Based, f.lengthBytes).trim();
                 	//TODO: check on this
-                	if(v.chars().count() < 4) {
+                	if(v.chars().count() == 1){
                 		try {
                         	v = String.valueOf(parseOverpunchInt(v));
                         } catch (NullPointerException ne) {

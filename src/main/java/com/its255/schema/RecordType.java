@@ -49,6 +49,23 @@ public enum RecordType {
     RT_F6("F6"),
     RT_G0("G0"),
     RT_X0("X0"),
+    RT_1A("1A"),
+    RT_2A("2A"),
+    RT_2B("2B"),
+    RT_2C("2C"),
+    RT_2E("2E"),
+    RT_2F("2F"),
+    RT_2G("2G"),
+    RT_2H("2H"),
+    RT_3A("3A"),
+    RT_3C("3C"),
+    RT_3D("3D"),
+    RT_4A("4A"),
+    RT_4B("4B"),
+    RT_4C("4C"),
+    RT_4D("4D"),
+    RT_8A("8A"),
+    RT_9A("9A"),
     UNKNOWN("??");
 
     public final String code;
