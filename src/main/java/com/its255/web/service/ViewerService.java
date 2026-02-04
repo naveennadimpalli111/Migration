@@ -205,14 +205,17 @@ public class ViewerService {
         Path temp = Files.createTempFile("its255_", ".dat");
         file.transferTo(temp.toFile());
         
-        File f = new File(dataPath + "input.dat");
-        Files.copy(temp, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        String[] targetArgs = {f.getCanonicalPath(), targetPath};
-        try {
-			Parse255ToCsv.main(targetArgs);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//        System.out.println("********************** "+ System.getProperty("os.name") + " ********************");
+        if(System.getProperty("os.name") != "Linux") {
+        	File f = new File(dataPath + "input.dat");
+            Files.copy(temp, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            String[] targetArgs = {f.getCanonicalPath(), targetPath};
+            try {
+    			Parse255ToCsv.main(targetArgs);
+    		} catch (Exception e) {
+    			e.printStackTrace();
+            }
+        }
 
         try {
             if (recordNumber != null && recordNumber > 0) {
