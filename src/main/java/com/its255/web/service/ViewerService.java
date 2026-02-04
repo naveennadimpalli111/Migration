@@ -226,19 +226,19 @@ public class ViewerService {
                 List<FieldSpec> layout = schemas.get(sr.type);
                 if (layout == null) throw new IllegalArgumentException("Unsupported record type: " + sr.type);
 
-//                List<String> headers = layout.stream().map(fs -> fs.name).toList();
+//                List<String> headers = layout.parallelStream().map(fs -> fs.name).toList();
                 List<String> headers = new ArrayList<String>();
                 headers.add(0, "SCCF_ID");
                 headers.add(1, "REC_NO");
             	headers.add(2, "REC_TYPE");
-            	headers.addAll(layout.stream().map(fs -> fs.name).toList());
+            	headers.addAll(layout.parallelStream().map(fs -> fs.name).toList());
             	
                 List<String> row = new ArrayList<>(headers.size());
                 for (String h : headers) {
                 	row.add(sr.values.getOrDefault(h, ""));
                 }
                 
-//                System.out.println(headers.stream().collect(Collectors.joining(",")));
+//                System.out.println(headers.parallelStream().collect(Collectors.joining(",")));
 //                System.out.println(row.toString());//Prints out one record row values
 
                 return new TableResult(sr.type, cs.name(), headers, List.of(row), 1, 1,
@@ -248,12 +248,12 @@ public class ViewerService {
                 Map<RecordType, List<FieldSpec>> schemas = Schemas.all();
                 List<FieldSpec> layout = schemas.get(requestedType);
                 if (layout == null) throw new IllegalArgumentException("Unsupported record type: " + requestedType);
-//                List<String> headers = layout.stream().map(fs -> fs.name).toList();
+//                List<String> headers = layout.parallelStream().map(fs -> fs.name).toList();
                 List<String> headers = new ArrayList<String>();
                 headers.add(0, "SCCF_ID");
                 headers.add(1, "REC_NO");
             	headers.add(2, "REC_TYPE");
-            	headers.addAll(layout.stream().map(fs -> fs.name).toList());
+            	headers.addAll(layout.parallelStream().map(fs -> fs.name).toList());
 
                 final List<List<String>> rows = new ArrayList<>();
                 final int[] matched = new int[]{0};
@@ -278,7 +278,7 @@ public class ViewerService {
 
                 // Filtering (case-insensitive substring across any cell)
                 if (!effFilter.isEmpty()) {
-                    Predicate<List<String>> pred = r -> r.stream()
+                    Predicate<List<String>> pred = r -> r.parallelStream()
                             .anyMatch(v -> v != null && v.toLowerCase().contains(effFilter.toLowerCase()));
                     rows.removeIf(pred.negate());
                 }
@@ -300,7 +300,7 @@ public class ViewerService {
                 }
                 
                 //This prints out the header then the list in the console
-//                System.out.println(headers.stream().collect(Collectors.joining(",")));
+//                System.out.println(headers.parallelStream().collect(Collectors.joining(",")));
 //                rows.forEach(System.out::println);
                 
                 return new TableResult(requestedType, cs.name(), headers, rows, rows.size(), matched[0],
@@ -518,9 +518,9 @@ public class ViewerService {
             String serNumSuffix = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-SUFFIX"))
             		.map(Map.Entry::getValue).findFirst().get();
             
-            System.out.println("*******************************SCCF ID**************************");
+//            System.out.println("*******************************SCCF ID**************************");
             sccfId = serNumLocalPlan + serNumJulDtCc + serNumJulDtYy + serNumJulDtDdd + serNumSequence + serNumSuffix;
-            System.out.println(serNumLocalPlan + serNumJulDtCc + serNumJulDtYy + serNumJulDtDdd + serNumSequence + serNumSuffix);
+//            System.out.println(serNumLocalPlan + serNumJulDtCc + serNumJulDtYy + serNumJulDtDdd + serNumSequence + serNumSuffix);
     	} catch (NoSuchElementException ne) {
     		System.err.println("No such element found for rec no: " + recNo + " and rec type: " + rt.replace("RT_", ""));
     		sccfId = "N/A";

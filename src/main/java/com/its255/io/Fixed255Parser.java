@@ -3,9 +3,12 @@ package com.its255.io;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 import com.its255.schema.FieldSpec;
@@ -35,28 +38,89 @@ public final class Fixed255Parser {
         this.recTypeLen = recTypeLen;
     }
 
-    public void parse(Path input, RecordConsumer consumer) throws IOException {
-        try (InputStream in = Files.newInputStream(input)) {
-            byte[] rec = new byte[RECORD_LEN];
-            long recNo = 0;
-            while (true) {
-                int n = readExact(in, rec);
-                if (n == -1) break;
-                if (n != RECORD_LEN) throw new EOFException("Partial record at #" + (recNo + 1));
-                recNo++;
+//    public void parse(Path input, RecordConsumer consumer) throws IOException {
+//        try (InputStream in = Files.newInputStream(input)) {
+//            byte[] rec = new byte[RECORD_LEN];
+//            long recNo = 0;
+//            while (true) {
+//                int n = readExact(in, rec);
+//                if (n == -1) break;
+//                if (n != RECORD_LEN) throw new EOFException("Partial record at #" + (recNo + 1));
+//                recNo++;
+//
+//                String typeCode = slice(rec, recTypeStart1Based, recTypeLen).trim();
+//                RecordType rt = RecordType.from(typeCode);
+//                List<FieldSpec> layout = schemas.get(rt);
+//                if (layout == null) {
+//                    consumer.onUnknown(recNo, rt, typeCode, rec.clone());
+//                    continue;
+//                }
+//                Map<String, String> values = parseFields(rec, layout);
+//                consumer.onRecord(recNo, rt, values);
+//            }
+//        }
+//    }
+    
 
-                String typeCode = slice(rec, recTypeStart1Based, recTypeLen).trim();
-                RecordType rt = RecordType.from(typeCode);
-                List<FieldSpec> layout = schemas.get(rt);
-                if (layout == null) {
-                    consumer.onUnknown(recNo, rt, typeCode, rec.clone());
-                    continue;
-                }
-                Map<String, String> values = parseFields(rec, layout);
-                consumer.onRecord(recNo, rt, values);
-            }
-        }
-    }
+		public void parse(Path input, RecordConsumer consumer) throws IOException {
+		    // Tune this: how many records to read per chunk (64–1024 are common sweet spots)
+		final int BATCH = 1024;
+		final int CHUNK = RECORD_LEN * BATCH;
+		
+		try (FileChannel ch = FileChannel.open(input, StandardOpenOption.READ)) {
+		    // Fast fail: ensure file size is a multiple of RECORD_LEN
+		    long size = ch.size();
+		    if ((size % RECORD_LEN) != 0) {
+		        long partialIndex = (size / RECORD_LEN) + 1;
+		        throw new EOFException("Partial record at #" + partialIndex);
+		    }
+		
+		    // Large direct buffer for batched I/O
+		    ByteBuffer bb = ByteBuffer.allocateDirect(CHUNK);
+		    // Reuse a single array for each logical record to avoid re-allocation
+		    byte[] rec = new byte[RECORD_LEN];
+		
+		    long recNo = 0;
+		
+		    // Read-process loop with flip/compact to handle boundaries cleanly
+		    for (;;) {
+		        int read = ch.read(bb);       // fills from current position
+		        bb.flip();                    // switches to read mode
+		
+		        // Process as many full records as we have
+		        while (bb.remaining() >= RECORD_LEN) {
+		            bb.get(rec);              // copy one full record into reusable buffer
+		            recNo++;
+		
+		            // Keep your existing logic unchanged
+		            String typeCode = slice(rec, recTypeStart1Based, recTypeLen).trim();
+		            RecordType rt = RecordType.from(typeCode);
+		            List<FieldSpec> layout = schemas.get(rt);
+		
+		            if (layout == null) {
+		                // Preserve behavior: clone only when unknown
+		                consumer.onUnknown(recNo, rt, typeCode, rec.clone());
+		                continue;
+		            }
+		
+		            Map<String, String> values = parseFields(rec, layout);
+		            consumer.onRecord(recNo, rt, values);
+		        }
+		
+		        bb.compact();                 // move leftover (if any) to beginning
+		
+		        if (read == -1) {
+		            // We already pre-validated size is a multiple of RECORD_LEN,
+		            // so there should be no leftover; but double-check defensively.
+		            if (bb.position() != 0) {
+		                throw new EOFException("Partial record at #" + (recNo + 1));
+		            }
+		            break; // done
+		        }
+		    }
+		}
+	}
+
 
     public interface RecordConsumer {
         void onRecord(long recNo, RecordType type, Map<String, String> values);

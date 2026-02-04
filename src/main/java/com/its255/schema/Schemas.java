@@ -185,7 +185,7 @@ public final class Schemas {
         new FieldSpec("FM140-SER-NUM-JULDT-CC",        4,   2,  ALPHA),
         new FieldSpec("FM140-SER-NUM-JULDT-YY",        6,   2,  ALPHA),
         new FieldSpec("FM140-SER-NUM-JULDT-DDD",       8,   3,  ALPHA),
-        new FieldSpec("FM140-SER-NUM-SEEQUENCE",      11,   5,  ALPHA),
+        new FieldSpec("FM140-SER-NUM-SEQUENCE",       11,   5,  ALPHA),
         new FieldSpec("FM140-SER-NUM-SUFFIX",         16,   2,  ALPHA),
         new FieldSpec("FM140-TRANS-ID",               18,   2,  ALPHA),
         new FieldSpec("FM140-TRANS-QUAL",             20,   2,  ALPHA),
