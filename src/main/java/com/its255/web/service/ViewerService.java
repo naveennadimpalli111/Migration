@@ -206,16 +206,16 @@ public class ViewerService {
         file.transferTo(temp.toFile());
         
 //        System.out.println("********************** "+ System.getProperty("os.name") + " ********************");
-        if(System.getProperty("os.name") != "Linux") {
-        	File f = new File(dataPath + "input.dat");
-            Files.copy(temp, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            String[] targetArgs = {f.getCanonicalPath(), targetPath};
-            try {
-    			Parse255ToCsv.main(targetArgs);
-    		} catch (Exception e) {
-    			e.printStackTrace();
-            }
-        }
+//        if(System.getProperty("os.name") != "Linux") {
+//        	File f = new File(dataPath + "input.dat");
+//            Files.copy(temp, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+//            String[] targetArgs = {f.getCanonicalPath(), targetPath};
+//            try {
+//    			Parse255ToCsv.main(targetArgs);
+//    		} catch (Exception e) {
+//    			e.printStackTrace();
+//            }
+//        }
 
         try {
             if (recordNumber != null && recordNumber > 0) {
@@ -228,8 +228,9 @@ public class ViewerService {
 
 //                List<String> headers = layout.stream().map(fs -> fs.name).toList();
                 List<String> headers = new ArrayList<String>();
-                headers.add(0, "REC_NO");
-            	headers.add(1, "REC_TYPE");
+                headers.add(0, "SCCF_ID");
+                headers.add(1, "REC_NO");
+            	headers.add(2, "REC_TYPE");
             	headers.addAll(layout.stream().map(fs -> fs.name).toList());
             	
                 List<String> row = new ArrayList<>(headers.size());
@@ -249,8 +250,9 @@ public class ViewerService {
                 if (layout == null) throw new IllegalArgumentException("Unsupported record type: " + requestedType);
 //                List<String> headers = layout.stream().map(fs -> fs.name).toList();
                 List<String> headers = new ArrayList<String>();
-                headers.add(0, "REC_NO");
-            	headers.add(1, "REC_TYPE");
+                headers.add(0, "SCCF_ID");
+                headers.add(1, "REC_NO");
+            	headers.add(2, "REC_TYPE");
             	headers.addAll(layout.stream().map(fs -> fs.name).toList());
 
                 final List<List<String>> rows = new ArrayList<>();
@@ -258,6 +260,9 @@ public class ViewerService {
 
                 Fixed255Parser parser = new Fixed255Parser(schemas, cs, /*recTypeStart1Based*/22, /*len*/2);
                 parser.parse(temp, (recNo, rt, values) -> {
+                	String sccfId = sccfSearch(values, String.valueOf(recNo), String.valueOf(rt).replace("RT_", ""));
+                    
+                    values.put("SCCF_ID", sccfId);
                 	values.put("REC_NO", String.valueOf(recNo));
                     values.put("REC_TYPE", String.valueOf(rt).replace("RT_", ""));
                     if (rt == requestedType) {
@@ -335,6 +340,10 @@ public class ViewerService {
         }
 
         Map<String, String> values = decodeFields(buf, layout, cs);
+        
+        String sccfId = sccfSearch(values, String.valueOf(recordNumber), typeCode);
+        
+        values.put("SCCF_ID", sccfId);
         values.put("REC_NO", String.valueOf(recordNumber));
         values.put("REC_TYPE", typeCode);
         return new SingleRecord(rt, values);
@@ -492,4 +501,30 @@ public class ViewerService {
     		Map.entry('R', 9),
     		Map.entry('X', 0)//Checking on this char
     		);
+    
+    private String sccfSearch(Map<String,String> values, String recNo, String rt) {
+    	String sccfId = null;
+    	try {
+    		String serNumLocalPlan = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-LOCAL-PLAN"))
+            		.map(Map.Entry::getValue).findFirst().get();
+            String serNumJulDtCc = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-JULDT-CC"))
+            		.map(Map.Entry::getValue).findFirst().get();
+            String serNumJulDtYy = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-JULDT-YY"))
+            		.map(Map.Entry::getValue).findFirst().get();
+            String serNumJulDtDdd = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-JULDT-DDD"))
+            		.map(Map.Entry::getValue).findFirst().get();
+            String serNumSequence = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-SEQUENCE"))
+            		.map(Map.Entry::getValue).findFirst().get();
+            String serNumSuffix = values.entrySet().parallelStream().filter(x -> x.getKey().contains("SER-NUM-SUFFIX"))
+            		.map(Map.Entry::getValue).findFirst().get();
+            
+            System.out.println("*******************************SCCF ID**************************");
+            sccfId = serNumLocalPlan + serNumJulDtCc + serNumJulDtYy + serNumJulDtDdd + serNumSequence + serNumSuffix;
+            System.out.println(serNumLocalPlan + serNumJulDtCc + serNumJulDtYy + serNumJulDtDdd + serNumSequence + serNumSuffix);
+    	} catch (NoSuchElementException ne) {
+    		System.err.println("No such element found for rec no: " + recNo + " and rec type: " + rt.replace("RT_", ""));
+    		sccfId = "N/A";
+    	}
+    	return sccfId;
+    }
 }
