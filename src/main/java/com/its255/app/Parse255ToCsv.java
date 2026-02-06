@@ -1,12 +1,22 @@
 package com.its255.app;
 
-import com.its255.io.Fixed255Parser;
-import com.its255.schema.*;
-
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.its255.app.Parse255ToCsv.CsvSink;
+import com.its255.io.Fixed255Parser;
+import com.its255.schema.FieldSpec;
+import com.its255.schema.RecordType;
+import com.its255.schema.Schemas;
 
 /** CLI that parses a 255-byte file and writes one CSV per record type. */
 public final class Parse255ToCsv {

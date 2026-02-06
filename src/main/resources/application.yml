@@ -13,6 +13,18 @@ spring:
         check-template-location: true
         prefix: classpath:/templates/
         suffix: .html
+    web:
+        resources:
+            cache:
+                cachecontrol:
+                    max-age: 365d
+                    cache-public: true
+            chain:
+                enabled: true
+                strategy:
+                    control:
+                        enabled: true
+                        paths: /**
 
 server:
     port: 8080

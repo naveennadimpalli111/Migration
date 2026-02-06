@@ -30,6 +30,9 @@ public class ViewerService {
     private Charset cs;
     private String dataPath = System.getProperty("user.dir") + "\\src\\main\\resources\\data\\";
     private String targetPath = System.getProperty("user.dir") + "\\target\\data\\";
+    int workers = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
+    int batchBytes    = 32 * 1024 * 1024; // 32MB is a good starting point
+    int queueCapacity = 4096;             // per-batch streaming buffer (2k–8k typical
 
     public record TableResult(
             RecordType recordType,
@@ -259,22 +262,36 @@ public class ViewerService {
                 final int[] matched = new int[]{0};
 
                 Fixed255Parser parser = new Fixed255Parser(schemas, cs, /*recTypeStart1Based*/22, /*len*/2);
-                parser.parse(temp, (recNo, rt, values) -> {
-                	String sccfId = sccfSearch(values, String.valueOf(recNo), String.valueOf(rt).replace("RT_", ""));
-                    
-                    values.put("SCCF_ID", sccfId);
-                	values.put("REC_NO", String.valueOf(recNo));
-                    values.put("REC_TYPE", String.valueOf(rt).replace("RT_", ""));
-                    if (rt == requestedType) {
-                        matched[0]++;
-                        // Collect a bit more than cap before filtering/sorting to improve utility
-                        if (rows.size() < Math.max(cap, 2000)) {
-                            List<String> row = new ArrayList<>(headers.size());
-                            for (String h : headers) row.add(values.getOrDefault(h, ""));
-                            rows.add(row);
-                        }
-                    }
-                });
+                parser.parseParallelOrdered(
+                	    temp,
+                	    (recNo, rt, values) -> {
+                	        // Early reject: do NOTHING for other types
+                	        if (rt != requestedType) return;
+
+                	        String recTypeStr = rt.name().replace("RT_", "");
+                	        String sccfId = sccfSearch(values, Long.toString(recNo), recTypeStr);
+
+                	        // Avoid mutating 'values' (hashing/resizing is expensive)
+                	        // Build output row directly
+                	        List<String> row = new ArrayList<>(headers.size());
+                	        for (String h : headers) {
+                	            switch (h) {
+                	                case "SCCF_ID"  -> row.add(sccfId);
+                	                case "REC_NO"   -> row.add(Long.toString(recNo));
+                	                case "REC_TYPE" -> row.add(recTypeStr);
+                	                default         -> row.add(values.getOrDefault(h, ""));
+                	            }
+                	        }
+
+                	        matched[0]++; // or use LongAdder in parallel mode
+                	        if (rows.size() < Math.max(cap, 2000)) {
+                	            rows.add(row);
+                	        }
+                	    },
+                	    workers,
+                	    batchBytes,
+                	    queueCapacity
+                	);
 
                 // Filtering (case-insensitive substring across any cell)
                 if (!effFilter.isEmpty()) {
