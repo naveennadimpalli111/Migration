@@ -25,7 +25,6 @@ spring:
                     control:
                         enabled: true
                         paths: /**
-
 server:
     port: 8080
     tomcat:

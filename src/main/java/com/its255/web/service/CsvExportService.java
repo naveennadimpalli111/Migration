@@ -1,5 +1,5 @@
 
-package com.its255.viewer;
+package com.its255.web.service;
 
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
@@ -57,6 +57,8 @@ public class CsvExportService {
                     w.flush(); zip.closeEntry(); continue;
                 }
                 String[] header = layout.stream().map(f -> f.name).toArray(String[]::new);
+//                String[] header = {"REC_NO","SCCF","REC_TYPE"};
+//                header = append(header, layout.stream().map(f -> f.name).toArray(String[]::new));
                 writeCsvRow(w, header);
                 for (int rn : list) {
                     byte[] rec = readRecordBytes(rn);
@@ -67,7 +69,11 @@ public class CsvExportService {
                         int len = f.lengthBytes;
                         String val;
                         switch (f.type) {
-                            case ALPHA: case NUMERIC_TEXT: val = sliceTrim(rec, start, len); break;
+                            case ALPHA: val = sliceTrim(rec, start, len); break;
+                            case NUMERIC_TEXT: 
+                            	val = sliceTrim(rec, start, len);
+                            	val = String.valueOf(parseOverpunchInt(val));
+                            	break;
                             case PACKED_DECIMAL: val = invokeParser("decodeComp3ToString", rec, start, len, f.scale); break;
                             case BINARY: val = invokeParser("decodeBinary", rec, start, len, f.scale); break;
                             default: val = "";
@@ -101,14 +107,80 @@ public class CsvExportService {
 
     private void writeCsvRow(Writer w, String[] cols) throws IOException {
         StringBuilder sb = new StringBuilder();
-        for (int i=0;i<cols.length;i++) {
-            if (i>0) sb.append(',');
-            String s = cols[i]==null?"":cols[i];
-            boolean needs = s.contains(",") || s.contains("") || s.contains("") || s.contains("\"");
-            if (needs) { sb.append('"').append(s.replace("\"", "\"\"")).append('"'); }
-            else sb.append(s);
+        for (int i = 0; i < cols.length; i++) {
+            if (i > 0) sb.append(',');
+            String s = (cols[i] == null) ? "" : cols[i];
+            boolean needs = s.contains(",") || s.contains("\n") || s.contains("\r") || s.contains("\"");
+            if (needs) {
+                sb.append('"').append(s.replace("\"", "\"\"")).append('"');
+            } else {
+                sb.append(s);
+            }
         }
-        sb.append("");
+        // Write line separator so the next write goes on a new row
+        sb.append(System.lineSeparator());
         w.write(sb.toString());
+    }
+    
+    static int parseOverpunchInt(String s) {
+    	if(s == null || s.isEmpty()) {
+    		return (Integer) null;
+    	}
+    	char last = s.charAt(s.length() - 1);
+    	String body = s.substring(0, s.length() - 1);
+    	
+    	if (last >= '0' && last <= '9') {
+    		return Integer.parseInt(body + last);
+    	}
+    	
+    	Integer d;
+    	boolean neg = false;
+    	if ((d = POS.get(last)) != null) {
+    		neg = false;
+    	} else if ((d = NEG.get(last)) != null) {
+    		neg = true;
+    	} else {
+//    		throw new IllegalArgumentException("Invalid overpunch char: " + last);
+    		System.err.println("Invalid overpunch char: " + last);
+    	}
+    	int value = Integer.parseInt(body + d);
+    	return neg ? -value : value;
+    }
+    
+    static final Map<Character, Integer> POS = Map.ofEntries(
+    		Map.entry('{', 0),
+    		Map.entry('A', 1),
+    		Map.entry('B', 2),
+    		Map.entry('C', 3),
+    		Map.entry('D', 4),
+    		Map.entry('E', 5),
+    		Map.entry('F', 6),
+    		Map.entry('G', 7),
+    		Map.entry('H', 8),
+    		Map.entry('I', 9),
+    		Map.entry('X', 0)//Checking on this char
+    		);
+    
+    static final Map<Character, Integer> NEG = Map.ofEntries(
+    		Map.entry('}', 0),
+    		Map.entry('J', 1),
+    		Map.entry('K', 2),
+    		Map.entry('L', 3),
+    		Map.entry('M', 4),
+    		Map.entry('N', 5),
+    		Map.entry('O', 6),
+    		Map.entry('P', 7),
+    		Map.entry('Q', 8),
+    		Map.entry('R', 9),
+    		Map.entry('X', 0)//Checking on this char
+    		);
+    
+    static String[] append(String[] orig, String...more) {
+    	int oldLen = orig.length;
+    	int addLen = more.length;
+    	String[] out = Arrays.copyOf(orig, oldLen + addLen);
+    	System.arraycopy(more, 0, out, oldLen, addLen);
+    	return out;
+    	
     }
 }

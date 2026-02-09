@@ -2,9 +2,9 @@
 package com.its255.viewer;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@Configuration
+@ConfigurationProperties(prefix = "viewer")
 public class ViewerConfig {
     @Value("${viewer.recordLength:255}")
     private int recordLength;

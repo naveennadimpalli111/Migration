@@ -9,7 +9,7 @@
   <script>
     async function poll() {
       try {
-        const r = await fetch('/viewer3/progress');
+        const r = await fetch('/viewer/progress');
         const j = await r.json();
         const p = Math.round((j.progress||0)*100);
         const el = document.getElementById('pbar');
@@ -22,7 +22,7 @@
 <body class="container py-3" onload="poll()">
   <h1 class="mb-3">ITS255 Viewer — v3.2 (Chunked Mapping)</h1>
 
-  <form action="/viewer3/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
+  <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
     <div class="mb-2"><label class="form-label">EBCDIC File</label>
       <input type="file" name="file" class="form-control" required />
     </div>
@@ -33,7 +33,7 @@
     <div class="form-text">Chunked mapping is enabled (default 512MB windows). Prefix index length and workers are configurable via application.yml.</div>
   </form>
 
-  <form action="/viewer3/search" method="post" class="mb-3 border p-3 rounded">
+  <form action="/viewer/search" method="post" class="mb-3 border p-3 rounded">
     <div class="row g-2">
       <div class="col-md-4">
         <label class="form-label">SCCF (prefix allowed)</label>
@@ -49,15 +49,15 @@
       </div>
       <div class="col-md-4 d-flex align-items-end gap-2">
         <button class="btn btn-success">Search</button>
-        <a class="btn btn-outline-secondary" href="/viewer3/export">Export (ZIP per type)</a>
+        <a class="btn btn-outline-secondary" href="/viewer/export">Export (ZIP per type)</a>
       </div>
     </div>
     <div class="form-text">15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).</div>
   </form>
 
   <div class="d-flex align-items-center gap-2 mb-2" th:if="${hasFile}">
-    <form th:action="@{/viewer3/prev}" method="post"><button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button></form>
-    <form th:action="@{/viewer3/next}" method="post"><button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button></form>
+    <form th:action="@{/viewer/prev}" method="post"><button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button></form>
+    <form th:action="@{/viewer/next}" method="post"><button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button></form>
     <span class="ms-2" th:text="|Record ${position} of ${count}|"></span>
   </div>
 
