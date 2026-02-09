@@ -34,3 +34,15 @@ server:
             max: 200
         accept-count: 200
     max-http-header-size: 16KB
+viewer:
+  recordLength: 255
+  charset: Cp037
+  prefixIndexLength: 10
+  index:
+    workers: 4
+    progressStep: 8192
+  export:
+    bufferSize: 1048576
+  chunk:
+    enabled: true
+    windowSizeMB: 512
