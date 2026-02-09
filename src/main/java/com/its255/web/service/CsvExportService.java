@@ -56,13 +56,14 @@ public class CsvExportService {
                     }
                     w.flush(); zip.closeEntry(); continue;
                 }
-                String[] header = layout.stream().map(f -> f.name).toArray(String[]::new);
-//                String[] header = {"REC_NO","SCCF","REC_TYPE"};
-//                header = append(header, layout.stream().map(f -> f.name).toArray(String[]::new));
+//                String[] header = layout.stream().map(f -> f.name).toArray(String[]::new);//46
+                String[] header = {"REC_NO","SCCF","REC_TYPE"};
+                header = append(header, layout.stream().map(f -> f.name).toArray(String[]::new));
                 writeCsvRow(w, header);
                 for (int rn : list) {
                     byte[] rec = readRecordBytes(rn);
-                    String[] row = new String[layout.size()];
+                    String[] row = new String[layout.size()];//46
+                    String[] updRow = {String.valueOf(rn),null,type};
                     for (int i=0;i<layout.size();i++) {
                         FieldSpec f = layout.get(i);
                         int start = f.start1Based - 1;
@@ -80,7 +81,15 @@ public class CsvExportService {
                         }
                         row[i] = val;
                     }
-                    writeCsvRow(w, row);
+                    updRow = append(updRow, row);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(String.valueOf(updRow[3]));
+                    sb.append(String.valueOf(updRow[4]));
+                    sb.append(String.valueOf(updRow[5]));
+                    sb.append(String.valueOf(updRow[6]));
+                    sb.append(String.valueOf(updRow[7]));
+                    updRow[1] = "=\"" + sb.toString() + "\"";
+                    writeCsvRow(w, updRow);
                 }
                 w.flush(); zip.closeEntry();
             }
@@ -122,15 +131,15 @@ public class CsvExportService {
         w.write(sb.toString());
     }
     
-    static int parseOverpunchInt(String s) {
+    static String parseOverpunchInt(String s) {
     	if(s == null || s.isEmpty()) {
-    		return (Integer) null;
+    		return (String) null;
     	}
     	char last = s.charAt(s.length() - 1);
     	String body = s.substring(0, s.length() - 1);
     	
     	if (last >= '0' && last <= '9') {
-    		return Integer.parseInt(body + last);
+    		return String.valueOf(body + last);
     	}
     	
     	Integer d;
@@ -143,8 +152,7 @@ public class CsvExportService {
 //    		throw new IllegalArgumentException("Invalid overpunch char: " + last);
     		System.err.println("Invalid overpunch char: " + last);
     	}
-    	int value = Integer.parseInt(body + d);
-    	return neg ? -value : value;
+    	return String.valueOf(body + d);
     }
     
     static final Map<Character, Integer> POS = Map.ofEntries(
