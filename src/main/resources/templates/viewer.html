@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,31 +5,120 @@
   <title>ITS255 Viewer — v3.2 (Chunked Mapping)</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <style>code{white-space:pre-wrap}</style>
+
   <script>
+    // --- Phase B: server parsing progress (polling) ---
     async function poll() {
       try {
-        const r = await fetch('/viewer/progress');
+        // Avoid cached responses
+        const r = await fetch('/viewer/progress?ts=' + Date.now(), { cache: 'no-store' });
         const j = await r.json();
-        const p = Math.round((j.progress||0)*100);
+        const serverPct = Math.round((j.progress || 0) * 100); // 0..100
+
+        // Map server parse to the last 20% of the bar (80..100)
+        const mapped = Math.min(100, Math.max(80, 80 + Math.round(serverPct * 0.20)));
+
         const el = document.getElementById('pbar');
-        if (el) { el.style.width = p+'%'; el.innerText = p+'%'; }
-        if (p < 100) setTimeout(poll, 800);
-      } catch(e) { /* ignore */ }
+        if (el) {
+          el.style.width = mapped + '%';
+          el.innerText = mapped + '%';
+        }
+        if (mapped < 100) setTimeout(poll, 800);
+      } catch (e) {
+        // Optionally retry
+        setTimeout(poll, 1200);
+      }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const uploadForm = document.querySelector('form[action="/viewer/upload"]');
+      const fileInput  = uploadForm?.querySelector('input[type="file"][name="file"]');
+      const pbar       = document.getElementById('pbar');
+
+      // Keep progress at 0% when user picks a new file (before upload)
+      if (fileInput && pbar) {
+        fileInput.addEventListener('change', () => {
+          pbar.classList.remove('bg-danger');
+          pbar.style.width = '0%';
+          pbar.innerText   = '0%';
+        });
+      }
+
+      if (!uploadForm || !pbar) return;
+
+      // Intercept the upload to provide true upload progress (Phase A: 0..80)
+      uploadForm.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const file = fileInput?.files?.[0];
+
+        if (!file) {
+          // No file selected: keep at 0% and let server validate if desired
+          pbar.style.width = '0%';
+          pbar.innerText   = '0%';
+          return uploadForm.submit(); // Or show a validation message instead
+        }
+
+        const formData = new FormData(uploadForm);
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/viewer/upload', true);
+
+        // True upload progress (bytes sent)
+        xhr.upload.onprogress = (e) => {
+          if (!e.lengthComputable) return;
+          const rawPct = (e.loaded / e.total) * 100;                 // 0..100 for upload
+          const mapped = Math.max(0, Math.min(80, Math.round(rawPct * 0.80))); // Map to 0..80
+          pbar.style.width = mapped + '%';
+          pbar.innerText   = mapped + '%';
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Upload finished successfully: begin server poll (Phase B: 80..100)
+            setTimeout(poll, 300);
+          } else {
+            // Error – reflect failure
+            pbar.classList.add('bg-danger');
+            pbar.style.width = '100%';
+            pbar.innerText   = 'Upload error';
+          }
+        };
+
+        xhr.onerror = () => {
+          pbar.classList.add('bg-danger');
+          pbar.style.width = '100%';
+          pbar.innerText   = 'Network error';
+        };
+
+        // Start with 1% to show movement even before first onprogress fires
+        pbar.classList.remove('bg-danger');
+        pbar.style.width = '1%';
+        pbar.innerText   = '1%';
+
+        // Send it
+        xhr.send(formData);
+      });
+    });
   </script>
 </head>
-<body class="container py-3" onload="poll()">
+
+<!-- Removed onload="poll()" so we do NOT start at 80% on first paint -->
+<body class="container py-3">
   <h1 class="mb-3">ITS255 Viewer — v3.2 (Chunked Mapping)</h1>
 
   <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
-    <div class="mb-2"><label class="form-label">EBCDIC File</label>
+    <div class="mb-2">
+      <label class="form-label">EBCDIC File</label>
       <input type="file" name="file" class="form-control" required />
     </div>
     <button class="btn btn-primary">Upload</button>
+
     <div class="progress mt-3" style="height:24px">
       <div id="pbar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
     </div>
-    <div class="form-text">Chunked mapping is enabled (default 512MB windows). Prefix index length and workers are configurable via application.yml.</div>
+
+    <div class="form-text">
+      Chunked mapping is enabled (default 512MB windows). Prefix index length and workers are configurable via application.yml.
+    </div>
   </form>
 
   <form action="/viewer/search" method="post" class="mb-3 border p-3 rounded">
