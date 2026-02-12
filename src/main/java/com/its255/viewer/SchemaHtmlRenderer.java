@@ -3,6 +3,7 @@ package com.its255.viewer;
 
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +78,11 @@ public class SchemaHtmlRenderer {
                         break;
                     case BINARY:
                         val = invokeFixed("decodeBinary", rec, start, len, f.scale);
+//                        System.out.println("BINARY");
+//                        System.out.println(Arrays.toString(rec));
+//                        System.out.println(start);
+//                        System.out.println(len);
+//                        System.out.println(f.scale);
                         break;
                     default:
                         val = "";

@@ -639,7 +639,7 @@ public final class Fixed255Parser {
         if (scale > 0) return new BigDecimal(signed).movePointLeft(scale).toPlainString();
         return Long.toString(signed);
     }
-
+    
     /** Safer overpunch decoder that returns null for invalid inputs. */
     private static Integer parseOverpunchIntSafe(String s) {
         if (s == null || s.isEmpty()) return null;
