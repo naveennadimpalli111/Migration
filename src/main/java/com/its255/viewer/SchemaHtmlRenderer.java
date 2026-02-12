@@ -116,7 +116,7 @@ public class SchemaHtmlRenderer {
         try {
             Class<?> cls = Class.forName("com.its255.io.Fixed255Parser");
             Method m = cls.getDeclaredMethod(method, byte[].class, int.class, int.class, int.class);
-            Object val = m.invoke(null, rec, start, len, scale);
+            Object val = m.invoke(null, rec, start, len, scale);//Catching Exception for Binary
             return String.valueOf(val);
         } catch (Exception ex) {
             return "";
