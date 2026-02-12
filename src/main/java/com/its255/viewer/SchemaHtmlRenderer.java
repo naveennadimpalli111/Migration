@@ -1,13 +1,14 @@
 
 package com.its255.viewer;
 
-import com.its255.schema.FieldSpec;
-import com.its255.schema.RecordType;
-import com.its255.schema.Schemas;
-
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
+
+import com.its255.schema.FieldSpec;
+import com.its255.schema.RecordType;
+import com.its255.schema.Schemas;
 
 /**
  * Renders ONE 255-byte record as an HTML table using the active copybook schema.
@@ -49,11 +50,27 @@ public class SchemaHtmlRenderer {
             for (FieldSpec f : layout) {
                 int start = f.start1Based - 1;
                 int len = f.lengthBytes;
-                String val;
+                String val = null;
                 switch (f.type) {
                     case ALPHA:
+                    	val = sliceTrim(rec, start, len);
+                    	break;
                     case NUMERIC_TEXT:
-                        val = sliceTrim(rec, start, len);
+                    	val = sliceTrim(rec, start, len);
+                    	if(val.chars().count() == 1){
+                    		try {
+                            	val = String.valueOf(parseOverpunchInt(val));
+                            } catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                    	}
+                    	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
+                        	try {
+                            	val = String.valueOf(parseOverpunchInt(val));
+                            } catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                        }
                         break;
                     case PACKED_DECIMAL:
                         val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
@@ -118,4 +135,58 @@ public class SchemaHtmlRenderer {
             .replace(">", "&gt;")
             .replace("\"", "&quot;");
     }
+    
+    static int parseOverpunchInt(String s) {
+    	if(s == null || s.isEmpty()) {
+    		return (Integer) null;
+    	}
+    	char last = s.charAt(s.length() - 1);
+    	String body = s.substring(0, s.length() - 1);
+    	
+    	if (last >= '0' && last <= '9') {
+    		return Integer.parseInt(body + last);
+    	}
+    	
+    	Integer d;
+    	boolean neg = false;
+    	if ((d = POS.get(last)) != null) {
+    		neg = false;
+    	} else if ((d = NEG.get(last)) != null) {
+    		neg = true;
+    	} else {
+//    		throw new IllegalArgumentException("Invalid overpunch char: " + last);
+    		System.err.println("Invalid overpunch char: " + last);
+    	}
+    	int value = Integer.parseInt(body + d);
+    	return neg ? -value : value;
+    }
+    
+    static final Map<Character, Integer> POS = Map.ofEntries(
+    		Map.entry('{', 0),
+    		Map.entry('A', 1),
+    		Map.entry('B', 2),
+    		Map.entry('C', 3),
+    		Map.entry('D', 4),
+    		Map.entry('E', 5),
+    		Map.entry('F', 6),
+    		Map.entry('G', 7),
+    		Map.entry('H', 8),
+    		Map.entry('I', 9),
+    		Map.entry('X', 0)//Checking on this char
+    		);
+    
+    static final Map<Character, Integer> NEG = Map.ofEntries(
+    		Map.entry('}', 0),
+    		Map.entry('J', 1),
+    		Map.entry('K', 2),
+    		Map.entry('L', 3),
+    		Map.entry('M', 4),
+    		Map.entry('N', 5),
+    		Map.entry('O', 6),
+    		Map.entry('P', 7),
+    		Map.entry('Q', 8),
+    		Map.entry('R', 9),
+    		Map.entry('X', 0)//Checking on this char
+    		);
+
 }

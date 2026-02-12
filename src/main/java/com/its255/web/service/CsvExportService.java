@@ -68,12 +68,25 @@ public class CsvExportService {
                         FieldSpec f = layout.get(i);
                         int start = f.start1Based - 1;
                         int len = f.lengthBytes;
-                        String val;
+                        String val = null;
                         switch (f.type) {
                             case ALPHA: val = sliceTrim(rec, start, len); break;
                             case NUMERIC_TEXT: 
                             	val = sliceTrim(rec, start, len);
-                            	val = String.valueOf(parseOverpunchInt(val));
+                            	if(val.chars().count() == 1){
+                            		try {
+                                    	val = String.valueOf(parseOverpunchInt(val));
+                                    } catch (NullPointerException ne) {
+                                    	val = "";
+                                    }
+                            	}
+                            	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
+                                	try {
+                                    	val = String.valueOf(parseOverpunchInt(val));
+                                    } catch (NullPointerException ne) {
+                                    	val = "";
+                                    }
+                                }
                             	break;
                             case PACKED_DECIMAL: val = invokeParser("decodeComp3ToString", rec, start, len, f.scale); break;
                             case BINARY: val = invokeParser("decodeBinary", rec, start, len, f.scale); break;
