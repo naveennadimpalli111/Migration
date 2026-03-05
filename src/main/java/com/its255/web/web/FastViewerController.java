@@ -73,7 +73,6 @@ public class FastViewerController {
         model.addAttribute("error", "Please select a file.");
         return page(model, session);
     }
-  	long t0 = System.nanoTime(); // request enters
     ViewerSession vs = getSession(session);
 
     // clean old store if present
@@ -82,9 +81,7 @@ public class FastViewerController {
     }
 
     Path tmp = Files.createTempFile("its255_v3_", ".dat");
-    long t1 = System.nanoTime(); // temp file created
     file.transferTo(tmp.toFile());
-    long t2 = System.nanoTime(); // upload written to disk
 
     vs.filePath = tmp;
     vs.originalFilename = file.getOriginalFilename();
@@ -105,26 +102,13 @@ public class FastViewerController {
             cfg.getProgressStep(),
             p -> vs.progress = p
     );
- // If you keep indexing sync for now, time it as phase C
-    long t2b = System.nanoTime();
 
  // If you still build index synchronously:
     vs.pidx = builder.build();
     vs.filter = new FastRecordFilter(vs.store, vs.pidx);
     vs.nav = new RecordNavigator(List.of(), -1);
     vs.lastFiltered = List.of();
-    long t3 = System.nanoTime();
-    long createTmpMs = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-    long writeMs     = TimeUnit.NANOSECONDS.toMillis(t2 - t1);
-    long prepMs      = TimeUnit.NANOSECONDS.toMillis(t2b - t2); // (usually sub-ms; store construction)
-    long indexMs     = TimeUnit.NANOSECONDS.toMillis(t3 - t2b);
-    long totalMs     = TimeUnit.NANOSECONDS.toMillis(t3 - t0);
 
-   
-
-    System.out.printf("Upload: upload=%d bytes, timing: total=%d ms | createTmp=%d ms | write=%d ms | prep=%d ms | buildIndex=%d ms %n",
-    		file.getSize(),
-            totalMs, createTmpMs, writeMs, prepMs, indexMs);
     return "redirect:/viewer";
   }
 
