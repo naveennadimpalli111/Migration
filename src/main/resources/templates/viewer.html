@@ -10,12 +10,9 @@
     // --- Phase B: server parsing progress (polling) ---
     async function poll() {
       try {
-        // Avoid cached responses
         const r = await fetch('/viewer/progress?ts=' + Date.now(), { cache: 'no-store' });
         const j = await r.json();
-        const serverPct = Math.round((j.progress || 0) * 100); // 0..100
-
-        // Map server parse to the last 20% of the bar (80..100)
+        const serverPct = Math.round((j.progress || 0) * 100); 
         const mapped = Math.min(100, Math.max(80, 80 + Math.round(serverPct * 0.20)));
 
         const el = document.getElementById('pbar');
@@ -25,7 +22,6 @@
         }
         if (mapped < 100) setTimeout(poll, 800);
       } catch (e) {
-        // Optionally retry
         setTimeout(poll, 1200);
       }
     }
@@ -35,7 +31,6 @@
       const fileInput  = uploadForm?.querySelector('input[type="file"][name="file"]');
       const pbar       = document.getElementById('pbar');
 
-      // Keep progress at 0% when user picks a new file (before upload)
       if (fileInput && pbar) {
         fileInput.addEventListener('change', () => {
           pbar.classList.remove('bg-danger');
@@ -46,37 +41,34 @@
 
       if (!uploadForm || !pbar) return;
 
-      // Intercept the upload to provide true upload progress (Phase A: 0..80)
       uploadForm.addEventListener('submit', (ev) => {
         ev.preventDefault();
         const file = fileInput?.files?.[0];
 
         if (!file) {
-          // No file selected: keep at 0% and let server validate if desired
           pbar.style.width = '0%';
           pbar.innerText   = '0%';
-          return uploadForm.submit(); // Or show a validation message instead
+          return uploadForm.submit();
         }
 
         const formData = new FormData(uploadForm);
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/viewer/upload', true);
 
-        // True upload progress (bytes sent)
         xhr.upload.onprogress = (e) => {
           if (!e.lengthComputable) return;
-          const rawPct = (e.loaded / e.total) * 100;                 // 0..100 for upload
-          const mapped = Math.max(0, Math.min(80, Math.round(rawPct * 0.80))); // Map to 0..80
+          const rawPct = (e.loaded / e.total) * 100;
+          const mapped = Math.max(0, Math.min(80, Math.round(rawPct * 0.80)));
           pbar.style.width = mapped + '%';
           pbar.innerText   = mapped + '%';
         };
-
+        const tStart = performance.now();
         xhr.onload = () => {
+        console.log('Upload roundtrip(ms):', performance.now() - tStart);
+
           if (xhr.status >= 200 && xhr.status < 300) {
-            // Upload finished successfully: begin server poll (Phase B: 80..100)
             setTimeout(poll, 300);
           } else {
-            // Error – reflect failure
             pbar.classList.add('bg-danger');
             pbar.style.width = '100%';
             pbar.innerText   = 'Upload error';
@@ -89,28 +81,33 @@
           pbar.innerText   = 'Network error';
         };
 
-        // Start with 1% to show movement even before first onprogress fires
         pbar.classList.remove('bg-danger');
         pbar.style.width = '1%';
         pbar.innerText   = '1%';
 
-        // Send it
         xhr.send(formData);
       });
     });
   </script>
 </head>
 
-<!-- Removed onload="poll()" so we do NOT start at 80% on first paint -->
+
 <body class="container py-3">
   <h1 class="mb-3">ITS255 Viewer — v3.2 (Chunked Mapping)</h1>
 
+  <!-- UPLOAD FORM -->
   <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
     <div class="mb-2">
       <label class="form-label">EBCDIC File</label>
       <input type="file" name="file" class="form-control" required />
     </div>
+
     <button class="btn btn-primary">Upload</button>
+
+    <!-- ▼ Added: filename (Version 1 feature restored) -->
+    <small class="text-muted ms-2" th:if="${filename}">
+      — <span th:text="${filename}">yourfile.dat</span>
+    </small>
 
     <div class="progress mt-3" style="height:24px">
       <div id="pbar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
@@ -121,6 +118,8 @@
     </div>
   </form>
 
+
+  <!-- SEARCH FORM -->
   <form action="/viewer/search" method="post" class="mb-3 border p-3 rounded">
     <div class="row g-2">
       <div class="col-md-4">
@@ -140,15 +139,36 @@
         <a class="btn btn-outline-secondary" href="/viewer/export">Export (ZIP per type)</a>
       </div>
     </div>
-    <div class="form-text">15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).</div>
+    <div class="form-text">
+      15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).
+    </div>
   </form>
 
+
+  <!-- NAVIGATION ROW -->
   <div class="d-flex align-items-center gap-2 mb-2" th:if="${hasFile}">
-    <form th:action="@{/viewer/prev}" method="post"><button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button></form>
-    <form th:action="@{/viewer/next}" method="post"><button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button></form>
+
+    <!-- Prev / Next -->
+    <form th:action="@{/viewer/prev}" method="post">
+      <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
+    </form>
+    <form th:action="@{/viewer/next}" method="post">
+      <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
+    </form>
+
     <span class="ms-2" th:text="|Record ${position} of ${count}|"></span>
+
+    <!-- ▼ Added: Clear cached file button (aligned, unobtrusive) -->
+    <form th:action="@{/viewer/clear}" method="post" class="ms-auto">
+      <button class="btn btn-outline-danger btn-sm">
+        Clear cached file
+      </button>
+    </form>
   </div>
 
+
+  <!-- RECORD TABLE -->
   <div th:utext="${html}"></div>
+
 </body>
 </html>

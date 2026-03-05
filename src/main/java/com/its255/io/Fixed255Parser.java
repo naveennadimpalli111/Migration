@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.FieldType;
 import com.its255.schema.RecordType;
+import com.its255.util.Overpunch;
 
 /**
  * Fixed-length 255-byte parser supporting ALPHA, NUMERIC_TEXT, PACKED_DECIMAL (COMP-3) and BINARY (COMP/COMP-4).
@@ -514,17 +515,11 @@ public final class Fixed255Parser {
             switch (f.type) {
                 case ALPHA -> out.put(f.name, sliceTrim(rec, start, f.lengthBytes));
                 case NUMERIC_TEXT -> {
-                    String s = sliceTrim(rec, start, f.lengthBytes);
-                    int len = s.length();
-                    if (len == 1) {
-                        Integer x = parseOverpunchIntSafe(s);
-                        out.put(f.name, x == null ? "" : String.valueOf(x));
-                    } else if (len == 4 && (s.isEmpty() || s.charAt(0) != 'X')) {
-                        Integer x = parseOverpunchIntSafe(s);
-                        out.put(f.name, x == null ? "" : String.valueOf(x));
-                    } else {
-                        out.put(f.name, s);
-                    }
+                	 String s = sliceTrim(rec, start, f.lengthBytes);
+                	 // Always try to decode zoned-decimal overpunch; fallback to original if not applicable.
+                	 String decodedText = Overpunch.decodeOrOriginal(s);
+                	 out.put(f.name, decodedText);
+
                 }
                 case PACKED_DECIMAL -> out.put(f.name, decodeComp3ToString(rec, start, f.lengthBytes, f.scale));
                 case BINARY -> out.put(f.name, decodeBinary(rec, start, f.lengthBytes, f.scale));
@@ -544,17 +539,9 @@ public final class Fixed255Parser {
             switch (f.type) {
                 case ALPHA -> v = sliceTrim(rec, start, f.lengthBytes);
                 case NUMERIC_TEXT -> {
-                    String s = sliceTrim(rec, start, f.lengthBytes);
-                    int len = s.length();
-                    if (len == 1) {
-                        Integer x = parseOverpunchIntSafe(s);
-                        v = (x == null) ? "" : String.valueOf(x);
-                    } else if (len == 4 && (s.isEmpty() || s.charAt(0) != 'X')) {
-                        Integer x = parseOverpunchIntSafe(s);
-                        v = (x == null) ? "" : String.valueOf(x);
-                    } else {
-                        v = s;
-                    }
+                	String s = sliceTrim(rec, start, f.lengthBytes);
+                	v = com.its255.util.Overpunch.decodeOrOriginal(s);
+
                 }
                 case PACKED_DECIMAL -> v = decodeComp3ToString(rec, start, f.lengthBytes, f.scale);
                 case BINARY -> v = decodeBinary(rec, start, f.lengthBytes, f.scale);

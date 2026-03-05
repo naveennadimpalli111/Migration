@@ -4,6 +4,7 @@ package com.its255.web.service;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.Schemas;
+import com.its255.util.Overpunch;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -72,21 +73,7 @@ public class CsvExportService {
                         switch (f.type) {
                             case ALPHA: val = sliceTrim(rec, start, len); break;
                             case NUMERIC_TEXT: 
-                            	val = sliceTrim(rec, start, len);
-                            	if(val.chars().count() == 1){
-                            		try {
-                                    	val = String.valueOf(parseOverpunchInt(val));
-                                    } catch (NullPointerException ne) {
-                                    	val = "";
-                                    }
-                            	}
-                            	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
-                                	try {
-                                    	val = String.valueOf(parseOverpunchInt(val));
-                                    } catch (NullPointerException ne) {
-                                    	val = "";
-                                    }
-                                }
+                            	val = Overpunch.decodeOrOriginal(sliceTrim(rec, start, len));
                             	break;
                             case PACKED_DECIMAL: val = invokeParser("decodeComp3ToString", rec, start, len, f.scale); break;
                             case BINARY: val = invokeParser("decodeBinary", rec, start, len, f.scale); break;
