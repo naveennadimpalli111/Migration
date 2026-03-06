@@ -62,9 +62,9 @@
           pbar.style.width = mapped + '%';
           pbar.innerText   = mapped + '%';
         };
-        const tStart = performance.now();
+        //const tStart = performance.now();
         xhr.onload = () => {
-        console.log('Upload roundtrip(ms):', performance.now() - tStart);
+       // console.log('Upload roundtrip(ms):', performance.now() - tStart);
 
           if (xhr.status >= 200 && xhr.status < 300) {
             setTimeout(poll, 300);
