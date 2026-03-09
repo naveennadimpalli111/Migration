@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.FieldType;
 import com.its255.schema.RecordType;
-import com.its255.util.Overpunch;
 
 /**
  * Fixed-length 255-byte parser supporting ALPHA, NUMERIC_TEXT, PACKED_DECIMAL (COMP-3) and BINARY (COMP/COMP-4).
@@ -509,19 +508,42 @@ public final class Fixed255Parser {
     // Parse fields directly from the record's backing array (fewer allocations).
     private Map<String, String> parseFieldsFromArray(byte[] rec, int base, List<FieldSpec> layout) {
         Map<String, String> out = new LinkedHashMap<>(layout.size() * 2);
-
+        String s = null;
+        int len = 0;
+        Integer x = 0;
         for (FieldSpec f : layout) {
             final int start = base + (f.start1Based - 1);
             switch (f.type) {
                 case ALPHA -> out.put(f.name, sliceTrim(rec, start, f.lengthBytes));
                 case NUMERIC_TEXT -> {
-                	 String s = sliceTrim(rec, start, f.lengthBytes);
-                	 // Always try to decode zoned-decimal overpunch; fallback to original if not applicable.
-                	 String decodedText = Overpunch.decodeOrOriginal(s);
-                	 out.put(f.name, decodedText);
-
+                    s = sliceTrim(rec, start, f.lengthBytes);
+                    len = s.length();
+                    if (len == 1) {
+                        x = parseOverpunchIntSafe(s);
+                        out.put(f.name, x == null ? "" : String.valueOf(x));
+                    } else if (s.contains("}")) {
+                    	x = parseOverpunchIntSafe(s);
+                        out.put(f.name, x == null ? "" : String.valueOf(x));
+                    } else if (s.contains("{")) {
+                    	x = parseOverpunchIntSafe(s);
+                        out.put(f.name, x == null ? "" : String.valueOf(x));
+                    } else if (len == 4 && (s.isEmpty() || s.charAt(0) != 'X')) {
+                        x = parseOverpunchIntSafe(s);
+                        out.put(f.name, x == null ? "" : String.valueOf(x));
+                    } else {
+                        out.put(f.name, s);
+                    }
                 }
-                case PACKED_DECIMAL -> out.put(f.name, decodeComp3ToString(rec, start, f.lengthBytes, f.scale));
+                case PACKED_DECIMAL -> {
+                	s = decodeComp3ToString(rec, start, f.lengthBytes, f.scale);
+                	if(s.contains("}")) {
+                		x = parseOverpunchIntSafe(s);
+                		out.put(f.name, x == null ? "" : String.valueOf(x));
+                	} else {
+                		out.put(f.name, s);
+                	}
+                	
+                }
                 case BINARY -> out.put(f.name, decodeBinary(rec, start, f.lengthBytes, f.scale));
                 default -> out.put(f.name, "");
             }
@@ -536,14 +558,36 @@ public final class Fixed255Parser {
         for (FieldSpec f : layout) {
             final int start = base + (f.start1Based - 1);
             String v;
+            int len = 0;
+            String s;
             switch (f.type) {
                 case ALPHA -> v = sliceTrim(rec, start, f.lengthBytes);
                 case NUMERIC_TEXT -> {
-                	String s = sliceTrim(rec, start, f.lengthBytes);
-                	v = com.its255.util.Overpunch.decodeOrOriginal(s);
-
+                    s = sliceTrim(rec, start, f.lengthBytes);
+                    len = s.length();
+                    if (len == 1) {
+                        Integer x = parseOverpunchIntSafe(s);
+                        v = (x == null) ? "" : String.valueOf(x);
+                    } else if (s.contains("}")) {
+                    	Integer x = parseOverpunchIntSafe(s);
+                        v = (x == null) ? "" : String.valueOf(x);
+                    } else if (s.contains("{")) {
+                        Integer x = parseOverpunchIntSafe(s);
+                        v = (x == null) ? "" : String.valueOf(x);
+                    } else if (len == 4 && (s.isEmpty() || s.charAt(0) != 'X')) {
+                        Integer x = parseOverpunchIntSafe(s);
+                        v = (x == null) ? "" : String.valueOf(x);
+                    } else {
+                        v = s;
+                    }
                 }
-                case PACKED_DECIMAL -> v = decodeComp3ToString(rec, start, f.lengthBytes, f.scale);
+                case PACKED_DECIMAL -> {
+                	v = decodeComp3ToString(rec, start, f.lengthBytes, f.scale);
+                	if(v.contains("}")) {
+                		Integer x = parseOverpunchIntSafe(v);
+                        v = (x == null) ? "" : String.valueOf(x);
+                	}
+                }
                 case BINARY -> v = decodeBinary(rec, start, f.lengthBytes, f.scale);
                 default -> v = "";
             }
@@ -552,7 +596,6 @@ public final class Fixed255Parser {
         return vals;
     }
 
-    // Build LinkedHashMap from layout + values (done on emitter thread).
     private static Map<String, String> buildMap(List<FieldSpec> layout, String[] values) {
         Map<String, String> out = new LinkedHashMap<>(layout.size() * 2);
         for (int i = 0; i < layout.size(); i++) {

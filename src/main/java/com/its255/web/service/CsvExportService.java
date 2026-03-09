@@ -4,7 +4,6 @@ package com.its255.web.service;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.Schemas;
-import com.its255.util.Overpunch;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -73,7 +72,35 @@ public class CsvExportService {
                         switch (f.type) {
                             case ALPHA: val = sliceTrim(rec, start, len); break;
                             case NUMERIC_TEXT: 
-                            	val = Overpunch.decodeOrOriginal(sliceTrim(rec, start, len));
+                            	val = sliceTrim(rec, start, len);
+                            	if(val.chars().count() == 1){
+                            		try {
+                                    	val = String.valueOf(parseOverpunchIntSafe(val));
+                                    } catch (NullPointerException ne) {
+                                    	val = "";
+                                    }
+                            	}
+                                if (val.contains("}")) {
+                                    try {
+                                        val = String.valueOf(parseOverpunchIntSafe(val));
+                                    } catch (NullPointerException ne) {
+                                        val = "";
+                                    }
+                                }
+                                if (val.contains("{")) {
+                                    try {
+                                        val = String.valueOf(parseOverpunchIntSafe(val));
+                                    } catch (NullPointerException ne) {
+                                        val = "";
+                                    }
+                                }
+                            	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
+                                	try {
+                                    	val = String.valueOf(parseOverpunchIntSafe(val));
+                                    } catch (NullPointerException ne) {
+                                    	val = "";
+                                    }
+                                }
                             	break;
                             case PACKED_DECIMAL: val = invokeParser("decodeComp3ToString", rec, start, len, f.scale); break;
                             case BINARY: val = invokeParser("decodeBinary", rec, start, len, f.scale); break;
@@ -153,6 +180,32 @@ public class CsvExportService {
     		System.err.println("Invalid overpunch char: " + last);
     	}
     	return String.valueOf(body + d);
+    }
+
+    /** Safer overpunch decoder that returns null for invalid inputs. */
+    private static Integer parseOverpunchIntSafe(String s) {
+        if (s == null || s.isEmpty()) return null;
+        char last = s.charAt(s.length() - 1);
+        String body = s.substring(0, s.length() - 1);
+
+        if (last >= '0' && last <= '9') {
+            try { return Integer.parseInt(body + last); } catch (NumberFormatException e) { return null; }
+        }
+
+        Integer d = POS.get(last);
+        boolean neg = false;
+        if (d == null) {
+            d = NEG.get(last);
+            if (d != null) neg = true;
+        }
+        if (d == null) return null;
+
+        try {
+            int value = Integer.parseInt(body + d);
+            return neg ? -value : value;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
     
     static final Map<Character, Integer> POS = Map.ofEntries(

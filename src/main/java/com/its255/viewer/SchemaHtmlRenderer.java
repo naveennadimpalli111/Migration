@@ -10,7 +10,6 @@ import java.util.Map;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.Schemas;
-import com.its255.util.Overpunch;
 
 /**
  * Renders ONE 255-byte record as an HTML table using the active copybook schema.
@@ -58,7 +57,35 @@ public class SchemaHtmlRenderer {
                     	val = sliceTrim(rec, start, len);
                     	break;
                     case NUMERIC_TEXT:
-                    	val = Overpunch.decodeOrOriginal(sliceTrim(rec, start, len));
+                    	val = sliceTrim(rec, start, len);
+                    	if(val.chars().count() == 1){
+                    		try {
+                            	val = String.valueOf(parseOverpunchInt(val));
+                            } catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                    	}
+                    	if (val.contains("}")) {
+                    		try {
+                    			val = String.valueOf(parseOverpunchInt(val));
+                    		} catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                    	}
+                        if (val.contains("{")) {
+                        	try {
+                    			val = String.valueOf(parseOverpunchInt(val));
+                    		} catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                        }
+                    	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
+                        	try {
+                            	val = String.valueOf(parseOverpunchInt(val));
+                            } catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                        }
                         break;
                     case PACKED_DECIMAL:
                         val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);

@@ -94,7 +94,14 @@
 
 <body class="container py-3">
   <h1 class="mb-3">ITS255 Viewer — v3.2 (Chunked Mapping)</h1>
-
+  <p class="text-muted">
+    Upload a raw ITS file and either enter a <strong>record number</strong>,
+    <strong>record type</strong>, or enter a <strong>SCCF</strong> to preview.
+  </p>
+  <!-- Session cache announcement -->
+  <div th:if="${hasFile}" class="alert alert-info" role="status" aria-live="polite">
+    <strong>Cached file available.</strong> You can search again without uploading a new file.
+  </div>
   <!-- UPLOAD FORM -->
   <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
     <div class="mb-2">
@@ -103,12 +110,28 @@
     </div>
 
     <button class="btn btn-primary">Upload</button>
-
-    <!-- ▼ Added: filename (Version 1 feature restored) -->
-    <small class="text-muted ms-2" th:if="${filename}">
-      — <span th:text="${filename}">yourfile.dat</span>
-    </small>
-
+    <div id="fileHelp" class="form-text">
+      <span th:if="${hasFile}">
+        Optional — leave empty to reuse the cached file from this session.
+      </span>
+      <span th:if="${!hasFile}">
+        The viewer reads fixed‑length 255‑byte records from the uploaded file.
+      </span>
+    </div>
+    <div class="form-text mt-2" th:if="${hasFile}" role="status" aria-live="polite">
+      <span class="badge rounded-pill text-bg-primary fs-5 py-2 px-4"
+            th:text="${filename}">
+        yourfile.dat
+      </span>
+      <span class="visually-hidden"> is cached for this session.</span>
+    </div>
+    <!-- <small class="text-muted ms-2" th:if="${filename}">
+      —
+      <span
+        class="badge text-bg-light border text-primary fw-semibold rounded-pill px-2 py-1"
+        th:text="${filename}"
+      >yourfile.dat</span>
+    </small> -->
     <div class="progress mt-3" style="height:24px">
       <div id="pbar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
     </div>
