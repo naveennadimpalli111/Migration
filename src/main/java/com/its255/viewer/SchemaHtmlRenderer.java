@@ -60,28 +60,28 @@ public class SchemaHtmlRenderer {
                     	val = sliceTrim(rec, start, len);
                     	if(val.chars().count() == 1){
                     		try {
-                            	val = String.valueOf(parseOverpunchInt(val));
+                            	val = String.valueOf(parseOverpunchIntSafe(val));
                             } catch (NullPointerException ne) {
                             	val = "";
                             }
                     	}
                     	if (val.contains("}")) {
                     		try {
-                    			val = String.valueOf(parseOverpunchInt(val));
+                    			val = String.valueOf(parseOverpunchIntSafe(val));
                     		} catch (NullPointerException ne) {
                             	val = "";
                             }
                     	}
                         if (val.contains("{")) {
                         	try {
-                    			val = String.valueOf(parseOverpunchInt(val));
+                    			val = String.valueOf(parseOverpunchIntSafe(val));
                     		} catch (NullPointerException ne) {
                             	val = "";
                             }
                         }
                     	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
                         	try {
-                            	val = String.valueOf(parseOverpunchInt(val));
+                            	val = String.valueOf(parseOverpunchIntSafe(val));
                             } catch (NullPointerException ne) {
                             	val = "";
                             }
@@ -89,6 +89,13 @@ public class SchemaHtmlRenderer {
                         break;
                     case PACKED_DECIMAL:
                         val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
+                        if(val.contains("}")) {
+                        	try {
+                            	val = String.valueOf(parseOverpunchIntSafe(val));
+                            } catch (NullPointerException ne) {
+                            	val = "";
+                            }
+                    	} 
                         break;
                     case BINARY:
                         val = invokeFixed("decodeBinary", rec, start, len, f.scale);
@@ -130,9 +137,14 @@ public class SchemaHtmlRenderer {
         try {
             Class<?> cls = Class.forName("com.its255.io.Fixed255Parser");
             Method m = cls.getDeclaredMethod(method, byte[].class, int.class, int.class, int.class);
+            // It's private – make it accessible
+            m.setAccessible(true);
+
+            
             Object val = m.invoke(null, rec, start, len, scale);//Catching Exception for Binary
-            return String.valueOf(val);
+            return (val == null) ? "" : String.valueOf(val);
         } catch (Exception ex) {
+        	//ex.printStackTrace();
             return "";
         }
     }
@@ -179,6 +191,30 @@ public class SchemaHtmlRenderer {
     	}
     	int value = Integer.parseInt(body + d);
     	return neg ? -value : value;
+    }
+    
+    /** Safer overpunch decoder that returns null for invalid inputs. */
+    private static Integer parseOverpunchIntSafe(String s) {
+        if (s == null || s.isEmpty()) return null;
+        char last = s.charAt(s.length() - 1);
+        String body = s.substring(0, s.length() - 1);
+        if (last >= '0' && last <= '9') {
+            try { return Integer.parseInt(body + last); }
+            catch (NumberFormatException e) { return null; }
+        }
+        Integer d = POS.get(last);
+        boolean neg = false;
+        if (d == null) {
+            d = NEG.get(last);
+            if (d != null) neg = true;
+        }
+        if (d == null) return null;
+        try {
+            int value = Integer.parseInt(body + d);
+            return neg ? -value : value;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
     
     static final Map<Character, Integer> POS = Map.ofEntries(
