@@ -102,7 +102,16 @@ public class CsvExportService {
                                     }
                                 }
                             	break;
-                            case PACKED_DECIMAL: val = invokeParser("decodeComp3ToString", rec, start, len, f.scale); break;
+                            case PACKED_DECIMAL:
+                                val = invokeParser("decodeComp3ToString", rec, start, len, f.scale);
+                                if(val.contains("}")) {
+                                	try {
+                                    	val = String.valueOf(parseOverpunchIntSafe(val));
+                                    } catch (NullPointerException ne) {
+                                    	val = "";
+                                    }
+                            	} 
+                                break;
                             case BINARY: val = invokeParser("decodeBinary", rec, start, len, f.scale); break;
                             default: val = "";
                         }
@@ -136,6 +145,8 @@ public class CsvExportService {
         try {
             Class<?> cls = Class.forName("com.its255.io.Fixed255Parser");
             java.lang.reflect.Method m = cls.getDeclaredMethod(method, byte[].class, int.class, int.class, int.class);
+            // It's private – make it accessible
+            m.setAccessible(true);
             Object val = m.invoke(null, rec, start, len, scale);
             return String.valueOf(val);
         } catch (Exception ex) { return ""; }
