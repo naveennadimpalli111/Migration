@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.its255.schema.Schemas;
 import com.its255.viewer.ChunkedMMapRecordStore;
 import com.its255.viewer.FastRecordFilter;
 import com.its255.viewer.ParallelPrefixIndexBuilder;
@@ -108,13 +109,14 @@ public class FastViewerController {
     vs.filter = new FastRecordFilter(vs.store, vs.pidx);
     vs.nav = new RecordNavigator(List.of(), -1);
     vs.lastFiltered = List.of();
+    
 
     return "redirect:/viewer";
   }
 
   @PostMapping("/search")
   public String search(@RequestParam(name = "sccf", required = false) String sccf,
-                       @RequestParam(name = "type", required = false) String type,
+                       @RequestParam(name = "recordTypeCode", required = false) String type,
                        @RequestParam(name = "recNo", required = false) Integer recNo,
                        Model model, HttpSession session) {
 	  ViewerSession vs = getSession(session);
@@ -164,7 +166,12 @@ public class FastViewerController {
 	      .append(" SCCF=").append(sccf)
 	      .append(" Type=").append(type.trim())
 	      .append("</pre>\n")
-	      .append(tableHtml);
+	      .append(tableHtml)
+	      .append("<pre>")
+	      .append("Record #").append(rn)
+	      .append(" SCCF=").append(sccf)
+	      .append(" Type=").append(type.trim())
+	      .append("</pre>\n");
 
 	    model.addAttribute("hasFile", true);
 	    model.addAttribute("filename", vs.originalFilename); // NEW
@@ -233,4 +240,6 @@ public class FastViewerController {
       }
       return "redirect:/viewer";
   }
+ 
+ 
 }

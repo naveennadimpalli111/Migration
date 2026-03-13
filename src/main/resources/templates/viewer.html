@@ -2,19 +2,97 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="utf-8" />
-  <title>ITS255 Viewer — v3.2 (Chunked Mapping)</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-  <style>code{white-space:pre-wrap}</style>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EBCDIC File Viewer — v3.2 (Chunked Mapping)</title>
 
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <!-- ========= SINGLE STYLE BLOCK ========= -->
+  <style>
+    /* Preserve code wrapping */
+    code { white-space: pre-wrap; }
+
+    /* Equal 25% width for the first four controls (SCCF, Txn Type, Record Type, Record #) on md+ */
+    @media (min-width: 768px) {
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(1),
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(2),
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(3),
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(4) {
+        flex: 0 0 25%;
+        max-width: 25%;
+      }
+      /* make SCCF input fill its column */
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(1) input[name="sccf"] { width: 100%; }
+
+      /* Optional: avoid over-shrinking of controls */
+      #txnType,
+      #recordTypeCode,
+      form[action="/viewer/search"] input[name="sccf"],
+      form[action="/viewer/search"] input[name="recNo"] { min-width: 12rem; }
+    }
+
+    /* Prevent Record Type label from wrapping so its select stays on one row */
+    label[for="recordTypeCode"] { white-space: nowrap; }
+
+    /* BUTTON ROW: alignment, spacing, consistent sizing */
+    form[action="/viewer/search"] .actions-row {
+      margin-top: 0.75rem; /* subtle spacing above the button row */
+      display: flex;
+      align-items: center; /* vertical alignment */
+      justify-content: center;
+      gap: .5rem;          /* spacing between buttons */
+      flex-wrap: wrap;     /* graceful wrap on narrow screens */
+    }
+
+    /* Ensure UI buttons share the same height/size */
+    #btnSearch, #btnExport, #btnClear, #btnClearSearch { line-height: 1.5; }
+
+    /* Make disabled <a> truly inert (mouse + keyboard), and visually disabled */
+    a.btn[aria-disabled="true"],
+    a.btn.disabled {
+      pointer-events: none;
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    /* Navigation rows (top and bottom) */
+    .nav-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .nav-row .count-text { margin-left: .5rem; }
+    .meta-line { margin-top: .25rem; }
+
+    /* ---------- CHANGE: Sticky table headers (robust) ---------- */
+    /* NOTE: sticky works against the document scroll (or the nearest scrolling ancestor).
+       We don’t wrap the table in an overflowed scroller; we stick to the page scroll. */
+    .record-container { position: relative; }
+    .record-container table { border-collapse: separate; border-spacing: 0; width: 100%; }
+
+    /* We’ll add .sticky-head to <thead> in JS (or use existing thead).
+       Sticky only needs to be applied to the header cells. */
+    .sticky-head th, .sticky-head td {
+      position: sticky;
+      top: 0; /* if you later add a fixed navbar, update this offset (e.g., top: 56px) */
+      background-color: var(--bs-body-bg, #fff);
+      z-index: 2; /* keep above body cells */
+      box-shadow: 0 1px 0 rgba(0,0,0,.08);
+    }
+  </style>
+  <!-- ========= END SINGLE STYLE BLOCK ========= -->
+
+  <!-- ========= SINGLE SCRIPT BLOCK ========= -->
   <script>
-    // --- Phase B: server parsing progress (polling) ---
+    // ---- Server-side progress poller (existing logic) ----
     async function poll() {
       try {
         const r = await fetch('/viewer/progress?ts=' + Date.now(), { cache: 'no-store' });
         const j = await r.json();
-        const serverPct = Math.round((j.progress || 0) * 100); 
+        const serverPct = Math.round((j.progress || 0) * 100);
+        // Upload phase maps to 0-80; server parse maps to 80-100
         const mapped = Math.min(100, Math.max(80, 80 + Math.round(serverPct * 0.20)));
-
         const el = document.getElementById('pbar');
         if (el) {
           el.style.width = mapped + '%';
@@ -26,74 +104,338 @@
       }
     }
 
+    // ---- Utilities for enabling/disabling Search & Export ----
+    function setActionsEnabled(enabled) {
+      const btnSearch = document.getElementById('btnSearch');
+      const btnExport = document.getElementById('btnExport');
+      if (btnSearch) btnSearch.disabled = !enabled;
+      if (btnExport) {
+        if (enabled) {
+          btnExport.classList.remove('disabled');
+          btnExport.removeAttribute('aria-disabled');
+        } else {
+          btnExport.classList.add('disabled');
+          btnExport.setAttribute('aria-disabled', 'true');
+        }
+      }
+    }
+
+    // ---- Filter Record Type by Transaction Type ----
+    function initTxnRecordTypeFilter() {
+      const txnSelect   = document.getElementById('txnType');
+      const recordType  = document.getElementById('recordTypeCode');
+      if (!txnSelect || !recordType) return;
+
+      const rtHelpId = "recordTypeHelp";
+      if (!document.getElementById(rtHelpId)) {
+        const help = document.createElement("div");
+        help.className = "form-text";
+        help.id = rtHelpId;
+        help.textContent = "This list is filtered by Transaction Type. Choose a transaction type first.";
+        recordType.insertAdjacentElement("afterend", help);
+      }
+      recordType.setAttribute("aria-describedby", rtHelpId);
+
+      // Harvest existing options (from backend)
+      const allOptions = [];
+      Array.from(recordType.querySelectorAll("option")).forEach(opt => {
+        const val = (opt.value || "").trim();
+        const label = (opt.textContent || "").trim();
+        if (val === "" || !label) return; // ignore placeholder
+        allOptions.push({ code: val, label });
+      });
+
+      // Mapping (per your spec)
+      const TXN_MAP = {
+        "SF-Institutional": new Set([
+          "05","10","15","20","30","31","32","33",
+          "40","41","42","43","44","45","46","47",
+          "50","60","65","66","71","72","73","74",
+          "80","90","9D"
+        ]),
+        "SF-Professional": new Set([
+          "A5","B0","B5","C0",
+          "D0","D1","D2","D3",
+          "E0","E1","E2","E6",
+          "F0","F1","F5","F6",
+          "G0","X0"
+        ]),
+        "DF": new Set([
+          "1A","2A","2B","2C","2E","2F","2G","2H",
+          "3A","3C","3D",
+          "4A","4B","4C","4D",
+          "8A","9A"
+        ])
+      };
+
+      function setRecordTypeDisabled(isDisabled) {
+        recordType.disabled = !!isDisabled;
+        if (isDisabled) recordType.setAttribute("aria-disabled", "true");
+        else recordType.removeAttribute("aria-disabled");
+      }
+
+      function resetRecordType() {
+        recordType.innerHTML = '<option value="">Choose…</option>';
+        setRecordTypeDisabled(true);
+      }
+
+      function populateRecordTypesFor(txn) {
+        recordType.innerHTML = '<option value="">Choose…</option>';
+        if (!txn) {
+          setRecordTypeDisabled(true);
+          return;
+        }
+        const set = TXN_MAP[txn];
+        const list = set
+          ? allOptions.filter(o => set.has(o.code))
+          : []; // unknown txn
+
+        for (const o of list) {
+          const el = document.createElement("option");
+          el.value = o.code;
+          el.textContent = o.label;
+          recordType.appendChild(el);
+        }
+        setRecordTypeDisabled(list.length === 0);
+      }
+
+      // Initial + events
+      resetRecordType();
+      txnSelect.addEventListener("change", () => {
+        recordType.value = "";
+        populateRecordTypesFor(txnSelect.value);
+      });
+      window.addEventListener("pageshow", () => {
+        populateRecordTypesFor(txnSelect.value);
+      });
+
+      // expose for session restore
+      return { resetRecordType, populateRecordTypesFor, txnSelect, recordType };
+    }
+
+    // ---- Persistence helpers ----
+    const KEY = (name) => `viewer.${name}`;
+    function clearSearchStorage() {
+      try {
+        sessionStorage.removeItem(KEY('sccf'));
+        sessionStorage.removeItem(KEY('recNo'));
+        sessionStorage.removeItem(KEY('txnType'));
+        sessionStorage.removeItem(KEY('recordTypeCode'));
+      } catch (_) {}
+    }
+
+    // ---- SessionStorage: persist & restore search fields; restart-aware; Clear buttons ----
+    (function initSessionStoragePersistence() {
+      document.addEventListener('DOMContentLoaded', () => {
+        const searchForm = document.getElementById('searchForm');
+        const sccfInput  = document.getElementById('sccf');
+        const txnSelect  = document.getElementById('txnType');
+        const rtSelect   = document.getElementById('recordTypeCode');
+        const recNoInput = document.getElementById('recNo');
+
+        // Initialize Txn/RecordType filter and get its helpers
+        const filterAPI = initTxnRecordTypeFilter();
+
+        // Restart-aware clearing using data-has-file
+        const body = document.body;
+        const hasFileNow   = body.getAttribute('data-has-file') === 'true';
+        const lastHasFile  = sessionStorage.getItem(KEY('lastHasFile')) === 'true';
+        if (lastHasFile && !hasFileNow) {
+          clearSearchStorage();
+          if (sccfInput)  sccfInput.value = '';
+          if (recNoInput) recNoInput.value = '';
+          if (txnSelect)  txnSelect.value = '';
+          if (filterAPI)  filterAPI.resetRecordType();
+          if (rtSelect)   rtSelect.value = '';
+        }
+        try { sessionStorage.setItem(KEY('lastHasFile'), hasFileNow ? 'true' : 'false'); } catch (_) {}
+
+        // RESTORE from sessionStorage
+        try {
+          const storedTxn  = sessionStorage.getItem(KEY('txnType')) || '';
+          const storedRT   = sessionStorage.getItem(KEY('recordTypeCode')) || '';
+          const storedSccf = sessionStorage.getItem(KEY('sccf')) || '';
+          const storedRec  = sessionStorage.getItem(KEY('recNo')) || '';
+
+          if (txnSelect && storedTxn) { txnSelect.value = storedTxn; }
+          if (filterAPI && txnSelect) { filterAPI.populateRecordTypesFor(txnSelect.value); }
+
+          // Try to set RT immediately…
+          if (rtSelect && storedRT) {
+            rtSelect.value = storedRT;
+          }
+
+          // …and reapply shortly after population if it didn't take yet  // PERSIST FIX
+          if (rtSelect && storedRT && rtSelect.value !== storedRT) {
+            requestAnimationFrame(() => {
+              rtSelect.value = storedRT;
+            });
+          }
+
+          if (sccfInput && storedSccf){ sccfInput.value = storedSccf; }
+          if (recNoInput && storedRec){ recNoInput.value = storedRec; }
+        } catch (e) {}
+
+        // Also reapply RT on pageshow in case of bfcache timing  // PERSIST FIX
+        window.addEventListener('pageshow', () => {
+          const storedRT = sessionStorage.getItem(KEY('recordTypeCode')) || '';
+          if (rtSelect && storedRT && rtSelect.value !== storedRT) {
+            rtSelect.value = storedRT;
+          }
+        });
+
+        // PERSIST on change/submit
+        function persist() {
+          try {
+            if (txnSelect)  sessionStorage.setItem(KEY('txnType'), txnSelect.value || '');
+            if (rtSelect)   sessionStorage.setItem(KEY('recordTypeCode'), rtSelect.value || '');
+            if (sccfInput)  sessionStorage.setItem(KEY('sccf'), sccfInput.value || '');
+            if (recNoInput) sessionStorage.setItem(KEY('recNo'), recNoInput.value || '');
+          } catch (e) {}
+        }
+        if (txnSelect)  txnSelect.addEventListener('change', () => {
+          if (filterAPI) filterAPI.populateRecordTypesFor(txnSelect.value);
+          if (rtSelect)  rtSelect.value = '';
+          persist();
+        });
+        if (rtSelect)   rtSelect.addEventListener('change', persist);
+        if (sccfInput)  sccfInput.addEventListener('input', persist);
+        if (recNoInput) recNoInput.addEventListener('input', persist);
+        if (searchForm) searchForm.addEventListener('submit', () => { persist(); setScrollToResultsFlag(); });
+
+        // Clear buttons
+        const btnClear = document.getElementById('btnClear');      // Clear cached file (server)
+        const clearForm = document.getElementById('clearForm');
+        if (btnClear && clearForm) {
+          btnClear.addEventListener('click', () => {
+            if (sccfInput)  sccfInput.value = '';
+            if (recNoInput) recNoInput.value = '';
+            if (txnSelect)  txnSelect.value = '';
+            if (filterAPI)  filterAPI.resetRecordType();
+            if (rtSelect)   rtSelect.value = '';
+            clearSearchStorage();
+            try { sessionStorage.setItem(KEY('lastHasFile'), 'false'); } catch (_) {}
+            setScrollToResultsFlag(); // consistent scroll target on reload
+          });
+        }
+
+        const btnClearSearch = document.getElementById('btnClearSearch'); // Clear Search (client only)
+        if (btnClearSearch) {
+          btnClearSearch.addEventListener('click', () => {
+            if (sccfInput)  sccfInput.value = '';
+            if (recNoInput) recNoInput.value = '';
+            if (txnSelect)  txnSelect.value = '';
+            if (filterAPI)  filterAPI.resetRecordType();
+            if (rtSelect)   rtSelect.value = '';
+            clearSearchStorage();
+            if (sccfInput) sccfInput.focus();
+          });
+        }
+      });
+    })();
+
+    // ---------- Scroll to results (table start) ----------
+    function setScrollToResultsFlag() {
+      try { sessionStorage.setItem(KEY('scrollToResults'), 'true'); } catch (_) {}
+    }
+    function maybeScrollToResults() {
+      try {
+        const flag = sessionStorage.getItem(KEY('scrollToResults')) === 'true';
+        if (flag) {
+          const anchor = document.getElementById('resultsTop') || document.querySelector('.record-container');
+          if (anchor) anchor.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
+        sessionStorage.removeItem(KEY('scrollToResults'));
+      } catch (_) {}
+    }
+
+    // ---- Main DOMContentLoaded wiring for upload & buttons ----
     document.addEventListener('DOMContentLoaded', () => {
       const uploadForm = document.querySelector('form[action="/viewer/upload"]');
       const fileInput  = uploadForm?.querySelector('input[type="file"][name="file"]');
       const pbar       = document.getElementById('pbar');
 
+      // Initialize action buttons from server-rendered state (hasFile):
+      const searchInitiallyDisabled = document.getElementById('btnSearch')?.hasAttribute('disabled');
+      const exportInitiallyDisabled = document.getElementById('btnExport')?.classList.contains('disabled');
+      setActionsEnabled(!(searchInitiallyDisabled || exportInitiallyDisabled));
+
       if (fileInput && pbar) {
         fileInput.addEventListener('change', () => {
           pbar.classList.remove('bg-danger');
           pbar.style.width = '0%';
-          pbar.innerText   = '0%';
+          pbar.innerText = '0%';
         });
       }
 
-      if (!uploadForm || !pbar) return;
+      if (uploadForm && pbar) {
+        uploadForm.addEventListener('submit', (ev) => {
+          ev.preventDefault();
+          const file = fileInput?.files?.[0];
 
-      uploadForm.addEventListener('submit', (ev) => {
-        ev.preventDefault();
-        const file = fileInput?.files?.[0];
+          // Lock actions while uploading
+          setActionsEnabled(false);
 
-        if (!file) {
-          pbar.style.width = '0%';
-          pbar.innerText   = '0%';
-          return uploadForm.submit();
-        }
+          if (!file) {
+            // No new file selected; submit normally (server may use cached file)
+            return uploadForm.submit();
+          }
 
-        const formData = new FormData(uploadForm);
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/viewer/upload', true);
+          const formData = new FormData(uploadForm);
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/viewer/upload', true);
 
-        xhr.upload.onprogress = (e) => {
-          if (!e.lengthComputable) return;
-          const rawPct = (e.loaded / e.total) * 100;
-          const mapped = Math.max(0, Math.min(80, Math.round(rawPct * 0.80)));
-          pbar.style.width = mapped + '%';
-          pbar.innerText   = mapped + '%';
-        };
-        //const tStart = performance.now();
-        xhr.onload = () => {
-       // console.log('Upload roundtrip(ms):', performance.now() - tStart);
+          xhr.upload.onprogress = (e) => {
+            if (!e.lengthComputable) return;
+            const rawPct = (e.loaded / e.total) * 100;
+            const mapped = Math.max(0, Math.min(80, Math.round(rawPct * 0.80)));
+            pbar.style.width = mapped + '%';
+            pbar.innerText = mapped + '%';
+          };
 
-          if (xhr.status >= 200 && xhr.status < 300) {
-            setTimeout(poll, 300);
-          } else {
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              // Upload OK → enable actions and start server-side poll
+              setActionsEnabled(true);
+              setTimeout(poll, 300);
+            } else {
+              // Error → keep disabled, mark bar red
+              pbar.classList.add('bg-danger');
+              pbar.style.width = '100%';
+              pbar.innerText = 'Upload error';
+              setActionsEnabled(false);
+            }
+          };
+
+          xhr.onerror = () => {
             pbar.classList.add('bg-danger');
             pbar.style.width = '100%';
-            pbar.innerText   = 'Upload error';
-          }
-        };
+            pbar.innerText = 'Network error';
+            setActionsEnabled(false);
+          };
 
-        xhr.onerror = () => {
-          pbar.classList.add('bg-danger');
-          pbar.style.width = '100%';
-          pbar.innerText   = 'Network error';
-        };
+          pbar.classList.remove('bg-danger');
+          pbar.style.width = '1%';
+          pbar.innerText = '1%';
+          xhr.send(formData);
+        });
+      }
 
-        pbar.classList.remove('bg-danger');
-        pbar.style.width = '1%';
-        pbar.innerText   = '1%';
-
-        xhr.send(formData);
+      // set scroll flag when using Prev/Next forms (top & bottom)
+      document.querySelectorAll('form[data-nav="true"]').forEach((f) => {
+        f.addEventListener('submit', () => { setScrollToResultsFlag(); });
       });
     });
+
+    // Scroll after the page is shown (normal loads + bfcache)
+    window.addEventListener('pageshow', maybeScrollToResults);
   </script>
+  <!-- ========= END SINGLE SCRIPT BLOCK ========= -->
 </head>
 
-
-<body class="container py-3">
-  <h1 class="mb-3">ITS255 Viewer — v3.2 (Chunked Mapping)</h1>
+<!-- Keep track of hasFile for restart-aware behavior -->
+<body class="container py-3" th:attr="data-has-file=${hasFile}">
+  <h1 class="mb-3">EBCDIC File Viewer — v3.2 (Chunked Mapping)</h1>
   <p class="text-muted">
     Upload a raw ITS file and either enter a <strong>record number</strong>,
     <strong>record type</strong>, or enter a <strong>SCCF</strong> to preview.
@@ -102,7 +444,8 @@
   <div th:if="${hasFile}" class="alert alert-info" role="status" aria-live="polite">
     <strong>Cached file available.</strong> You can search again without uploading a new file.
   </div>
-  <!-- UPLOAD FORM -->
+
+  <!-- ========== UPLOAD FORM ========== -->
   <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
     <div class="mb-2">
       <label class="form-label">EBCDIC File</label>
@@ -119,19 +462,12 @@
       </span>
     </div>
     <div class="form-text mt-2" th:if="${hasFile}" role="status" aria-live="polite">
-      <span class="badge rounded-pill text-bg-primary fs-5 py-2 px-4"
-            th:text="${filename}">
+      <span class="badge rounded-pill text-bg-primary fs-5 py-2 px-4" th:text="${filename}">
         yourfile.dat
       </span>
       <span class="visually-hidden"> is cached for this session.</span>
     </div>
-    <!-- <small class="text-muted ms-2" th:if="${filename}">
-      —
-      <span
-        class="badge text-bg-light border text-primary fw-semibold rounded-pill px-2 py-1"
-        th:text="${filename}"
-      >yourfile.dat</span>
-    </small> -->
+    
     <div class="progress mt-3" style="height:24px">
       <div id="pbar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
     </div>
@@ -141,57 +477,181 @@
     </div>
   </form>
 
+  <!-- Standalone CLEAR form (empty) -->
+  <form id="clearForm" th:action="@{/viewer/clear}" method="post"></form>
 
-  <!-- SEARCH FORM -->
-  <form action="/viewer/search" method="post" class="mb-3 border p-3 rounded">
+  <!-- ========== SEARCH FORM ========== -->
+  <form id="searchForm" action="/viewer/search" method="post" class="mb-3 border p-3 rounded">
     <div class="row g-2">
       <div class="col-md-4">
-        <label class="form-label">SCCF (prefix allowed)</label>
-        <input type="text" name="sccf" class="form-control" placeholder="e.g., 9932601234" />
+        <label class="form-label" for="sccf">SCCF (prefix allowed)</label>
+        <input id="sccf" type="text" name="sccf" class="form-control" placeholder="e.g., 12345" aria-describedby="scffHelp"/>
+        <div class="form-text" id="scffHelp">
+          15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).
+        </div>
       </div>
+
+      <!-- Transaction Type -->
       <div class="col-md-2">
-        <label class="form-label">Record Type</label>
-        <input type="text" name="type" class="form-control" placeholder="e.g., 50" maxlength="2" />
+        <label class="form-label" id="txnTypeLabel" for="txnType">Transaction Type</label>
+        <select id="txnType" class="form-select" aria-labelledby="txnTypeLabel" aria-describedby="txnTypeHelp">
+          <option value="">Choose…</option>
+          <option value="SF-Institutional">SF-Institutional</option>
+          <option value="SF-Professional">SF-Professional</option>
+          <option value="DF">DF</option>
+        </select>
+        <div class="form-text" id="txnTypeHelp">
+          Pick a Transaction Type to filter the Record Type list. If empty, Record Type is disabled.
+        </div>
       </div>
+
+      <!-- Record type (full list from backend; JS filters this list) -->
+      <div class="col-md-3">
+        <label class="form-label" for="recordTypeCode">Record type</label>
+        <select id="recordTypeCode" class="form-select" name="recordTypeCode">
+          <option value="" selected>Choose…</option>
+          <optgroup label="05–47 series">
+            <option value="05">05 — FM105</option>
+            <option value="10">10 — FM110</option>
+            <option value="15">15 — FM115</option>
+            <option value="20">20 — FM120</option>
+            <option value="30">30 — FM130</option>
+            <option value="31">31 — FM131</option>
+            <option value="32">32 — FM132</option>
+            <option value="33">33 — FM133</option>
+            <option value="40">40 — FM140</option>
+            <option value="41">41 — FM141</option>
+            <option value="42">42 — FM142</option>
+            <option value="43">43 — FM143</option>
+            <option value="44">44 — FM144</option>
+            <option value="45">45 — FM145</option>
+            <option value="46">46 — FM146</option>
+            <option value="47">47 — FM147</option>
+          </optgroup>
+          <optgroup label="50–9D series">
+            <option value="50">50 — FM150</option>
+            <option value="60">60 — FM160</option>
+            <option value="65">65 — FM165</option>
+            <option value="66">66 — FM166</option>
+            <option value="71">71 — FM171</option>
+            <option value="72">72 — FM172</option>
+            <option value="73">73 — FM173</option>
+            <option value="74">74 — FM174</option>
+            <option value="80">80 — FM180</option>
+            <option value="90">90 — FM190</option>
+            <option value="9D">9D — FM9D</option>
+          </optgroup>
+          <optgroup label="A5–X0 series">
+            <option value="A5">A5 — FM1A5</option>
+            <option value="B0">B0 — FM1B0</option>
+            <option value="B5">B5 — FM1B5</option>
+            <option value="C0">C0 — FM1C0</option>
+            <option value="D0">D0 — FM1D0</option>
+            <option value="D1">D1 — FM1D1</option>
+            <option value="D2">D2 — FM1D2</option>
+            <option value="D3">D3 — FM1D3</option>
+            <option value="E0">E0 — FM1E0</option>
+            <option value="E1">E1 — FM1E1</option>
+            <option value="E2">E2 — FM1E2</option>
+            <option value="E6">E6 — FM1E6</option>
+            <option value="F0">F0 — FM1F0</option>
+            <option value="F1">F1 — FM1F1</option>
+            <option value="F5">F5 — FM1F5</option>
+            <option value="F6">F6 — FM1F6</option>
+            <option value="G0">G0 — FM1G0</option>
+            <option value="X0">X0 — FM1X0</option>
+          </optgroup>
+          <optgroup label="1A–9A series">
+            <option value="1A">1A — FM21A</option>
+            <option value="2A">2A — FM22A</option>
+            <option value="2B">2B — FM22B</option>
+            <option value="2C">2C — FM22C</option>
+            <option value="2E">2E — FM22E</option>
+            <option value="2F">2F — FM22F</option>
+            <option value="2G">2G — FM22G</option>
+            <option value="2H">2H — FM22H</option>
+            <option value="3A">3A — FM23A</option>
+            <option value="3C">3C — FM23C</option>
+            <option value="3D">3D — FM23D</option>
+            <option value="4A">4A — FM24A</option>
+            <option value="4B">4B — FM24B</option>
+            <option value="4C">4C — FM24C</option>
+            <option value="4D">4D — FM24D</option>
+            <option value="8A">8A — FM28A</option>
+            <option value="9A">9A — FM29A</option>
+          </optgroup>
+        </select>
+      </div>
+
       <div class="col-md-2">
-        <label class="form-label">Record #</label>
-        <input type="number" name="recNo" class="form-control" min="1" />
-      </div>
-      <div class="col-md-4 d-flex align-items-end gap-2">
-        <button class="btn btn-success">Search</button>
-        <a class="btn btn-outline-secondary" href="/viewer/export">Export (ZIP per type)</a>
+        <label class="form-label" for="recNo">Record #</label>
+        <input id="recNo" type="number" name="recNo" class="form-control" min="1" />
       </div>
     </div>
-    <div class="form-text">
-      15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).
+
+    <!-- BUTTON ROW: Search, Export, Clear Cache, Clear Search -->
+    <div class="actions-row">
+      <!-- Search (disabled until upload succeeds or cached file exists) -->
+      <button id="btnSearch"
+              class="btn btn-success"
+              th:disabled="${!hasFile}">
+        Search
+      </button>
+
+      <!-- Export (disabled until upload succeeds or cached file exists) -->
+      <a id="btnExport" class="btn btn-outline-secondary"
+         th:href="@{/viewer/export}"
+         th:attr="aria-disabled=${!hasFile} ? 'true' : null"
+         th:classappend="${!hasFile} ? ' disabled' : null">
+        Export (ZIP per type)
+      </a>
+
+      <!-- Clear cached file (submits the external clearForm; only when a file is cached) -->
+      <button id="btnClear"
+              class="btn btn-outline-danger"
+              form="clearForm"
+              th:if="${hasFile}">
+        Clear cached file
+      </button>
+
+      <!-- Clear Search (client-side only) -->
+      <button id="btnClearSearch" type="button" class="btn btn-outline-secondary">
+        Clear Search
+      </button>
     </div>
   </form>
 
-
-  <!-- NAVIGATION ROW -->
-  <div class="d-flex align-items-center gap-2 mb-2" th:if="${hasFile}">
-
-    <!-- Prev / Next -->
-    <form th:action="@{/viewer/prev}" method="post">
+  <!-- ========== NAVIGATION ROW — TOP ========== -->
+  <!-- NAV FIX: hide nav if there are no results -->
+  <div class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
+    <form th:action="@{/viewer/prev}" method="post" data-nav="true">
       <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
     </form>
-    <form th:action="@{/viewer/next}" method="post">
+    <form th:action="@{/viewer/next}" method="post" data-nav="true">
       <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
     </form>
-
-    <span class="ms-2" th:text="|Record ${position} of ${count}|"></span>
-
-    <!-- ▼ Added: Clear cached file button (aligned, unobtrusive) -->
-    <form th:action="@{/viewer/clear}" method="post" class="ms-auto">
-      <button class="btn btn-outline-danger btn-sm">
-        Clear cached file
-      </button>
-    </form>
+    <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
   </div>
 
 
-  <!-- RECORD TABLE -->
-  <div th:utext="${html}"></div>
+  <!-- RECORD TABLE (wrapped for sticky header styling) -->
+  <!-- CHANGE: anchor to scroll to after Prev/Next/Search -->
+  <div id="resultsTop"></div>
+  <div class="record-container">
+    <div th:utext="${html}"></div>
+  </div>
+
+  <!-- ========== NAVIGATION ROW — BOTTOM (mirrors top) ========== -->
+  <!-- NAV FIX: hide nav if there are no results -->
+  <div class="nav-row mt-3" th:if="${hasFile} and ${count} > 0">
+    <form th:action="@{/viewer/prev}" method="post" data-nav="true">
+      <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
+    </form>
+    <form th:action="@{/viewer/next}" method="post" data-nav="true">
+      <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
+    </form>
+    <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+  </div>
 
 </body>
 </html>
