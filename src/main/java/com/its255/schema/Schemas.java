@@ -11,12 +11,7 @@ import java.util.Map;
 
 public final class Schemas {
 
-	// --------------------------------------------------------------------
-    // FM110 — Institutional Provider (Record Type 10) — length 255 bytes
-    // (Original schema provided; unchanged)
-    // --------------------------------------------------------------------
-    public static final List<FieldSpec> FM110 = List.of(
-        // ---- KEY ----
+	public static final List<FieldSpec> FM110 = List.of(
         new FieldSpec("FM110-SER-NUM-LOCAL-PLAN",        1,   3,  ALPHA),
         new FieldSpec("FM110-SER-NUM-JULDT-CC",          4,   2,  ALPHA),
         new FieldSpec("FM110-SER-NUM-JULDT-YY",          6,   2,  ALPHA),
@@ -26,9 +21,7 @@ public final class Schemas {
         new FieldSpec("FM110-TRANS-ID",                  18,   2,  ALPHA),
         new FieldSpec("FM110-TRANS-QUAL",                20,   2,  ALPHA),
         new FieldSpec("FM110-REC-TYPE",                  22,   2,  ALPHA),
-        new FieldSpec("FM110-SEQ-NUM",                   24,   2,  BINARY), // S9(4) COMP ~ 2 bytes
-
-        // ---- DATA ----
+        new FieldSpec("FM110-SEQ-NUM",                   24,   2,  BINARY), 
         new FieldSpec("FM110-TYPE-BILL",                 26,   3,  ALPHA),
         new FieldSpec("FM110-FED-TAX-ID-NUM",            29,   9,  ALPHA),
         new FieldSpec("FM110-FED-TAX-SUB-ID",            38,   4,  ALPHA),
@@ -53,12 +46,7 @@ public final class Schemas {
         new FieldSpec("FM110-PERF-PROV-IHS-CLM-IND",    229,   1,  ALPHA),
         new FieldSpec("FM110-FILLER-1",                 230,  26,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM115 — Institutional Appended Provider (Record Type 15)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM115 = List.of(
-        // KEY (1–25)
         new FieldSpec("FM115-SER-NUM-LOCAL-PLAN",      1,   3,  ALPHA),
         new FieldSpec("FM115-SER-NUM-JULDT-CC",        4,   2,  ALPHA),
         new FieldSpec("FM115-SER-NUM-JULDT-YY",        6,   2,  ALPHA),
@@ -69,8 +57,6 @@ public final class Schemas {
         new FieldSpec("FM115-TRANS-QUAL",             20,   2,  ALPHA),
         new FieldSpec("FM115-REC-TYPE",               22,   2,  ALPHA),
         new FieldSpec("FM115-SEQ-NUM",                24,   2,  BINARY),
-
-        // DATA (26–255)
         new FieldSpec("FM115-CLASS-PROV-CLM",         26,   1,  ALPHA),
         new FieldSpec("FM115-PMT-RSTRCT-IND",         27,   1,  ALPHA),
         new FieldSpec("FM115-FACIL-TYPE",             28,   4,  ALPHA),
@@ -78,12 +64,7 @@ public final class Schemas {
         new FieldSpec("FM115-TIER-DESIG-IND-CLM",     36,   1,  ALPHA),
         new FieldSpec("FM115-FILLER-1",               37, 219,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM120 — Institutional Patient (Record Type 20)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM120 = List.of(
-        // KEY
         new FieldSpec("FM120-SER-NUM-LOCAL-PLAN",         1,  3,  ALPHA),
         new FieldSpec("FM120-SER-NUM-JULDT-CC",           4,  2,  ALPHA),
         new FieldSpec("FM120-SER-NUM-JULDT-YY",           6,  2,  ALPHA),
@@ -92,10 +73,8 @@ public final class Schemas {
         new FieldSpec("FM120-SER-NUM-SUFFIX",            16,  2,  ALPHA),
         new FieldSpec("FM120-TRANS-ID",                  18,  2,  ALPHA),
         new FieldSpec("FM120-TRANS-QUAL",                20,  2,  ALPHA),
-        new FieldSpec("FM120-REC-TYPE",                  22,  2,  ALPHA), // '20'
-        new FieldSpec("FM120-SEQ-NUM",                   24,  2,  BINARY),// S9(4) COMP
-
-        // DATA
+        new FieldSpec("FM120-REC-TYPE",                  22,  2,  ALPHA), 
+        new FieldSpec("FM120-SEQ-NUM",                   24,  2,  BINARY),
         new FieldSpec("FM120-PAT-CNTL-NUM",              26, 20,  ALPHA),
         new FieldSpec("FM120-PAT-LAST-NAME",             46, 20,  ALPHA),
         new FieldSpec("FM120-PAT-FIRST-NAME",            66, 10,  ALPHA),
@@ -118,8 +97,8 @@ public final class Schemas {
         new FieldSpec("FM120-ADM-DT-YY",                167,  2,  ALPHA),
         new FieldSpec("FM120-ADM-DT-MM",                169,  2,  ALPHA),
         new FieldSpec("FM120-ADM-DT-DD",                171,  2,  ALPHA),
-        new FieldSpec("FM120-ADM-HH",                   173,  2,  NUMERIC_TEXT), // S9(02)
-        new FieldSpec("FM120-DISCHRG-HH",               175,  2,  NUMERIC_TEXT), // S9(02)
+        new FieldSpec("FM120-ADM-HH",                   173,  2,  NUMERIC_TEXT), 
+        new FieldSpec("FM120-DISCHRG-HH",               175,  2,  NUMERIC_TEXT), 
         new FieldSpec("FM120-STMT-COV-FROM-DT-CC",      177,  2,  ALPHA),
         new FieldSpec("FM120-STMT-COV-FROM-DT-YY",      179,  2,  ALPHA),
         new FieldSpec("FM120-STMT-COV-FROM-DT-MM",      181,  2,  ALPHA),
@@ -128,19 +107,14 @@ public final class Schemas {
         new FieldSpec("FM120-STMT-COV-TO-DT-YY",        187,  2,  ALPHA),
         new FieldSpec("FM120-STMT-COV-TO-DT-MM",        189,  2,  ALPHA),
         new FieldSpec("FM120-STMT-COV-TO-DT-DD",        191,  2,  ALPHA),
-        new FieldSpec("FM120-LNG-STAY",                 193,  3,  NUMERIC_TEXT), // S9(03)
+        new FieldSpec("FM120-LNG-STAY",                 193,  3,  NUMERIC_TEXT), 
         new FieldSpec("FM120-PAT-STAT-CD",              196,  2,  ALPHA),
-        new FieldSpec("FM120-PAT-PAID-AMT",             198,  6,  PACKED_DECIMAL, 2), // S9(8)V99 COMP-3
+        new FieldSpec("FM120-PAT-PAID-AMT",             198,  6,  PACKED_DECIMAL, 2), 
         new FieldSpec("FM120-MED-REC-NUM",              204, 18,  ALPHA),
         new FieldSpec("FM120-OTH-CARR-IND",             222,  1,  ALPHA),
         new FieldSpec("FM120-FILLER-1",                 223, 33,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM130 — Institutional Subscriber / Third Party Payer (Record Type 30)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM130 = List.of(
-        // KEY
         new FieldSpec("FM130-SER-NUM-LOCAL-PLAN",       1,   3,  ALPHA),
         new FieldSpec("FM130-SER-NUM-JULDT-CC",         4,   2,  ALPHA),
         new FieldSpec("FM130-SER-NUM-JULDT-YY",         6,   2,  ALPHA),
@@ -149,10 +123,8 @@ public final class Schemas {
         new FieldSpec("FM130-SER-NUM-SUFFIX",          16,   2,  ALPHA),
         new FieldSpec("FM130-TRANS-ID",                18,   2,  ALPHA),
         new FieldSpec("FM130-TRANS-QUAL",              20,   2,  ALPHA),
-        new FieldSpec("FM130-REC-TYPE",                22,   2,  ALPHA),  // '30'
-        new FieldSpec("FM130-SEQ-NUM",                 24,   2,  BINARY), // S9(4) COMP
-
-        // DATA
+        new FieldSpec("FM130-REC-TYPE",                22,   2,  ALPHA),  
+        new FieldSpec("FM130-SEQ-NUM",                 24,   2,  BINARY), 
         new FieldSpec("FM130-CLM-OTH-CARR-FNCL-CD",    26,   1,  ALPHA),
         new FieldSpec("FM130-CNTL-PLAN-CD",            27,   3,  ALPHA),
         new FieldSpec("FM130-SUB-ID-PFX-1-3",          30,   3,  ALPHA),
@@ -175,12 +147,7 @@ public final class Schemas {
         new FieldSpec("FM130-SRC-PMT-CD",             138,   2,  ALPHA),
         new FieldSpec("FM130-FILLER-1",               140, 116,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM140 — Institutional Claim-Treatment Authorization/Occurrence (Record Type 40)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM140 = List.of(
-        // KEY
         new FieldSpec("FM140-SER-NUM-LOCAL-PLAN",      1,   3,  ALPHA),
         new FieldSpec("FM140-SER-NUM-JULDT-CC",        4,   2,  ALPHA),
         new FieldSpec("FM140-SER-NUM-JULDT-YY",        6,   2,  ALPHA),
@@ -189,21 +156,14 @@ public final class Schemas {
         new FieldSpec("FM140-SER-NUM-SUFFIX",         16,   2,  ALPHA),
         new FieldSpec("FM140-TRANS-ID",               18,   2,  ALPHA),
         new FieldSpec("FM140-TRANS-QUAL",             20,   2,  ALPHA),
-        new FieldSpec("FM140-REC-TYPE",               22,   2,  ALPHA),   // '40'
-        new FieldSpec("FM140-SEQ-NUM",                24,   2,  BINARY),  // S9(4) COMP
-
-        // DATA
+        new FieldSpec("FM140-REC-TYPE",               22,   2,  ALPHA),   
+        new FieldSpec("FM140-SEQ-NUM",                24,   2,  BINARY),  
         new FieldSpec("FM140-BNFT-MGT-TRTMT-AUTH-NUM-1", 26, 25, ALPHA),
         new FieldSpec("FM140-BNFT-MGT-TRTMT-AUTH-NUM-2", 51, 25, ALPHA),
         new FieldSpec("FM140-BNFT-MGT-TRTMT-AUTH-NUM-3", 76, 25, ALPHA),
         new FieldSpec("FM140-FILLER-1",               101, 155, ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM150 — Institutional Claim (Record Type 50)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM150 = List.of(
-        // KEY
         new FieldSpec("FM150-SER-NUM-LOCAL-PLAN",            1,   3,  ALPHA),
         new FieldSpec("FM150-SER-NUM-JULDT-CC",              4,   2,  ALPHA),
         new FieldSpec("FM150-SER-NUM-JULDT-YY",              6,   2,  ALPHA),
@@ -212,84 +172,60 @@ public final class Schemas {
         new FieldSpec("FM150-SER-NUM-SUFFIX",               16,   2,  ALPHA),
         new FieldSpec("FM150-TRANS-ID",                     18,   2,  ALPHA),
         new FieldSpec("FM150-TRANS-QUAL",                   20,   2,  ALPHA),
-        new FieldSpec("FM150-REC-TYPE",                     22,   2,  ALPHA),       // '50'
-        new FieldSpec("FM150-SEQ-NUM",                      24,   2,  BINARY),      // S9(4) COMP
-
-        // DATA
+        new FieldSpec("FM150-REC-TYPE",                     22,   2,  ALPHA),       
+        new FieldSpec("FM150-SEQ-NUM",                      24,   2,  BINARY),      
         new FieldSpec("FM150-PRC-MTD-CLM",                  26,   2,  ALPHA),
         new FieldSpec("FM150-RULE-NUM-PRIM-CLM-1-3",        28,   3,  ALPHA),
         new FieldSpec("FM150-RULE-NUM-PRIM-CLM-4-6",        31,   3,  ALPHA),
         new FieldSpec("FM150-RULE-NUM-SEC-CLM-1-3",         34,   3,  ALPHA),
         new FieldSpec("FM150-RULE-NUM-SEC-CLM-4-6",         37,   3,  ALPHA),
-
-        new FieldSpec("FM150-PCT-FCTR-CLM",                 40,   3,  PACKED_DECIMAL, 2), // S9(3)V99
-        new FieldSpec("FM150-AVG-SEMI-PRIV-RM-RATE",        43,   6,  PACKED_DECIMAL, 2), // S9(8)V99
-        new FieldSpec("FM150-PRIV-RM-RATE",                 49,   6,  PACKED_DECIMAL, 2), // S9(8)V99
-        new FieldSpec("FM150-PER-DIEM-RATE",                55,   6,  PACKED_DECIMAL, 2), // S9(8)V99
-
+        new FieldSpec("FM150-PCT-FCTR-CLM",                 40,   3,  PACKED_DECIMAL, 2), 
+        new FieldSpec("FM150-AVG-SEMI-PRIV-RM-RATE",        43,   6,  PACKED_DECIMAL, 2), 
+        new FieldSpec("FM150-PRIV-RM-RATE",                 49,   6,  PACKED_DECIMAL, 2), 
+        new FieldSpec("FM150-PER-DIEM-RATE",                55,   6,  PACKED_DECIMAL, 2), 
         new FieldSpec("FM150-DRG-CD",                       61,   4,  ALPHA),
         new FieldSpec("FM150-CASE-ALLW-AMT",                65,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM150-SUPPL-AMT",                    71,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM150-ACCESS-FEE-PCT",               77,   3,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM150-ATTACH-IND",                   80,   1,  ALPHA),
         new FieldSpec("FM150-POS-IND",                      81,   1,  ALPHA),
-
-        // SF message codes (5 × X(4))
         new FieldSpec("FM150-SF-MSG-CD-CLM-1",              82,   4,  ALPHA),
         new FieldSpec("FM150-SF-MSG-CD-CLM-2",              86,   4,  ALPHA),
         new FieldSpec("FM150-SF-MSG-CD-CLM-3",              90,   4,  ALPHA),
         new FieldSpec("FM150-SF-MSG-CD-CLM-4",              94,   4,  ALPHA),
         new FieldSpec("FM150-SF-MSG-CD-CLM-5",              98,   4,  ALPHA),
-
-        // Special pricing condition codes (5 × X(3))
         new FieldSpec("FM150-SPEC-PRC-COND-CD-CLM-1",      102,   3,  ALPHA),
         new FieldSpec("FM150-SPEC-PRC-COND-CD-CLM-2",      105,   3,  ALPHA),
         new FieldSpec("FM150-SPEC-PRC-COND-CD-CLM-3",      108,   3,  ALPHA),
         new FieldSpec("FM150-SPEC-PRC-COND-CD-CLM-4",      111,   3,  ALPHA),
         new FieldSpec("FM150-SPEC-PRC-COND-CD-CLM-5",      114,   3,  ALPHA),
-
-        // Amounts (5 × S9(8)V99 COMP-3 => 6 bytes, scale 2)
         new FieldSpec("FM150-SPEC-PRC-COND-AMT-CLM-1",     117,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM150-SPEC-PRC-COND-AMT-CLM-2",     123,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM150-SPEC-PRC-COND-AMT-CLM-3",     129,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM150-SPEC-PRC-COND-AMT-CLM-4",     135,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM150-SPEC-PRC-COND-AMT-CLM-5",     141,   6,  PACKED_DECIMAL, 2),
-
-        // Percentages (5 × S9(3)V9(5) COMP-3 => 5 bytes, scale 5)
         new FieldSpec("FM150-SPEC-PRC-COND-PCT-CLM-1",     147,   5,  PACKED_DECIMAL, 5),
         new FieldSpec("FM150-SPEC-PRC-COND-PCT-CLM-2",     152,   5,  PACKED_DECIMAL, 5),
         new FieldSpec("FM150-SPEC-PRC-COND-PCT-CLM-3",     157,   5,  PACKED_DECIMAL, 5),
         new FieldSpec("FM150-SPEC-PRC-COND-PCT-CLM-4",     162,   5,  PACKED_DECIMAL, 5),
         new FieldSpec("FM150-SPEC-PRC-COND-PCT-CLM-5",     167,   5,  PACKED_DECIMAL, 5),
-
         new FieldSpec("FM150-PPO-AVBL",                    172,   1,  ALPHA),
         new FieldSpec("FM150-PPO-PRV-TYP-AVL-CLM",         173,   1,  ALPHA),
         new FieldSpec("FM150-INDV-CASE-MGMT-STAT",         174,   1,  ALPHA),
         new FieldSpec("FM150-HOST-OPL-PROV-ARRNG-CD",      175,   1,  ALPHA),
-
-        // Special pricing condition days (5 × S9(3) => 3 bytes text)
         new FieldSpec("FM150-SPEC-PRC-COND-DAYS-1",        176,   3,  NUMERIC_TEXT),
         new FieldSpec("FM150-SPEC-PRC-COND-DAYS-2",        179,   3,  NUMERIC_TEXT),
         new FieldSpec("FM150-SPEC-PRC-COND-DAYS-3",        182,   3,  NUMERIC_TEXT),
         new FieldSpec("FM150-SPEC-PRC-COND-DAYS-4",        185,   3,  NUMERIC_TEXT),
         new FieldSpec("FM150-SPEC-PRC-COND-DAYS-5",        188,   3,  NUMERIC_TEXT),
-
-        // Info-only message codes (5 × X(4))
         new FieldSpec("FM150-SF-INFO-ONLY-MSG-CD-CLM-1",   191,   4,  ALPHA),
         new FieldSpec("FM150-SF-INFO-ONLY-MSG-CD-CLM-2",   195,   4,  ALPHA),
         new FieldSpec("FM150-SF-INFO-ONLY-MSG-CD-CLM-3",   199,   4,  ALPHA),
         new FieldSpec("FM150-SF-INFO-ONLY-MSG-CD-CLM-4",   203,   4,  ALPHA),
         new FieldSpec("FM150-SF-INFO-ONLY-MSG-CD-CLM-5",   207,   4,  ALPHA),
-
         new FieldSpec("FM150-FILLER-1",                    211,  45,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM160 — Institutional Line Level (Record Type 60)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM160 = List.of(
-        // KEY
         new FieldSpec("FM160-SER-NUM-LOCAL-PLAN",        1,   3,  ALPHA),
         new FieldSpec("FM160-SER-NUM-JULDT-CC",          4,   2,  ALPHA),
         new FieldSpec("FM160-SER-NUM-JULDT-YY",          6,   2,  ALPHA),
@@ -298,65 +234,46 @@ public final class Schemas {
         new FieldSpec("FM160-SER-NUM-SUFFIX",           16,   2,  ALPHA),
         new FieldSpec("FM160-TRANS-ID",                 18,   2,  ALPHA),
         new FieldSpec("FM160-TRANS-QUAL",               20,   2,  ALPHA),
-        new FieldSpec("FM160-REC-TYPE",                 22,   2,  ALPHA),     // '60'
-        new FieldSpec("FM160-SEQ-NUM",                  24,   2,  BINARY),    // S9(4) COMP
-
-        // DATA
-        new FieldSpec("FM160-REV-CD",                   26,   4,  NUMERIC_TEXT),   // 9(04)
+        new FieldSpec("FM160-REC-TYPE",                 22,   2,  ALPHA),     
+        new FieldSpec("FM160-SEQ-NUM",                  24,   2,  BINARY),    
+        new FieldSpec("FM160-REV-CD",                   26,   4,  NUMERIC_TEXT),   
         new FieldSpec("FM160-HCPCS-PROC-CD",            30,   5,  ALPHA),
         new FieldSpec("FM160-HCPCS-PROC-CD-MOD-1",      35,   2,  ALPHA),
         new FieldSpec("FM160-HCPCS-PROC-CD-MOD-2",      37,   2,  ALPHA),
-        new FieldSpec("FM160-NUM-SERV",                 39,   4,  NUMERIC_TEXT),   // S9(04)
-
+        new FieldSpec("FM160-NUM-SERV",                 39,   4,  NUMERIC_TEXT),   
         new FieldSpec("FM160-DT-SERV-CC",               43,   2,  ALPHA),
         new FieldSpec("FM160-DT-SERV-YY",               45,   2,  ALPHA),
         new FieldSpec("FM160-DT-SERV-MM",               47,   2,  ALPHA),
         new FieldSpec("FM160-DT-SERV-DD",               49,   2,  ALPHA),
-
-        new FieldSpec("FM160-SERV-CHRG",                51,   6,  PACKED_DECIMAL, 2), // S9(8)V99 COMP-3
-        new FieldSpec("FM160-ACCOM-RATE",               57,   6,  PACKED_DECIMAL, 2), // S9(8)V99 COMP-3
-
+        new FieldSpec("FM160-SERV-CHRG",                51,   6,  PACKED_DECIMAL, 2), 
+        new FieldSpec("FM160-ACCOM-RATE",               57,   6,  PACKED_DECIMAL, 2), 
         new FieldSpec("FM160-PERF-PROV-TXNMY-CD-LN",    63,  15,  ALPHA),
         new FieldSpec("FM160-HCPCS-PROC-CD-MOD-3",      78,   2,  ALPHA),
         new FieldSpec("FM160-HCPCS-PROC-CD-MOD-4",      80,   2,  ALPHA),
         new FieldSpec("FM160-NDC-CD",                   82,  13,  ALPHA),
         new FieldSpec("FM160-LN-ITEM-CNTL-NUM",         95,  30,  ALPHA),
-
-        // 5 occurrences: (2 + 5 + 6) = 13 bytes each
         new FieldSpec("FM160-CLM-ADJ-GP-CD-LN-PAYB-1", 125,   2,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-RSN-CD-LN-PAYB-1",127,   5,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-AMT-LN-PAYB-1",   132,   6,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM160-CLM-ADJ-GP-CD-LN-PAYB-2", 138,   2,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-RSN-CD-LN-PAYB-2",140,   5,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-AMT-LN-PAYB-2",   145,   6,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM160-CLM-ADJ-GP-CD-LN-PAYB-3", 151,   2,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-RSN-CD-LN-PAYB-3",153,   5,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-AMT-LN-PAYB-3",   158,   6,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM160-CLM-ADJ-GP-CD-LN-PAYB-4", 164,   2,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-RSN-CD-LN-PAYB-4",166,   5,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-AMT-LN-PAYB-4",   171,   6,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM160-CLM-ADJ-GP-CD-LN-PAYB-5", 177,   2,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-RSN-CD-LN-PAYB-5",179,   5,  ALPHA),
         new FieldSpec("FM160-CLM-ADJ-AMT-LN-PAYB-5",   184,   6,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM160-REV-TYPE-CD",             190,   1,  ALPHA),
-
         new FieldSpec("FM160-SERV-ELIG-CD-LN-1",       191,   1,  ALPHA),
         new FieldSpec("FM160-SERV-ELIG-CD-LN-2",       192,   1,  ALPHA),
         new FieldSpec("FM160-SERV-ELIG-CD-LN-3",       193,   1,  ALPHA),
-
         new FieldSpec("FM160-FILLER-1",                194,  62,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM171 — Institutional Medical 2 (Record Type 71)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM171 = List.of(
-        // KEY
         new FieldSpec("FM171-SER-NUM-LOCAL-PLAN",         1,   3,  ALPHA),
         new FieldSpec("FM171-SER-NUM-JULDT-CC",           4,   2,  ALPHA),
         new FieldSpec("FM171-SER-NUM-JULDT-YY",           6,   2,  ALPHA),
@@ -365,20 +282,14 @@ public final class Schemas {
         new FieldSpec("FM171-SER-NUM-SUFFIX",            16,   2,  ALPHA),
         new FieldSpec("FM171-TRANS-ID",                  18,   2,  ALPHA),
         new FieldSpec("FM171-TRANS-QUAL",                20,   2,  ALPHA),
-        new FieldSpec("FM171-REC-TYPE",                  22,   2,  ALPHA),  // '71'
+        new FieldSpec("FM171-REC-TYPE",                  22,   2,  ALPHA),  
         new FieldSpec("FM171-SEQ-NUM",                   24,   2,  BINARY),
-
-        // DATA
         new FieldSpec("FM171-ICD-ADMIT-DIAG-CD",         26,   7,  ALPHA),
-
         new FieldSpec("FM171-ICD-PAT-VISIT-RSN-CD-1",    33,   7,  ALPHA),
         new FieldSpec("FM171-ICD-PAT-VISIT-RSN-CD-2",    40,   7,  ALPHA),
         new FieldSpec("FM171-ICD-PAT-VISIT-RSN-CD-3",    47,   7,  ALPHA),
-
         new FieldSpec("FM171-PRINC-DIAG-CD-POA-IND",     54,   1,  ALPHA),
         new FieldSpec("FM171-ICD-PRINC-DIAG-CD",         55,   7,  ALPHA),
-
-        // 24 × POA indicators X(1)
         new FieldSpec("FM171-DIAG-CD-POA-IND-1",         62,   1,  ALPHA),
         new FieldSpec("FM171-DIAG-CD-POA-IND-2",         63,   1,  ALPHA),
         new FieldSpec("FM171-DIAG-CD-POA-IND-3",         64,   1,  ALPHA),
@@ -403,8 +314,6 @@ public final class Schemas {
         new FieldSpec("FM171-DIAG-CD-POA-IND-22",        83,   1,  ALPHA),
         new FieldSpec("FM171-DIAG-CD-POA-IND-23",        84,   1,  ALPHA),
         new FieldSpec("FM171-DIAG-CD-POA-IND-24",        85,   1,  ALPHA),
-
-        // 24 × ICD diagnosis codes X(7): 86 .. 253
         new FieldSpec("FM171-ICD-DIAG-CD-1",             86,   7,  ALPHA),
         new FieldSpec("FM171-ICD-DIAG-CD-2",             93,   7,  ALPHA),
         new FieldSpec("FM171-ICD-DIAG-CD-3",            100,   7,  ALPHA),
@@ -429,15 +338,9 @@ public final class Schemas {
         new FieldSpec("FM171-ICD-DIAG-CD-22",           233,   7,  ALPHA),
         new FieldSpec("FM171-ICD-DIAG-CD-23",           240,   7,  ALPHA),
         new FieldSpec("FM171-ICD-DIAG-CD-24",           247,   7,  ALPHA),
-
         new FieldSpec("FM171-FILLER-1",                 254,   2,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM172 — Institutional Medical 3 (Record Type 72)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM172 = List.of(
-        // KEY
         new FieldSpec("FM172-SER-NUM-LOCAL-PLAN",       1,   3,  ALPHA),
         new FieldSpec("FM172-SER-NUM-JULDT-CC",         4,   2,  ALPHA),
         new FieldSpec("FM172-SER-NUM-JULDT-YY",         6,   2,  ALPHA),
@@ -446,12 +349,9 @@ public final class Schemas {
         new FieldSpec("FM172-SER-NUM-SUFFIX",          16,   2,  ALPHA),
         new FieldSpec("FM172-TRANS-ID",                18,   2,  ALPHA),
         new FieldSpec("FM172-TRANS-QUAL",              20,   2,  ALPHA),
-        new FieldSpec("FM172-REC-TYPE",                22,   2,  ALPHA),  // '72'
+        new FieldSpec("FM172-REC-TYPE",                22,   2,  ALPHA),  
         new FieldSpec("FM172-SEQ-NUM",                 24,   2,  BINARY),
-
-        // DATA
         new FieldSpec("FM172-ICD-PRINC-PROC-CD",       26,   7,  ALPHA),
-
         new FieldSpec("FM172-ICD-PROC-CD-1",           33,   7,  ALPHA),
         new FieldSpec("FM172-ICD-PROC-CD-2",           40,   7,  ALPHA),
         new FieldSpec("FM172-ICD-PROC-CD-3",           47,   7,  ALPHA),
@@ -476,15 +376,9 @@ public final class Schemas {
         new FieldSpec("FM172-ICD-PROC-CD-22",         180,   7,  ALPHA),
         new FieldSpec("FM172-ICD-PROC-CD-23",         187,   7,  ALPHA),
         new FieldSpec("FM172-ICD-PROC-CD-24",         194,   7,  ALPHA),
-
         new FieldSpec("FM172-FILLER-1",                201,  55,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM173 — Institutional Medical 4 (Record Type 73) — OCCURS expanded (A)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM173 = List.of(
-        // KEY
         new FieldSpec("FM173-SER-NUM-LOCAL-PLAN",       1,   3,  ALPHA),
         new FieldSpec("FM173-SER-NUM-JULDT-CC",         4,   2,  ALPHA),
         new FieldSpec("FM173-SER-NUM-JULDT-YY",         6,   2,  ALPHA),
@@ -493,144 +387,111 @@ public final class Schemas {
         new FieldSpec("FM173-SER-NUM-SUFFIX",          16,   2,  ALPHA),
         new FieldSpec("FM173-TRANS-ID",                18,   2,  ALPHA),
         new FieldSpec("FM173-TRANS-QUAL",              20,   2,  ALPHA),
-        new FieldSpec("FM173-REC-TYPE",                22,   2,  ALPHA),  // '73'
+        new FieldSpec("FM173-REC-TYPE",                22,   2,  ALPHA),  
         new FieldSpec("FM173-SEQ-NUM",                 24,   2,  BINARY),
-
-        // Principal procedure date (CC YY MM DD) — 26..33
         new FieldSpec("FM173-PRINC-PROC-DT-CC",        26,   2,  ALPHA),
         new FieldSpec("FM173-PRINC-PROC-DT-YY",        28,   2,  ALPHA),
         new FieldSpec("FM173-PRINC-PROC-DT-MM",        30,   2,  ALPHA),
         new FieldSpec("FM173-PRINC-PROC-DT-DD",        32,   2,  ALPHA),
-
-        // 24× Procedure dates (each 8 bytes; CC YY MM DD), starting at 34
         new FieldSpec("FM173-PROC-DT-CC-1",            34,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-1",            36,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-1",            38,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-1",            40,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-2",            42,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-2",            44,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-2",            46,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-2",            48,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-3",            50,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-3",            52,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-3",            54,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-3",            56,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-4",            58,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-4",            60,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-4",            62,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-4",            64,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-5",            66,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-5",            68,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-5",            70,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-5",            72,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-6",            74,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-6",            76,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-6",            78,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-6",            80,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-7",            82,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-7",            84,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-7",            86,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-7",            88,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-8",            90,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-8",            92,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-8",            94,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-8",            96,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-9",            98,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-9",           100,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-9",           102,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-9",           104,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-10",          106,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-10",          108,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-10",          110,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-10",          112,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-11",          114,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-11",          116,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-11",          118,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-11",          120,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-12",          122,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-12",          124,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-12",          126,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-12",          128,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-13",          130,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-13",          132,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-13",          134,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-13",          136,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-14",          138,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-14",          140,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-14",          142,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-14",          144,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-15",          146,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-15",          148,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-15",          150,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-15",          152,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-16",          154,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-16",          156,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-16",          158,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-16",          160,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-17",          162,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-17",          164,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-17",          166,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-17",          168,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-18",          170,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-18",          172,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-18",          174,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-18",          176,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-19",          178,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-19",          180,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-19",          182,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-19",          184,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-20",          186,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-20",          188,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-20",          190,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-20",          192,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-21",          194,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-21",          196,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-21",          198,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-21",          200,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-22",          202,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-22",          204,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-22",          206,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-22",          208,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-23",          210,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-23",          212,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-23",          214,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-23",          216,   2,  ALPHA),
-
         new FieldSpec("FM173-PROC-DT-CC-24",          218,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-YY-24",          220,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-MM-24",          222,   2,  ALPHA),
         new FieldSpec("FM173-PROC-DT-DD-24",          224,   2,  ALPHA),
-
         new FieldSpec("FM173-FILLER-1",               226,  30,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM180 — Institutional Physician (Record Type 80)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM180 = List.of(
-        // KEY
         new FieldSpec("FM180-SER-NUM-LOCAL-PLAN",        1,   3,  ALPHA),
         new FieldSpec("FM180-SER-NUM-JULDT-CC",          4,   2,  ALPHA),
         new FieldSpec("FM180-SER-NUM-JULDT-YY",          6,   2,  ALPHA),
@@ -639,43 +500,30 @@ public final class Schemas {
         new FieldSpec("FM180-SER-NUM-SUFFIX",           16,   2,  ALPHA),
         new FieldSpec("FM180-TRANS-ID",                 18,   2,  ALPHA),
         new FieldSpec("FM180-TRANS-QUAL",               20,   2,  ALPHA),
-        new FieldSpec("FM180-REC-TYPE",                 22,   2,  ALPHA),  // '80'
+        new FieldSpec("FM180-REC-TYPE",                 22,   2,  ALPHA),  
         new FieldSpec("FM180-SEQ-NUM",                  24,   2,  BINARY),
-
-        // DATA
         new FieldSpec("FM180-ATTD-PHY-NUM",             26,  16,  ALPHA),
         new FieldSpec("FM180-OP-PHY-NUM",               42,  16,  ALPHA),
         new FieldSpec("FM180-OTH-PHY-NUM-1",            58,  16,  ALPHA),
         new FieldSpec("FM180-OTH-PHY-NUM-2",            74,  16,  ALPHA),
-
         new FieldSpec("FM180-ATTD-PHY-LAST-NAME",       90,  20,  ALPHA),
         new FieldSpec("FM180-ATTD-PHY-FIRST-NAME",     110,  10,  ALPHA),
         new FieldSpec("FM180-ATTD-PHY-MID-NAME",       120,   1,  ALPHA),
-
         new FieldSpec("FM180-OP-PHY-LAST-NAME",        121,  20,  ALPHA),
         new FieldSpec("FM180-OP-PHY-FIRST-NAME",       141,  10,  ALPHA),
         new FieldSpec("FM180-OP-PHY-MID-NAME",         151,   1,  ALPHA),
-
         new FieldSpec("FM180-OTH1-PHY-LAST-NAME",      152,  20,  ALPHA),
         new FieldSpec("FM180-OTH1-PHY-FIRST-NAME",     172,  10,  ALPHA),
         new FieldSpec("FM180-OTH1-PHY-MID-NAME",       182,   1,  ALPHA),
-
         new FieldSpec("FM180-OTH2-PHY-LAST-NAME",      183,  20,  ALPHA),
         new FieldSpec("FM180-OTH2-PHY-FIRST-NAME",     203,  10,  ALPHA),
         new FieldSpec("FM180-OTH2-PHY-MID-NAME",       213,   1,  ALPHA),
-
         new FieldSpec("FM180-ATTD-PHY-NUM-QUAL",       214,   2,  ALPHA),
         new FieldSpec("FM180-OP-PHY-NUM-QUAL",         216,   2,  ALPHA),
         new FieldSpec("FM180-OTH-PHY-NUM-1-QUAL",      218,   2,  ALPHA),
-
         new FieldSpec("FM180-FILLER-1",                220,  36,  ALPHA)
     );
-
-    // --------------------------------------------------------------------
-    // FM190 — Institutional Trailer (Record Type 90)
-    // --------------------------------------------------------------------
     public static final List<FieldSpec> FM190 = List.of(
-        // KEY
         new FieldSpec("FM190-SER-NUM-LOCAL-PLAN",          1,   3,  ALPHA),
         new FieldSpec("FM190-SER-NUM-JULDT-CC",            4,   2,  ALPHA),
         new FieldSpec("FM190-SER-NUM-JULDT-YY",            6,   2,  ALPHA),
@@ -684,36 +532,26 @@ public final class Schemas {
         new FieldSpec("FM190-SER-NUM-SUFFIX",             16,   2,  ALPHA),
         new FieldSpec("FM190-TRANS-ID",                   18,   2,  ALPHA),
         new FieldSpec("FM190-TRANS-QUAL",                 20,   2,  ALPHA),
-        new FieldSpec("FM190-REC-TYPE",                   22,   2,  ALPHA),     // '90'
+        new FieldSpec("FM190-REC-TYPE",                   22,   2,  ALPHA),     
         new FieldSpec("FM190-SEQ-NUM",                    24,   2,  BINARY),
-
-        // DATA
-        new FieldSpec("FM190-PHY-REC-CNT",                26,   4,  NUMERIC_TEXT), // S9(04)
-        new FieldSpec("FM190-REC-TYPE-1X-CNT",            30,   2,  NUMERIC_TEXT), // S9(02)
+        new FieldSpec("FM190-PHY-REC-CNT",                26,   4,  NUMERIC_TEXT), 
+        new FieldSpec("FM190-REC-TYPE-1X-CNT",            30,   2,  NUMERIC_TEXT), 
         new FieldSpec("FM190-REC-TYPE-2X-CNT",            32,   2,  NUMERIC_TEXT),
         new FieldSpec("FM190-REC-TYPE-3X-CNT",            34,   2,  NUMERIC_TEXT),
-        new FieldSpec("FM190-REC-TYPE-4X-CNT",            36,   4,  NUMERIC_TEXT), // S9(04)
+        new FieldSpec("FM190-REC-TYPE-4X-CNT",            36,   4,  NUMERIC_TEXT), 
         new FieldSpec("FM190-REC-TYPE-5X-CNT",            40,   2,  NUMERIC_TEXT),
-        new FieldSpec("FM190-REC-TYPE-6X-CNT",            42,   4,  NUMERIC_TEXT), // S9(04)
+        new FieldSpec("FM190-REC-TYPE-6X-CNT",            42,   4,  NUMERIC_TEXT), 
         new FieldSpec("FM190-REC-TYPE-7X-CNT",            46,   2,  NUMERIC_TEXT),
         new FieldSpec("FM190-REC-TYPE-8X-CNT",            48,   2,  NUMERIC_TEXT),
-        new FieldSpec("FM190-TOT-NUM-DAY-VIS",            50,   4,  NUMERIC_TEXT), // S9(04)
-
+        new FieldSpec("FM190-TOT-NUM-DAY-VIS",            50,   4,  NUMERIC_TEXT), 
         new FieldSpec("FM190-TOT-ACCOM-CHRG",             54,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM190-TOT-ACCOM-NON-COV-CHRG",     60,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM190-TOT-ANC-CHRG",               66,   6,  PACKED_DECIMAL, 2),
         new FieldSpec("FM190-TOT-ANC-NON-COV-CHRG",       72,   6,  PACKED_DECIMAL, 2),
-
         new FieldSpec("FM190-NARRATIVE",                  78, 116,  ALPHA),
         new FieldSpec("FM190-BLUE2-USER-ID",             194,  40,  ALPHA),
         new FieldSpec("FM190-FILLER-1",                  234,  22,  ALPHA)
     );
-    
-
-
- // ===== FM132_schema =====
-
- // FM132 — Institutional OPL Claim Level (Record Type 32)
  public static final List<FieldSpec> FM132 = List.of(
      new FieldSpec("FM132-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM132-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -759,10 +597,6 @@ public final class Schemas {
      new FieldSpec("FM132-OPL-VAL-AMT-CLM-16", 148, 6, PACKED_DECIMAL, 2),
      new FieldSpec("FM132-FILLER-1", 154, 102, ALPHA)
  );
-
- // ===== FM142_schema =====
-
- // FM142 — Institutional Claim 2 (Record Type 42)
  public static final List<FieldSpec> FM142 = List.of(
      new FieldSpec("FM142-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM142-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -824,10 +658,6 @@ public final class Schemas {
      new FieldSpec("FM142-VAL-AMT-24", 212, 6, PACKED_DECIMAL, 2),
      new FieldSpec("FM142-FILLER-1", 218, 38, ALPHA)
  );
-
- // ===== FM143_schema =====
-
- // FM143 — Institutional Claim 3 (Record Type 43)
  public static final List<FieldSpec> FM143 = List.of(
      new FieldSpec("FM143-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM143-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -875,10 +705,6 @@ public final class Schemas {
      new FieldSpec("FM143-OCC-SPAN-CD-10", 92, 2, ALPHA),
      new FieldSpec("FM143-FILLER-1", 94, 162, ALPHA)
  );
-
- // ===== FM144_schema =====
-
- // FM144 — Institutional Claim 4 (Record Type 44)
  public static final List<FieldSpec> FM144 = List.of(
      new FieldSpec("FM144-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM144-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -988,10 +814,6 @@ public final class Schemas {
      new FieldSpec("FM144-OCC-DT-DD-24", 216, 2, ALPHA),
      new FieldSpec("FM144-FILLER-1", 218, 38, ALPHA)
  );
-
- // ===== FM145_schema =====
-
- // FM145 — Institutional Claim 7 (Record Type 45)
  public static final List<FieldSpec> FM145 = List.of(
      new FieldSpec("FM145-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM145-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -1045,10 +867,6 @@ public final class Schemas {
      new FieldSpec("FM145-OCC-FROM-DT-DD-10", 104, 2, ALPHA),
      new FieldSpec("FM145-FILLER-1", 106, 150, ALPHA)
  );
-
- // ===== FM146_schema =====
-
- // FM146 — Institutional Special Notations (Record Type 46)
  public static final List<FieldSpec> FM146 = List.of(
      new FieldSpec("FM146-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM146-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -1065,11 +883,6 @@ public final class Schemas {
      new FieldSpec("FM146-SPEC-NOTE-DATA", 32, 215, ALPHA),
      new FieldSpec("FM146-FILLER-1", 247, 9, ALPHA)
  );
-
-
- // ===== FM147_schema =====
-
- // FM147 — Institutional Claim 6 (Record Type 47)
  public static final List<FieldSpec> FM147 = List.of(
      new FieldSpec("FM147-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM147-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -1123,108 +936,100 @@ public final class Schemas {
      new FieldSpec("FM147-OCC-TO-DT-DD-10", 104, 2, ALPHA),
      new FieldSpec("FM147-FILLER-1", 106, 150, ALPHA)
  );
-
- // ===== FM165_schema =====
-
- // FM165 — Institutional Line Level Pricing & POS (Record Type 65)
  public static final List<FieldSpec> FM165 = List.of(
-     new FieldSpec("FM165-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
-     new FieldSpec("FM165-SER-NUM-JULDT-CC", 4, 2, ALPHA),
-     new FieldSpec("FM165-SER-NUM-JULDT-YY", 6, 2, ALPHA),
-     new FieldSpec("FM165-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
-     new FieldSpec("FM165-SER-NUM-SEQUENCE", 11, 5, ALPHA),
-     new FieldSpec("FM165-SER-NUM-SUFFIX", 16, 2, ALPHA),
-     new FieldSpec("FM165-TRANS-ID", 18, 2, ALPHA),
-     new FieldSpec("FM165-TRANS-QUAL", 20, 2, ALPHA),
-     new FieldSpec("FM165-REC-TYPE", 22, 2, ALPHA),
-     new FieldSpec("FM165-SEQ-NUM", 24, 2, BINARY),
-     new FieldSpec("FM165-LOC-RATE", 26, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-PRC-MTD-LN", 32, 2, ALPHA),
-     new FieldSpec("FM165-RULE-NUM-LN-1-3", 34, 3, ALPHA),
-     new FieldSpec("FM165-RULE-NUM-LN-4-6", 37, 3, ALPHA),
-     new FieldSpec("FM165-PCT-FCTR-LN", 40, 4, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-CAP-IND", 44, 1, ALPHA),
-     new FieldSpec("FM165-LOC-PLAN-REF-NUM", 45, 25, ALPHA),
-     new FieldSpec("FM165-NUM-APPV-SERV", 70, 3, NUMERIC_TEXT),
-     new FieldSpec("FM165-POS-PRC-LEV-IND", 73, 1, ALPHA),
-     new FieldSpec("FM165-PREATH-PRECRT-STAT-IND", 74, 1, ALPHA),
-     new FieldSpec("FM165-REF-STAT-IND", 75, 1, ALPHA),
-     new FieldSpec("FM165-REF-PCP-IND", 76, 2, ALPHA),
-     new FieldSpec("FM165-REVIEW-DETER-COND-CD", 78, 2, ALPHA),
-     new FieldSpec("FM165-PROV-BASE-PEN-AMT-LN", 80, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-PROV-BASE-PEN-PCT-LN", 86, 4, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-PRV-BSE-PEN-APL-RLE-LN", 90, 4, ALPHA),
-     new FieldSpec("FM165-SF-MSG-CD-LN-1", 94, 4, ALPHA),
-     new FieldSpec("FM165-SF-MSG-CD-LN-2", 98, 4, ALPHA),
-     new FieldSpec("FM165-SF-MSG-CD-LN-3", 102, 4, ALPHA),
-     new FieldSpec("FM165-SF-MSG-CD-LN-4", 106, 4, ALPHA),
-     new FieldSpec("FM165-SF-MSG-CD-LN-5", 110, 4, ALPHA),
-     new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-1", 114, 3, ALPHA),
-     new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-2", 117, 3, ALPHA),
-     new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-3", 120, 3, ALPHA),
-     new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-4", 123, 3, ALPHA),
-     new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-5", 126, 3, ALPHA),
-     new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-1", 129, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-2", 135, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-3", 141, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-4", 147, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-5", 153, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-1", 159, 5, PACKED_DECIMAL, 5),
-     new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-2", 164, 5, PACKED_DECIMAL, 5),
-     new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-3", 169, 5, PACKED_DECIMAL, 5),
-     new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-4", 174, 5, PACKED_DECIMAL, 5),
-     new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-5", 179, 5, PACKED_DECIMAL, 5),
-     new FieldSpec("FM165-INCL-GROUPING-NBR", 184, 2, ALPHA),
-     new FieldSpec("FM165-ACT-AMB-MILEAGE", 186, 3, PACKED_DECIMAL, 1),
-     new FieldSpec("FM165-FILLER-1", 189, 67, ALPHA)
- );
-
- // ===== FM166_schema =====
-
- // FM166 — Institutional OPL Line Level (Record Type 66)
+		    new FieldSpec("FM165-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+		    new FieldSpec("FM165-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+		    new FieldSpec("FM165-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+		    new FieldSpec("FM165-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+		    new FieldSpec("FM165-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+		    new FieldSpec("FM165-SER-NUM-SUFFIX", 16, 2, ALPHA),
+		    new FieldSpec("FM165-TRANS-ID", 18, 2, ALPHA),
+		    new FieldSpec("FM165-TRANS-QUAL", 20, 2, ALPHA),
+		    new FieldSpec("FM165-REC-TYPE", 22, 2, ALPHA),
+		    new FieldSpec("FM165-SEQ-NUM", 24, 2, BINARY),
+		    new FieldSpec("FM165-LOC-RATE", 26, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-PRC-MTD-LN", 32, 2, ALPHA),
+		    new FieldSpec("FM165-RULE-NUM-LN-1-3", 34, 3, ALPHA),
+		    new FieldSpec("FM165-RULE-NUM-LN-4-6", 37, 3, ALPHA),
+		    new FieldSpec("FM165-PCT-FCTR-LN", 40, 3, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-CAP-IND", 43, 1, ALPHA),
+		    new FieldSpec("FM165-LOC-PLAN-REF-NUM", 44, 25, ALPHA),
+		    new FieldSpec("FM165-NUM-APPV-SERV", 69, 3, NUMERIC_TEXT),
+		    new FieldSpec("FM165-POS-PRC-LEV-IND", 72, 1, ALPHA),
+		    new FieldSpec("FM165-PREATH-PRECRT-STAT-IND", 73, 1, ALPHA),
+		    new FieldSpec("FM165-REF-STAT-IND", 74, 1, ALPHA),
+		    new FieldSpec("FM165-REF-PCP-IND", 75, 2, ALPHA),
+		    new FieldSpec("FM165-REVIEW-DETER-COND-CD", 77, 2, ALPHA),
+		    new FieldSpec("FM165-PROV-BASE-PEN-AMT-LN", 79, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-PROV-BASE-PEN-PCT-LN", 85, 3, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-PRV-BSE-PEN-APL-RLE-LN", 88, 4, ALPHA),
+		    new FieldSpec("FM165-SF-MSG-CD-LN-1", 92, 4, ALPHA),
+		    new FieldSpec("FM165-SF-MSG-CD-LN-2", 96, 4, ALPHA),
+		    new FieldSpec("FM165-SF-MSG-CD-LN-3", 100, 4, ALPHA),
+		    new FieldSpec("FM165-SF-MSG-CD-LN-4", 104, 4, ALPHA),
+		    new FieldSpec("FM165-SF-MSG-CD-LN-5", 108, 4, ALPHA),
+		    new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-1", 112, 3, ALPHA),
+		    new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-2", 115, 3, ALPHA),
+		    new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-3", 118, 3, ALPHA),
+		    new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-4", 121, 3, ALPHA),
+		    new FieldSpec("FM165-SPEC-PRC-COND-CD-LN-5", 124, 3, ALPHA),
+		    new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-1", 127, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-2", 133, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-3", 139, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-4", 145, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-SPEC-PRC-COND-AMT-LN-5", 151, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-1", 157, 5, PACKED_DECIMAL, 5),
+		    new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-2", 162, 5, PACKED_DECIMAL, 5),
+		    new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-3", 167, 5, PACKED_DECIMAL, 5),
+		    new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-4", 172, 5, PACKED_DECIMAL, 5),
+		    new FieldSpec("FM165-SPEC-PRC-COND-PCT-LN-5", 177, 5, PACKED_DECIMAL, 5),
+		    new FieldSpec("FM165-INCL-GROUPING-NBR", 182, 2, ALPHA),
+		    new FieldSpec("FM165-ACT-AMB-MILEAGE", 184, 3, PACKED_DECIMAL, 1),
+		    new FieldSpec("FM165-FILLER-1", 187, 69, ALPHA)
+		);
  public static final List<FieldSpec> FM166 = List.of(
-     new FieldSpec("FM166-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
-     new FieldSpec("FM166-SER-NUM-JULDT-CC", 4, 2, ALPHA),
-     new FieldSpec("FM166-SER-NUM-JULDT-YY", 6, 2, ALPHA),
-     new FieldSpec("FM166-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
-     new FieldSpec("FM166-SER-NUM-SEQUENCE", 11, 5, ALPHA),
-     new FieldSpec("FM166-SER-NUM-SUFFIX", 16, 2, ALPHA),
-     new FieldSpec("FM166-TRANS-ID", 18, 2, ALPHA),
-     new FieldSpec("FM166-TRANS-QUAL", 20, 2, ALPHA),
-     new FieldSpec("FM166-REC-TYPE", 22, 2, ALPHA),
-     new FieldSpec("FM166-SEQ-NUM", 24, 2, BINARY),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-1", 26, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-2", 28, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-3", 30, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-4", 32, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-5", 34, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-6", 36, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-7", 38, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-8", 40, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-9", 42, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-10", 44, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-11", 46, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-12", 48, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-13", 50, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-14", 52, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-15", 54, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-CD-LN-16", 56, 2, ALPHA),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-1", 58, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-2", 64, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-3", 70, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-4", 76, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-5", 82, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-6", 88, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-7", 94, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-8", 100, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-9", 106, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-10", 112, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-11", 118, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-12", 124, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-13", 130, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-14", 136, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-15", 142, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-OPL-VAL-AMT-LN-16", 148, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+		    new FieldSpec("FM166-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+		    new FieldSpec("FM166-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+		    new FieldSpec("FM166-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+		    new FieldSpec("FM166-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+		    new FieldSpec("FM166-SER-NUM-SUFFIX", 16, 2, ALPHA),
+		    new FieldSpec("FM166-TRANS-ID", 18, 2, ALPHA),
+		    new FieldSpec("FM166-TRANS-QUAL", 20, 2, ALPHA),
+		    new FieldSpec("FM166-REC-TYPE", 22, 2, ALPHA),
+		    new FieldSpec("FM166-SEQ-NUM", 24, 2, BINARY),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-1", 26, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-2", 28, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-3", 30, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-4", 32, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-5", 34, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-6", 36, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-7", 38, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-8", 40, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-9", 42, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-10", 44, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-11", 46, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-12", 48, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-13", 50, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-14", 52, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-15", 54, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-CD-LN-16", 56, 2, ALPHA),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-1", 58, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-2", 64, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-3", 70, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-4", 76, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-5", 82, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-6", 88, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-7", 94, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-8", 100, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-9", 106, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-10", 112, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-11", 118, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-12", 124, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-13", 130, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-14", 136, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-15", 142, 6, PACKED_DECIMAL, 2),
+		    new FieldSpec("FM166-OPL-VAL-AMT-LN-16", 148, 6, PACKED_DECIMAL, 2),
      new FieldSpec("FM166-CLM-ADJ-GP-CD-LN-PAYA-1", 154, 2, ALPHA),
      new FieldSpec("FM166-CLM-ADJ-RSN-CD-LN-PAYA-1", 156, 5, ALPHA),
      new FieldSpec("FM166-CLM-ADJ-AMT-LN-PAYA-1", 161, 6, PACKED_DECIMAL, 2),
@@ -1246,12 +1051,8 @@ public final class Schemas {
      new FieldSpec("FM166-CLM-ADJ-GP-CD-LN-PAYB", 232, 2, ALPHA),
      new FieldSpec("FM166-CLM-ADJ-RSN-CD-LN-PAYB", 234, 5, ALPHA),
      new FieldSpec("FM166-CLM-ADJ-AMT-LN-PAYB", 239, 6, PACKED_DECIMAL, 2),
-     new FieldSpec("FM166-FILLER-1", 245, 11, ALPHA)
- );
-
- // ===== FM174_schema =====
-
- // FM174 — Institutional Medical 5 (Record Type 74)
+		    new FieldSpec("FM166-FILLER-1", 245, 11, ALPHA)
+		);
  public static final List<FieldSpec> FM174 = List.of(
      new FieldSpec("FM174-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
      new FieldSpec("FM174-SER-NUM-JULDT-CC", 4, 2, ALPHA),
@@ -1289,548 +1090,228 @@ public final class Schemas {
      new FieldSpec("FM174-ICD-EXT-CAUSE-INJ-12", 115, 7, ALPHA),
      new FieldSpec("FM174-FILLER-1", 122, 134, ALPHA)
  );
- 
  public static final List<FieldSpec> FM9D = List.of(
-
 		    new FieldSpec("CDB99D-SCCF-FILLER", 1, 17, ALPHA),
-
 		    new FieldSpec("CDB99D-TRANS-ID", 18, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-FILLER-2", 20, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-REC-TYPE", 22, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-SEQ-NUM", 24, 2, BINARY),
-
-		 
-
 		    new FieldSpec("CDB99D-INP-SRC-ID", 26, 20, ALPHA),
-
 		    new FieldSpec("CDB99D-CLM-TRANS-CNT", 46, 5, PACKED_DECIMAL, 0),
-
 		    new FieldSpec("CDB99D-REC-CNT", 51, 5, PACKED_DECIMAL, 0),
-
 		    new FieldSpec("CDB99D-CREATE-DT-CC", 56, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-CREATE-DT-YY", 58, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-CREATE-DT-MM", 60, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-CREATE-DT-DD", 62, 2, ALPHA),
-
-		 
-
 		    new FieldSpec("CDB99D-CREATE-TIME-HH", 64, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-CREATE-TIME-MM", 66, 2, ALPHA),
-
 		    new FieldSpec("CDB99D-CREATE-TIME-SS", 68, 2, ALPHA),
-
-		 
-
 		    new FieldSpec("CDB99D-NET-LIAB-AMT", 70, 7, PACKED_DECIMAL, 2),
-
-		 
-
 		    new FieldSpec("CDB99D-FILLER-1", 77, 179, ALPHA)
-
 		);
- 
  public static final List<FieldSpec> FM131 = List.of(
-
 		    new FieldSpec("FM131-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
-
 		    new FieldSpec("FM131-SER-NUM-JULDT-CC", 4, 2, ALPHA),
-
 		    new FieldSpec("FM131-SER-NUM-JULDT-YY", 6, 2, ALPHA),
-
 		    new FieldSpec("FM131-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
-
 		    new FieldSpec("FM131-SER-NUM-SEQUENCE", 11, 5, ALPHA),
-
 		    new FieldSpec("FM131-SER-NUM-SUFFIX", 16, 2, ALPHA),
-
-		 
-
 		    new FieldSpec("FM131-TRANS-ID", 18, 2, ALPHA),
-
 		    new FieldSpec("FM131-TRANS-QUAL", 20, 2, ALPHA),
-
 		    new FieldSpec("FM131-REC-TYPE", 22, 2, ALPHA),
-
 		    new FieldSpec("FM131-SEQ-NUM", 24, 2, BINARY),
-
-		 
-
 		    new FieldSpec("FM131-SUB-ADDR-LN-1", 26, 25, ALPHA),
-
 		    new FieldSpec("FM131-SUB-ADDR-LN-2", 51, 25, ALPHA),
-
 		    new FieldSpec("FM131-SUB-CITY", 76, 15, ALPHA),
-
 		    new FieldSpec("FM131-SUB-ZIP-CD-5", 91, 5, ALPHA),
-
 		    new FieldSpec("FM131-SUB-ZIP-CD-4", 96, 4, ALPHA),
-
-		 
-
 		    new FieldSpec("FM131-FILLER-1", 100, 156, ALPHA)
-
 		);
- 
-//FM105 — Institutional Header (Record Type 05)
-
 public static final List<FieldSpec> FM105 = List.of(
-
   new FieldSpec("FM105-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
-
   new FieldSpec("FM105-SER-NUM-JULDT-CC", 4, 2, ALPHA),
-
   new FieldSpec("FM105-SER-NUM-JULDT-YY", 6, 2, ALPHA),
-
   new FieldSpec("FM105-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
-
   new FieldSpec("FM105-SER-NUM-SEQUENCE", 11, 5, ALPHA),
-
   new FieldSpec("FM105-SER-NUM-SUFFIX", 16, 2, ALPHA),
-
   new FieldSpec("FM105-TRANS-ID", 18, 2, ALPHA),
-
   new FieldSpec("FM105-TRANS-QUAL", 20, 2, ALPHA),
-
   new FieldSpec("FM105-REC-TYPE", 22, 2, ALPHA),
-
   new FieldSpec("FM105-SEQ-NUM", 24, 2, BINARY),
-
   new FieldSpec("FM105-CLM-TYPE", 26, 2, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-CD", 28, 3, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-STA-CD", 31, 4, ALPHA),
-
   new FieldSpec("FM105-PROC-SITE-PLAN-CD", 35, 3, ALPHA),
-
   new FieldSpec("FM105-PROC-SITE-STA-CD", 38, 4, ALPHA),
-
   new FieldSpec("FM105-CNTL-PLAN-CD", 42, 3, ALPHA),
-
   new FieldSpec("FM105-TRANSM-MODE-CD", 45, 1, ALPHA),
-
   new FieldSpec("FM105-PLAN-PAYER-CD", 46, 1, ALPHA),
-
   new FieldSpec("FM105-PMT-DISP-CD", 47, 1, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-CNTL-NUM", 48, 17, ALPHA),
-
   new FieldSpec("FM105-PROC-SITE-CNTL-NUM", 65, 17, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-CLM-REF-NUM", 82, 17, ALPHA),
-
   new FieldSpec("FM105-REF-NUM-LOCAL-PLAN", 99, 3, ALPHA),
-
   new FieldSpec("FM105-REF-NUM-JULDT-CC", 102, 2, ALPHA),
-
   new FieldSpec("FM105-REF-NUM-JULDT-YY", 104, 2, ALPHA),
-
   new FieldSpec("FM105-REF-NUM-JULDT-DDD", 106, 3, ALPHA),
-
   new FieldSpec("FM105-REF-NUM-SEQUENCE", 109, 5, ALPHA),
-
   new FieldSpec("FM105-REF-NUM-SUFFIX", 114, 2, ALPHA),
-
   new FieldSpec("FM105-INP-MED", 116, 1, ALPHA),
-
   new FieldSpec("FM105-REL-NUM", 117, 3, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-RCPT-DT-CC", 120, 2, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-RCPT-DT-YY", 122, 2, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-RCPT-DT-MM", 124, 2, ALPHA),
-
   new FieldSpec("FM105-LOC-PLAN-RCPT-DT-DD", 126, 2, ALPHA),
-
   new FieldSpec("FM105-EDIT-DT-CC", 128, 2, ALPHA),
-
   new FieldSpec("FM105-EDIT-DT-YY", 130, 2, ALPHA),
-
   new FieldSpec("FM105-EDIT-DT-MM", 132, 2, ALPHA),
-
   new FieldSpec("FM105-EDIT-DT-DD", 134, 2, ALPHA),
-
   new FieldSpec("FM105-PGM-CD", 136, 1, ALPHA),
-
   new FieldSpec("FM105-ONL-DT-LAST-ACT-CC", 137, 2, ALPHA),
-
   new FieldSpec("FM105-ONL-DT-LAST-ACT-YY", 139, 2, ALPHA),
-
   new FieldSpec("FM105-ONL-DT-LAST-ACT-MM", 141, 2, ALPHA),
-
   new FieldSpec("FM105-ONL-DT-LAST-ACT-DD", 143, 2, ALPHA),
-
   new FieldSpec("FM105-ONL-TIME-LAST-ACT-HH", 145, 2, ALPHA),
-
   new FieldSpec("FM105-ONL-TIME-LAST-ACT-MM", 147, 2, ALPHA),
-
   new FieldSpec("FM105-ONL-TIME-LAST-ACT-SS", 149, 2, ALPHA),
-
   new FieldSpec("FM105-STAT-CD", 151, 1, ALPHA),
-
   new FieldSpec("FM105-CLERK-NUM", 152, 4, ALPHA),
-
   new FieldSpec("FM105-ERR-CD-1", 156, 5, ALPHA),
-
   new FieldSpec("FM105-ERR-CD-2", 161, 5, ALPHA),
-
   new FieldSpec("FM105-ERR-CD-3", 166, 5, ALPHA),
-
   new FieldSpec("FM105-ERR-CD-4", 171, 5, ALPHA),
-
   new FieldSpec("FM105-ERR-CD-5", 176, 5, ALPHA),
-
   new FieldSpec("FM105-LINE-BUS", 181, 1, ALPHA),
-
   new FieldSpec("FM105-SYS-INP-SRC", 182, 2, ALPHA),
-
   new FieldSpec("FM105-TRANS-IND", 184, 1, ALPHA),
-
   new FieldSpec("FM105-PLAN-PROF-STND-IND", 185, 1, ALPHA),
-
   new FieldSpec("FM105-TYPE-SUBM", 186, 1, ALPHA),
-
   new FieldSpec("FM105-PLAN-PROF-ADJ-EDIT-IND", 187, 1, ALPHA),
-
   new FieldSpec("FM105-NAT-OOA-CD", 188, 1, ALPHA),
-
   new FieldSpec("FM105-INVEST-IND", 189, 1, ALPHA),
-
   new FieldSpec("FM105-RMRK-CD", 190, 3, ALPHA),
-
   new FieldSpec("FM105-FMT-DB-POST-DT-CC", 193, 2, ALPHA),
-
   new FieldSpec("FM105-FMT-DB-POST-DT-YY", 195, 2, ALPHA),
-
   new FieldSpec("FM105-FMT-DB-POST-DT-MM", 197, 2, ALPHA),
-
   new FieldSpec("FM105-FMT-DB-POST-DT-DD", 199, 2, ALPHA),
-
   new FieldSpec("FM105-CFA-CD", 201, 1, ALPHA),
-
   new FieldSpec("FM105-CNTL-PLAN-CFA-ACCT-CD", 202, 2, ALPHA),
-
   new FieldSpec("FM105-AEA-CD", 204, 1, ALPHA),
-
   new FieldSpec("FM105-ACCESS-FEE-CD", 205, 1, ALPHA),
-
   new FieldSpec("FM105-RESUB-DF-IND", 206, 1, ALPHA),
-
   new FieldSpec("FM105-ADJ-RCPT-DT-CC", 207, 2, ALPHA),
-
   new FieldSpec("FM105-ADJ-RCPT-DT-YY", 209, 2, ALPHA),
-
   new FieldSpec("FM105-ADJ-RCPT-DT-MM", 211, 2, ALPHA),
-
   new FieldSpec("FM105-ADJ-RCPT-DT-DD", 213, 2, ALPHA),
-
   new FieldSpec("FM105-BCP-PROD-TYPE", 215, 1, ALPHA),
-
   new FieldSpec("FM105-PLAN-OWNER-IND", 216, 1, ALPHA),
-
   new FieldSpec("FM105-RECYC-CTR", 217, 1, NUMERIC_TEXT),
-
   new FieldSpec("FM105-EXCLUDE-PER-USER", 218, 1, ALPHA),
-
   new FieldSpec("FM105-EXCLUDE-PER-BLUECD", 219, 1, ALPHA),
-
   new FieldSpec("FM105-INTL-CD", 220, 1, ALPHA),
-
   new FieldSpec("FM105-ECR-IND", 221, 1, ALPHA),
-
   new FieldSpec("FM105-ADMIN-EXP-ALLW", 222, 5, PACKED_DECIMAL, 2),
-
   new FieldSpec("FM105-DEL-MTD", 227, 1, ALPHA),
-
   new FieldSpec("FM105-UPF-PRC-EDIT-CD", 228, 1, ALPHA),
-
   new FieldSpec("FM105-POSE-IND", 229, 1, ALPHA),
-
   new FieldSpec("FM105-ACCT-TYPE-CD", 230, 1, ALPHA),
-
   new FieldSpec("FM105-EST-IND", 231, 1, ALPHA),
-
   new FieldSpec("FM105-BOID", 232, 4, ALPHA),
-
   new FieldSpec("FM105-INIT-TRANSM-MODE-CD", 236, 1, ALPHA),
-
   new FieldSpec("FM105-SYS-CRT-CD", 237, 1, ALPHA),
-
   new FieldSpec("FM105-SYS-UPDT-CD", 238, 1, ALPHA),
-
   new FieldSpec("FM105-ICD-PROV-SUB-VER-IND", 239, 1, ALPHA),
-
   new FieldSpec("FM105-FMT-CONV-IND", 240, 1, ALPHA),
-
   new FieldSpec("FM105-PRFX-ACCT-ID-IND", 241, 1, ALPHA),
-
   new FieldSpec("FM105-FILLER-1", 242, 14, ALPHA));
-
-	// --------------------------------------------------------------------
-	// FM133 — Institutional Appended Provider (Record Type 33)
-	// --------------------------------------------------------------------
 	public static final List<FieldSpec> FM133 = List.of(
-			new FieldSpec("FM133-SER-NUM-LOCAL-PLAN",  1,  3, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-SER-NUM-JULDT-CC",    4,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-SER-NUM-JULDT-YY",    6,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-SER-NUM-JULDT-DDD",   8,  3, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-SER-NUM-SEQUENCE",   11,  5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[1]", 26, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[1]",28, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[1]",   33, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #2: 39..51
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[2]", 39, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[2]",41, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[2]",   46, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #3: 52..64
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[3]", 52, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[3]",54, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[3]",   59, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #4: 65..77
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[4]", 65, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[4]",67, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[4]",   72, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #5: 78..90
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[5]", 78, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[5]",80, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[5]",   85, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #6: 91..103
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[6]", 91, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[6]",93, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[6]",   98, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // FILLER-1: 104..129 (26 bytes)
-
-		    new FieldSpec("FM133-FILLER-1",             104, 26, FieldType.ALPHA),
-
-		 
-
-		    // CLM-ADJ-PAYB OCCURS 6 — each occurrence: GP-CD(2), RSN-CD(5), AMT(6 packed, scale=2)
-
-		    // #1: 130..142
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[1]",130, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[1]",132, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[1]",  137, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #2: 143..155
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[2]",143, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[2]",145, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[2]",  150, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #3: 156..168
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[3]",156, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[3]",158, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[3]",  163, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #4: 169..181
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[4]",169, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[4]",171, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[4]",  176, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #5: 182..194
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[5]",182, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[5]",184, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[5]",  189, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // #6: 195..207
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[6]",195, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[6]",197, 5, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[6]",  202, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // Tail filler: 208..255
-
-		    new FieldSpec("FM133-FILLER-2",             208, 48, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-SER-NUM-SUFFIX",     16,  2, FieldType.ALPHA),
-
-		 
-
-		    new FieldSpec("FM133-TRANS-ID",           18,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-TRANS-QUAL",         20,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM133-REC-TYPE",           22,  2, FieldType.ALPHA));          // "33"
-
-
-// --------------------------------------------------------------------
-	// FM141 — Institutional Appended Provider (Record Type 41)
-	// --------------------------------------------------------------------
+    new FieldSpec("FM133-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+    new FieldSpec("FM133-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+    new FieldSpec("FM133-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+    new FieldSpec("FM133-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+    new FieldSpec("FM133-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+    new FieldSpec("FM133-SER-NUM-SUFFIX", 16, 2, ALPHA),
+    new FieldSpec("FM133-TRANS-ID", 18, 2, ALPHA),
+    new FieldSpec("FM133-TRANS-QUAL", 20, 2, ALPHA),
+    new FieldSpec("FM133-REC-TYPE", 22, 2, ALPHA),
+    new FieldSpec("FM133-SEQ-NUM", 24, 2, BINARY),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[1]", 26, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[1]", 28, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[1]", 33, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[2]", 39, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[2]", 41, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[2]", 46, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[3]", 52, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[3]", 54, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[3]", 59, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[4]", 65, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[4]", 67, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[4]", 72, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[5]", 78, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[5]", 80, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[5]", 85, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-GP-CD[6]", 91, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-RSN-CD[6]", 93, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYA-AMT[6]", 98, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-FILLER-1", 104, 26, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[1]", 130, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[1]", 132, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[1]", 137, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[2]", 143, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[2]", 145, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[2]", 150, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[3]", 156, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[3]", 158, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[3]", 163, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[4]", 169, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[4]", 171, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[4]", 176, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[5]", 182, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[5]", 184, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[5]", 189, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-GP-CD[6]", 195, 2, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-RSN-CD[6]", 197, 5, ALPHA),
+    new FieldSpec("FM133-CLM-ADJ-PAYB-AMT[6]", 202, 6, PACKED_DECIMAL, 2),
+    new FieldSpec("FM133-FILLER-2", 208, 48, ALPHA)
+);
 	public static final List<FieldSpec> FM141 = List.of(
-			// ----- KEY (1..25) -----
-
-		    new FieldSpec("FM141-SER-NUM-LOCAL-PLAN",   1,  3, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-SER-NUM-JULDT-CC",     4,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-SER-NUM-JULDT-YY",     6,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-SER-NUM-JULDT-DDD",    8,  3, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-SER-NUM-SEQUENCE",    11,  5, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-SER-NUM-SUFFIX",      16,  2, FieldType.ALPHA),
-
-		 
-
-		    new FieldSpec("FM141-TRANS-ID",            18,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-TRANS-QUAL",          20,  2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-REC-TYPE",            22,  2, FieldType.ALPHA),         // "41"
-
-		    new FieldSpec("FM141-SEQ-NUM",             24,  2, FieldType.BINARY), // S9(4) COMP
-
-		 
-
-		    // ----- DATA SECTION -----
-
-		    // These depend on actual FM141 copybook definitions.
-
-		    // Filling based on typical ITCFM14x structure (VAL-CD and VAL-AMT arrays).
-
-		 
-
-		    // --- VAL-CD OCCURS 12 (each 2 bytes) -> 26..49 ---
-
-		    new FieldSpec("FM141-VAL-CD[1]",   26, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[2]",   28, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[3]",   30, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[4]",   32, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[5]",   34, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[6]",   36, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[7]",   38, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[8]",   40, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[9]",   42, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[10]",  44, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[11]",  46, 2, FieldType.ALPHA),
-
-		    new FieldSpec("FM141-VAL-CD[12]",  48, 2, FieldType.ALPHA),
-
-		 
-
-		    // --- VAL-AMT OCCURS 12 (each 6 bytes, packed) -> 50..121 ---
-
-		    new FieldSpec("FM141-VAL-AMT[1]",   50, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[2]",   56, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[3]",   62, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[4]",   68, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[5]",   74, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[6]",   80, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[7]",   86, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[8]",   92, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[9]",   98, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[10]", 104, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[11]", 110, 6, FieldType.PACKED_DECIMAL, 2),
-
-		    new FieldSpec("FM141-VAL-AMT[12]", 116, 6, FieldType.PACKED_DECIMAL, 2),
-
-		 
-
-		    // Tail filler — rest of 255 bytes
-
-		    new FieldSpec("FM141-FILLER-1",    122, 134, FieldType.ALPHA)  // 122..255
-			);          // "41"
-	
-	// FM1A5 — Professional Header (Record Type A5)
+		    new FieldSpec("FM141-SER-NUM-LOCAL-PLAN", 1, 3, FieldType.ALPHA),
+		    new FieldSpec("FM141-SER-NUM-JULDT-CC", 4, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-SER-NUM-JULDT-YY", 6, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-SER-NUM-JULDT-DDD", 8, 3, FieldType.ALPHA),
+		    new FieldSpec("FM141-SER-NUM-SEQUENCE", 11, 5, FieldType.ALPHA),
+		    new FieldSpec("FM141-SER-NUM-SUFFIX", 16, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-TRANS-ID", 18, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-TRANS-QUAL", 20, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-REC-TYPE", 22, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-SEQ-NUM", 24, 2, FieldType.BINARY),
+		    new FieldSpec("FM141-COND-CD-1", 26, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-2", 28, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-3", 30, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-4", 32, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-5", 34, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-6", 36, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-7", 38, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-8", 40, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-9", 42, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-10", 44, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-11", 46, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-12", 48, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-13", 50, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-14", 52, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-15", 54, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-16", 56, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-17", 58, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-18", 60, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-19", 62, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-20", 64, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-21", 66, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-22", 68, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-23", 70, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-COND-CD-24", 72, 2, FieldType.ALPHA),
+		    new FieldSpec("FM141-FILLER-1", 74, 182, FieldType.ALPHA)
+		);       
     public static final List<FieldSpec> FM1A5 = List.of(
-        // KEY (1–25)
         new FieldSpec("FM1A5-SER-NUM-LOCAL-PLAN",        1,   3,  ALPHA),
         new FieldSpec("FM1A5-SER-NUM-JULDT-CC",          4,   2,  ALPHA),
         new FieldSpec("FM1A5-SER-NUM-JULDT-YY",          6,   2,  ALPHA),
@@ -1839,10 +1320,8 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1A5-SER-NUM-SUFFIX",           16,   2,  ALPHA),
         new FieldSpec("FM1A5-TRANS-ID",                 18,   2,  ALPHA),
         new FieldSpec("FM1A5-TRANS-QUAL",               20,   2,  ALPHA),
-        new FieldSpec("FM1A5-REC-TYPE",                 22,   2,  ALPHA),  // 'A5'
+        new FieldSpec("FM1A5-REC-TYPE",                 22,   2,  ALPHA),  
         new FieldSpec("FM1A5-SEQ-NUM",                  24,   2,  BINARY),
-
-        // DATA (26–255)
         new FieldSpec("FM1A5-CLM-TYPE",                  26,   2,  ALPHA),
         new FieldSpec("FM1A5-LOC-PLAN-CD",               28,   3,  ALPHA),
         new FieldSpec("FM1A5-LOC-PLAN-STA-CD",           31,   4,  ALPHA),
@@ -1930,10 +1409,7 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1A5-PRFX-ACCT-ID-IND",         241,   1,  ALPHA),
         new FieldSpec("FM1A5-FILLER-1",                 242,  14,  ALPHA)
     );
-
-    // FM1B0 — Professional Provider (Record Type B0)
     public static final List<FieldSpec> FM1B0 = List.of(
-        // KEY
         new FieldSpec("FM1B0-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1B0-SER-NUM-JULDT-CC",          4,   2, ALPHA),
         new FieldSpec("FM1B0-SER-NUM-JULDT-YY",          6,   2, ALPHA),
@@ -1944,7 +1420,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1B0-TRANS-QUAL",               20,   2, ALPHA),
         new FieldSpec("FM1B0-REC-TYPE",                 22,   2, ALPHA),
         new FieldSpec("FM1B0-SEQ-NUM",                  24,   2, BINARY),
-        // DATA
         new FieldSpec("FM1B0-TYPE-BILL",                26,   3, ALPHA),
         new FieldSpec("FM1B0-FED-TAX-ID-NUM",           29,   9, ALPHA),
         new FieldSpec("FM1B0-TYPE-FED-TAX-ID-NUM",      38,   1, ALPHA),
@@ -1970,10 +1445,7 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1B0-TIER-DESIG-IND-CLM",      233,   1, ALPHA),
         new FieldSpec("FM1B0-FILLER-1",                234,  22, ALPHA)
     );
-
-    // FM1B5 — Professional Appended Provider (Record Type B5)
     public static final List<FieldSpec> FM1B5 = List.of(
-        // KEY
         new FieldSpec("FM1B5-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1B5-SER-NUM-JULDT-CC",          4,   2, ALPHA),
         new FieldSpec("FM1B5-SER-NUM-JULDT-YY",          6,   2, ALPHA),
@@ -1984,7 +1456,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1B5-TRANS-QUAL",               20,   2, ALPHA),
         new FieldSpec("FM1B5-REC-TYPE",                 22,   2, ALPHA),
         new FieldSpec("FM1B5-SEQ-NUM",                  24,   2, BINARY),
-        // DATA
         new FieldSpec("FM1B5-PMT-RSTRCT-IND",           26,   1, ALPHA),
         new FieldSpec("FM1B5-AMB-PICK-UP-ADDR",         27,  25, ALPHA),
         new FieldSpec("FM1B5-AMB-PICK-UP-CITY",         52,  15, ALPHA),
@@ -2003,10 +1474,7 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1B5-AMB-DROP-OFF-ZIP",        235,   9, ALPHA),
         new FieldSpec("FM1B5-FILLER-2",                244,  12, ALPHA)
     );
-
-    // FM1C0 — Professional Patient (Record Type C0)
     public static final List<FieldSpec> FM1C0 = List.of(
-        // KEY
         new FieldSpec("FM1C0-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1C0-SER-NUM-JULDT-CC",          4,   2, ALPHA),
         new FieldSpec("FM1C0-SER-NUM-JULDT-YY",          6,   2, ALPHA),
@@ -2017,7 +1485,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1C0-TRANS-QUAL",               20,   2, ALPHA),
         new FieldSpec("FM1C0-REC-TYPE",                 22,   2, ALPHA),
         new FieldSpec("FM1C0-SEQ-NUM",                  24,   2, BINARY),
-        // DATA
         new FieldSpec("FM1C0-PAT-LAST-NAME",            26,  20, ALPHA),
         new FieldSpec("FM1C0-PAT-FIRST-NAME",           46,  10, ALPHA),
         new FieldSpec("FM1C0-PAT-MID-INIT",             56,   1, ALPHA),
@@ -2055,8 +1522,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1C0-SERV-ELIG-CD-CLM-4",      174,   1, ALPHA),
         new FieldSpec("FM1C0-FILLER-1",                175,  81, ALPHA)
     );
-
-    // FM1D0 — Professional Subscriber (Record Type D0)
     public static final List<FieldSpec> FM1D0 = List.of(
         new FieldSpec("FM1D0-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1D0-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2109,8 +1574,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1D0-MED-ASGNMT-IND",          216,   1, ALPHA),
         new FieldSpec("FM1D0-FILLER-1",                217,  39, ALPHA)
     );
-
-    // FM1D1 — Professional Additional Subscriber (Record Type D1)
     public static final List<FieldSpec> FM1D1 = List.of(
         new FieldSpec("FM1D1-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1D1-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2133,8 +1596,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1D1-MED-CLM-REJ-CD-CLM",       99,   5, ALPHA),
         new FieldSpec("FM1D1-FILLER-1",                104, 152, ALPHA)
     );
-
-    // FM1D2 — Professional OPL Claim Level (Record Type D2)
     public static final List<FieldSpec> FM1D2 = List.of(
         new FieldSpec("FM1D2-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1D2-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2180,8 +1641,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1D2-OPL-VAL-AMT-CLM-X-16",    148,   6, ALPHA),
         new FieldSpec("FM1D2-FILLER-1",                154, 102, ALPHA)
     );
-
-    // FM1D3 — Professional CAS Claim Level (Record Type D3)
     public static final List<FieldSpec> FM1D3 = List.of(
         new FieldSpec("FM1D3-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1D3-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2232,8 +1691,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1D3-CLM-ADJ-AMT-CLM-PAYB-6",   202,  6, PACKED_DECIMAL, 2),
         new FieldSpec("FM1D3-FILLER-2",                 208, 48, ALPHA)
     );
-
-    // FM1E0 — Professional Claim (Record Type E0)
     public static final List<FieldSpec> FM1E0 = List.of(
         new FieldSpec("FM1E0-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1E0-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2280,8 +1737,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1E0-PERF-PROV-NPI-CLM",       217,  10, ALPHA),
         new FieldSpec("FM1E0-FILLER-1",                227,  29, ALPHA)
     );
-
-    // FM1E1 — Professional Claim Pricing (Record Type E1)
     public static final List<FieldSpec> FM1E1 = List.of(
         new FieldSpec("FM1E1-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1E1-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2321,8 +1776,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1E1-SPEC-PRC-COND-DAYS-5",    158,   3, NUMERIC_TEXT),
         new FieldSpec("FM1E1-FILLER-2",                161,  95, ALPHA)
     );
-
-    // FM1E2 — Professional Claim Detail (Record Type E2)
     public static final List<FieldSpec> FM1E2 = List.of(
         new FieldSpec("FM1E2-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1E2-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2350,8 +1803,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1E2-ANES-PROC-CD-2",          115,   5, ALPHA),
         new FieldSpec("FM1E2-FILLER-1",                120, 136, ALPHA)
     );
-
-    // FM1E6 — Professional Special Notations (Record Type E6)
     public static final List<FieldSpec> FM1E6 = List.of(
         new FieldSpec("FM1E6-SER-NUM-LOCAL-PLAN",        1,   3, ALPHA),
         new FieldSpec("FM1E6-SER-NUM-JULDT-CC",          4,   2, ALPHA),
@@ -2368,8 +1819,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1E6-SPEC-NOTE-DATA",           32, 215, ALPHA),
         new FieldSpec("FM1E6-FILLER-1",                247,   9, ALPHA)
     );
-
-    // FM1F0 — Professional Line-of-Service (Record Type F0)
     public static final List<FieldSpec> FM1F0 = List.of(
         new FieldSpec("FM1F0-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1F0-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2435,8 +1884,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1F0-PERF-PROV-IHS-LN-IND",   248,   1, ALPHA),
         new FieldSpec("FM1F0-FILLER-1",               249,   7, ALPHA)
     );
-
-    // FM1F1 — Professional Dental Line-of-Service (Record Type F1)
     public static final List<FieldSpec> FM1F1 = List.of(
         new FieldSpec("FM1F1-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1F1-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2502,8 +1949,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1F1-SERV-FAC-LOC-ST-LN",     248,   2, ALPHA),
         new FieldSpec("FM1F1-FILLER-1",               250,   6, ALPHA)
     );
-
-    // FM1F5 — Professional Line-Level Pricing & POS (Record Type F5)
     public static final List<FieldSpec> FM1F5 = List.of(
         new FieldSpec("FM1F5-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1F5-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2573,8 +2018,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1F5-TIER-DESIG-IND-LN",      254,   1, ALPHA),
         new FieldSpec("FM1F5-FILLER-1",               255,   1, ALPHA)
     );
-
-    // FM1F6 — Professional OPL Line-Level (Record Type F6)
     public static final List<FieldSpec> FM1F6 = List.of(
         new FieldSpec("FM1F6-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1F6-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2643,8 +2086,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1F6-FILLER-1",               249, 3, ALPHA),
         new FieldSpec("FM1F6-MKT-ID-LN",              252, 4, ALPHA)
     );
-
-    // FM1G0 — Professional Referring Physician (Record Type G0)
     public static final List<FieldSpec> FM1G0 = List.of(
         new FieldSpec("FM1G0-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1G0-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2667,8 +2108,6 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1G0-REF-PROV-NUM-QUAL",      116,   2, ALPHA),
         new FieldSpec("FM1G0-FILLER-1",               118, 138, ALPHA)
     );
-
-    // FM1X0 — Professional Trailer (Record Type X0)
     public static final List<FieldSpec> FM1X0 = List.of(
         new FieldSpec("FM1X0-SER-NUM-LOCAL-PLAN",       1,   3, ALPHA),
         new FieldSpec("FM1X0-SER-NUM-JULDT-CC",         4,   2, ALPHA),
@@ -2690,609 +2129,617 @@ public static final List<FieldSpec> FM105 = List.of(
         new FieldSpec("FM1X0-BLUE2-USER-ID",           46,  40, ALPHA),
         new FieldSpec("FM1X0-FILLER-1",                86, 170, ALPHA)
     );
-    
     public static final List<FieldSpec> FM21A = List.of(
-    		 new FieldSpec("FM21A-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-TRANS-ID", 7, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REC-TYPE", 9, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SEQ-NUM", 10, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PROC-SITE-PLAN-CD", 26, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-CD", 27, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CNTL-PLAN-CD", 28, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PROC-SITE-STA-CD", 29, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-STA-CD", 30, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-TRANSM-MODE-CD", 43, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REL-NUM", 44, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CLM-TYPE", 45, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DISP-CD", 46, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DISP-DT-CC", 47, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DISP-DT-YY", 48, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DISP-DT-MM", 49, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DISP-DT-DD", 50, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-SCDF-TYPE-CD", 58, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PLAN-PAYER-CD", 59, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PMT-DISP-CD", 60, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-ADJUD-STAT-IND", 61, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DT-PAID-CC", 62, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DT-PAID-YY", 63, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DT-PAID-MM", 64, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-DT-PAID-DD", 65, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PMT-RSTRCT-IND", 70, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-TYPE-BILL", 71, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-INP-MED", 72, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-CNTL-NUM", 73, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-CLM-REF-NUM", 74, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PROC-SITE-CNTL-NUM", 75, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PREV-TOT-AMT-PAID", 126, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PREV-DISP-CC", 127, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PREV-DISP-YY", 128, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PREV-DISP-MM", 129, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PREV-DISP-DD", 130, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CREATE-DT-CC", 140, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CREATE-DT-YY", 141, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CREATE-DT-MM", 142, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CREATE-DT-DD", 143, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-TRANS-IND", 144, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PLAN-PROF-STND-IND", 145, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-STAT-CD", 146, 1, FieldType.ALPHA),
-             new FieldSpec("TIMES", 151, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-EDIT-DT-CC", 152, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-EDIT-DT-YY", 153, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-EDIT-DT-MM", 154, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-EDIT-DT-DD", 155, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-ADJ-RSN-CD", 156, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-NET-LIAB-AMT", 186, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CASH-REFND-IND", 187, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CFA-CD", 188, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LINE-BUS", 189, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-RECYC-CTR", 190, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PLAN-PROF-ADJ-EDIT-IND", 191, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-NAT-OOA-CD", 192, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PGM-CD", 193, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CNTL-PLAN-CFA-ACCT-CD", 194, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-INVEST-IND", 195, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CARVE-OUT-IND", 196, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CARVE-OUT-DAY", 197, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REF-NUM-LOCAL-PLAN", 205, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REF-NUM-JULDT-CC", 206, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REF-NUM-JULDT-YY", 207, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REF-NUM-JULDT-DDD", 208, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REF-NUM-SEQUENCE", 209, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-REF-NUM-SUFFIX", 210, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-CC", 211, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-YY", 212, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-MM", 213, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-DD", 214, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-TYPE-DISP", 230, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-FMT-DB-POST-DT-CC", 231, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-FMT-DB-POST-DT-YY", 232, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-FMT-DB-POST-DT-MM", 233, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-FMT-DB-POST-DT-DD", 234, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-CFA-BILL-IND", 235, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-AEA-CD", 236, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-ACCESS-FEE-CD", 237, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-RESUB-DF-IND", 238, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-BCP-PROD-TYPE", 239, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-PLAN-OWNER-IND", 240, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-EXCLUDE-PER-USER", 241, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-EXCLUDE-PER-BLUECD", 242, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-INTL-CD", 243, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-STREAM-ADJ-IND", 244, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-INDEM-CUTBK-IND", 245, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-ECR-IND", 246, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-ACCT-TYPE-CD", 247, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-FMT-CONV-IND", 248, 1, FieldType.ALPHA),
-             new FieldSpec("FM21A-FILLER-1", 254, 1, FieldType.ALPHA)
+        new FieldSpec("FM21A-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM21A-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM21A-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM21A-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM21A-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM21A-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM21A-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM21A-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM21A-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM21A-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM21A-PROC-SITE-PLAN-CD", 26, 3, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-CD", 29, 3, ALPHA),
+        new FieldSpec("FM21A-CNTL-PLAN-CD", 32, 3, ALPHA),
+        new FieldSpec("FM21A-PROC-SITE-STA-CD", 35, 4, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-STA-CD", 39, 4, ALPHA),
+        new FieldSpec("FM21A-TRANSM-MODE-CD", 43, 1, ALPHA),
+        new FieldSpec("FM21A-REL-NUM", 44, 3, ALPHA),
+        new FieldSpec("FM21A-CLM-TYPE", 47, 2, ALPHA),
+        new FieldSpec("FM21A-DISP-CD", 49, 1, ALPHA),
+        new FieldSpec("FM21A-DISP-DT-CC", 50, 2, ALPHA),
+        new FieldSpec("FM21A-DISP-DT-YY", 52, 2, ALPHA),
+        new FieldSpec("FM21A-DISP-DT-MM", 54, 2, ALPHA),
+        new FieldSpec("FM21A-DISP-DT-DD", 56, 2, ALPHA),
+        new FieldSpec("FM21A-SCDF-TYPE-CD", 58, 1, ALPHA),
+        new FieldSpec("FM21A-PLAN-PAYER-CD", 59, 1, ALPHA),
+        new FieldSpec("FM21A-PMT-DISP-CD", 60, 1, ALPHA),
+        new FieldSpec("FM21A-ADJUD-STAT-IND", 61, 1, ALPHA),
+        new FieldSpec("FM21A-DT-PAID-CC", 62, 2, ALPHA),
+        new FieldSpec("FM21A-DT-PAID-YY", 64, 2, ALPHA),
+        new FieldSpec("FM21A-DT-PAID-MM", 66, 2, ALPHA),
+        new FieldSpec("FM21A-DT-PAID-DD", 68, 2, ALPHA),
+        new FieldSpec("FM21A-PMT-RSTRCT-IND", 70, 1, ALPHA),
+        new FieldSpec("FM21A-TYPE-BILL", 71, 3, ALPHA),
+        new FieldSpec("FM21A-INP-MED", 74, 1, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-CNTL-NUM", 75, 17, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-CLM-REF-NUM", 92, 17, ALPHA),
+        new FieldSpec("FM21A-PROC-SITE-CNTL-NUM", 109, 17, ALPHA),
+        new FieldSpec("FM21A-PREV-TOT-AMT-PAID", 126, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM21A-PREV-DISP-CC", 132, 2, ALPHA),
+        new FieldSpec("FM21A-PREV-DISP-YY", 134, 2, ALPHA),
+        new FieldSpec("FM21A-PREV-DISP-MM", 136, 2, ALPHA),
+        new FieldSpec("FM21A-PREV-DISP-DD", 138, 2, ALPHA),
+        new FieldSpec("FM21A-CREATE-DT-CC", 140, 2, ALPHA),
+        new FieldSpec("FM21A-CREATE-DT-YY", 142, 2, ALPHA),
+        new FieldSpec("FM21A-CREATE-DT-MM", 144, 2, ALPHA),
+        new FieldSpec("FM21A-CREATE-DT-DD", 146, 2, ALPHA),
+        new FieldSpec("FM21A-TRANS-IND", 148, 1, ALPHA),
+        new FieldSpec("FM21A-PLAN-PROF-STND-IND", 149, 1, ALPHA),
+        new FieldSpec("FM21A-STAT-CD", 150, 1, ALPHA),
+        new FieldSpec("FM21A-ERR-CD-1", 151, 5, ALPHA),
+        new FieldSpec("FM21A-ERR-CD-2", 156, 5, ALPHA),
+        new FieldSpec("FM21A-ERR-CD-3", 161, 5, ALPHA),
+        new FieldSpec("FM21A-ERR-CD-4", 166, 5, ALPHA),
+        new FieldSpec("FM21A-ERR-CD-5", 171, 5, ALPHA),
+        new FieldSpec("FM21A-EDIT-DT-CC", 176, 2, ALPHA),
+        new FieldSpec("FM21A-EDIT-DT-YY", 178, 2, ALPHA),
+        new FieldSpec("FM21A-EDIT-DT-MM", 180, 2, ALPHA),
+        new FieldSpec("FM21A-EDIT-DT-DD", 182, 2, ALPHA),
+        new FieldSpec("FM21A-ADJ-RSN-CD", 184, 2, ALPHA),
+        new FieldSpec("FM21A-NET-LIAB-AMT", 186, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM21A-CASH-REFND-IND", 192, 1, ALPHA),
+        new FieldSpec("FM21A-CFA-CD", 193, 1, ALPHA),
+        new FieldSpec("FM21A-LINE-BUS", 194, 1, ALPHA),
+        new FieldSpec("FM21A-RECYC-CTR", 195, 1, NUMERIC_TEXT),
+        new FieldSpec("FM21A-PLAN-PROF-ADJ-EDIT-IND", 196, 1, ALPHA),
+        new FieldSpec("FM21A-NAT-OOA-CD", 197, 1, ALPHA),
+        new FieldSpec("FM21A-PGM-CD", 198, 1, ALPHA),
+        new FieldSpec("FM21A-CNTL-PLAN-CFA-ACCT-CD", 199, 2, ALPHA),
+        new FieldSpec("FM21A-INVEST-IND", 201, 1, ALPHA),
+        new FieldSpec("FM21A-CARVE-OUT-IND", 202, 1, ALPHA),
+        new FieldSpec("FM21A-CARVE-OUT-DAY", 203, 3, NUMERIC_TEXT),
+        new FieldSpec("FM21A-REF-NUM-LOCAL-PLAN", 206, 3, ALPHA),
+        new FieldSpec("FM21A-REF-NUM-JULDT-CC", 209, 2, ALPHA),
+        new FieldSpec("FM21A-REF-NUM-JULDT-YY", 211, 2, ALPHA),
+        new FieldSpec("FM21A-REF-NUM-JULDT-DDD", 213, 3, ALPHA),
+        new FieldSpec("FM21A-REF-NUM-SEQUENCE", 216, 5, ALPHA),
+        new FieldSpec("FM21A-REF-NUM-SUFFIX", 221, 2, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-CC", 223, 2, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-YY", 225, 2, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-MM", 227, 2, ALPHA),
+        new FieldSpec("FM21A-LOC-PLAN-RCPT-DT-DD", 229, 2, ALPHA),
+        new FieldSpec("FM21A-TYPE-DISP", 231, 1, ALPHA),
+        new FieldSpec("FM21A-FMT-DB-POST-DT-CC", 232, 2, ALPHA),
+        new FieldSpec("FM21A-FMT-DB-POST-DT-YY", 234, 2, ALPHA),
+        new FieldSpec("FM21A-FMT-DB-POST-DT-MM", 236, 2, ALPHA),
+        new FieldSpec("FM21A-FMT-DB-POST-DT-DD", 238, 2, ALPHA),
+        new FieldSpec("FM21A-CFA-BILL-IND", 240, 1, ALPHA),
+        new FieldSpec("FM21A-AEA-CD", 241, 1, ALPHA),
+        new FieldSpec("FM21A-ACCESS-FEE-CD", 242, 1, ALPHA),
+        new FieldSpec("FM21A-RESUB-DF-IND", 243, 1, ALPHA),
+        new FieldSpec("FM21A-BCP-PROD-TYPE", 244, 1, ALPHA),
+        new FieldSpec("FM21A-PLAN-OWNER-IND", 245, 1, ALPHA),
+        new FieldSpec("FM21A-EXCLUDE-PER-USER", 246, 1, ALPHA),
+        new FieldSpec("FM21A-EXCLUDE-PER-BLUECD", 247, 1, ALPHA),
+        new FieldSpec("FM21A-INTL-CD", 248, 1, ALPHA),
+        new FieldSpec("FM21A-STREAM-ADJ-IND", 249, 1, ALPHA),
+        new FieldSpec("FM21A-INDEM-CUTBK-IND", 250, 1, ALPHA),
+        new FieldSpec("FM21A-ECR-IND", 251, 1, ALPHA),
+        new FieldSpec("FM21A-ACCT-TYPE-CD", 252, 1, ALPHA),
+        new FieldSpec("FM21A-FMT-CONV-IND", 253, 1, ALPHA),
+        new FieldSpec("FM21A-FILLER-1", 254, 2, ALPHA)
         );
-    
     public static final List<FieldSpec> FM22A = List.of(
-    		new FieldSpec("FM22A-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-BCBS-PROV-NUM", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-NAME", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-ADDR-LN-1", 70, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-CITY", 71, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-ST", 72, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-ZIP-CD-5", 73, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-ZIP-CD-4", 74, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-FED-TAX-ID-NUM", 121, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-TYPE-FED-TAX-ID-NUM", 122, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-CLASS-PROV-CLM", 123, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-REF-PROV-NUM", 124, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-PROV-NPI", 125, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-CUST-PRIMY-NTWK", 126, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-CUST-SCNDY-NTWK", 127, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-BOID", 128, 1, FieldType.ALPHA),
-            new FieldSpec("FM22A-FILLER-1", 168, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22A-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22A-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22A-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22A-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22A-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22A-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22A-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22A-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22A-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22A-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22A-BCBS-PROV-NUM", 26, 13, ALPHA),
+        new FieldSpec("FM22A-PROV-NAME", 39, 31, ALPHA),
+        new FieldSpec("FM22A-PROV-ADDR-LN-1", 70, 25, ALPHA),
+        new FieldSpec("FM22A-PROV-CITY", 95, 15, ALPHA),
+        new FieldSpec("FM22A-PROV-ST", 110, 2, ALPHA),
+        new FieldSpec("FM22A-PROV-ZIP-CD-5", 112, 5, ALPHA),
+        new FieldSpec("FM22A-PROV-ZIP-CD-4", 117, 4, ALPHA),
+        new FieldSpec("FM22A-FED-TAX-ID-NUM", 121, 9, ALPHA),
+        new FieldSpec("FM22A-TYPE-FED-TAX-ID-NUM", 130, 1, ALPHA),
+        new FieldSpec("FM22A-CLASS-PROV-CLM", 131, 1, ALPHA),
+        new FieldSpec("FM22A-REF-PROV-NUM", 132, 14, ALPHA),
+        new FieldSpec("FM22A-PROV-NPI", 146, 10, ALPHA),
+        new FieldSpec("FM22A-CUST-PRIMY-NTWK", 156, 4, ALPHA),
+        new FieldSpec("FM22A-CUST-SCNDY-NTWK", 160, 4, ALPHA),
+        new FieldSpec("FM22A-BOID", 164, 4, ALPHA),
+        new FieldSpec("FM22A-FILLER-1", 168, 88, ALPHA)
+    );
     public static final List<FieldSpec> FM22B = List.of(
-    		new FieldSpec("FM22B-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-CNTL-NUM", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-LAST-NAME", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-FIRST-NAME", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-MID-INIT", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-BRT-DT-CC", 77, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-BRT-DT-YY", 78, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-BRT-DT-MM", 79, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-BRT-DT-DD", 80, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-SEX", 81, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-PAT-REL-SUB", 82, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-CORR-PRI-PAYER-NM", 83, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-OTH-SUB-LAST-NM", 104, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-OTH-SUB-MDL-INIT", 105, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-OTH-SUB-FIRST-NM", 106, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-OTH-SUB-ID-NUM", 107, 1, FieldType.ALPHA),
-            new FieldSpec("FM22B-FILLER-1", 152, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22B-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22B-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22B-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22B-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22B-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22B-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22B-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22B-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22B-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22B-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22B-PAT-CNTL-NUM", 26, 20, ALPHA),
+        new FieldSpec("FM22B-PAT-LAST-NAME", 46, 20, ALPHA),
+        new FieldSpec("FM22B-PAT-FIRST-NAME", 66, 10, ALPHA),
+        new FieldSpec("FM22B-PAT-MID-INIT", 76, 1, ALPHA),
+        new FieldSpec("FM22B-PAT-BRT-DT-CC", 77, 2, ALPHA),
+        new FieldSpec("FM22B-PAT-BRT-DT-YY", 79, 2, ALPHA),
+        new FieldSpec("FM22B-PAT-BRT-DT-MM", 81, 2, ALPHA),
+        new FieldSpec("FM22B-PAT-BRT-DT-DD", 83, 2, ALPHA),
+        new FieldSpec("FM22B-PAT-SEX", 85, 1, ALPHA),
+        new FieldSpec("FM22B-PAT-REL-SUB", 86, 2, ALPHA),
+        new FieldSpec("FM22B-CORR-PRI-PAYER-NM", 88, 16, ALPHA),
+        new FieldSpec("FM22B-OTH-SUB-LAST-NM", 104, 20, ALPHA),
+        new FieldSpec("FM22B-OTH-SUB-MDL-INIT", 124, 1, ALPHA),
+        new FieldSpec("FM22B-OTH-SUB-FIRST-NM", 125, 10, ALPHA),
+        new FieldSpec("FM22B-OTH-SUB-ID-NUM", 135, 17, ALPHA),
+        new FieldSpec("FM22B-FILLER-1", 152, 104, ALPHA)
+    );
     public static final List<FieldSpec> FM22C = List.of(
-    		new FieldSpec("FM22C-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ID-ACTUAL-PFX-1-3", 11, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ID-ACTUAL-SUFX-4-17", 12, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ID-INP-PFX-1-3", 13, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ID-INP-SUFX-4-17", 14, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-GRP-NUM", 15, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-LAST-NAME", 16, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-FIRST-NAME", 17, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-MID-INIT", 18, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ADDR-LN-1", 19, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ADDR-LN-2", 20, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-CITY", 21, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ST", 22, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ZIP-CD-5", 23, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-SUB-ZIP-CD-4", 24, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-ASO-IND", 25, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-PRFX-ACCT-ID-IND", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-PRFX-ACCT-ID", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM22C-FILLER-1", 28, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22C-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22C-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22C-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22C-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22C-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22C-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22C-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22C-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22C-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22C-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22C-SUB-ID-ACTUAL-PFX-1-3", 26, 3, ALPHA),
+        new FieldSpec("FM22C-SUB-ID-ACTUAL-SUFX-4-17", 29, 14, ALPHA),
+        new FieldSpec("FM22C-SUB-ID-INP-PFX-1-3", 43, 3, ALPHA),
+        new FieldSpec("FM22C-SUB-ID-INP-SUFX-4-17", 46, 14, ALPHA),
+        new FieldSpec("FM22C-SUB-GRP-NUM", 60, 9, ALPHA),
+        new FieldSpec("FM22C-SUB-LAST-NAME", 69, 20, ALPHA),
+        new FieldSpec("FM22C-SUB-FIRST-NAME", 89, 10, ALPHA),
+        new FieldSpec("FM22C-SUB-MID-INIT", 99, 1, ALPHA),
+        new FieldSpec("FM22C-SUB-ADDR-LN-1", 100, 25, ALPHA),
+        new FieldSpec("FM22C-SUB-ADDR-LN-2", 125, 25, ALPHA),
+        new FieldSpec("FM22C-SUB-CITY", 150, 15, ALPHA),
+        new FieldSpec("FM22C-SUB-ST", 165, 2, ALPHA),
+        new FieldSpec("FM22C-SUB-ZIP-CD-5", 167, 5, ALPHA),
+        new FieldSpec("FM22C-SUB-ZIP-CD-4", 172, 4, ALPHA),
+        new FieldSpec("FM22C-ASO-IND", 176, 1, ALPHA),
+        new FieldSpec("FM22C-PRFX-ACCT-ID-IND", 177, 1, ALPHA),
+        new FieldSpec("FM22C-PRFX-ACCT-ID", 178, 20, ALPHA),
+        new FieldSpec("FM22C-FILLER-1", 198, 58, ALPHA)
+    );
     public static final List<FieldSpec> FM22E = List.of(
-    		new FieldSpec("FM22E-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REP-PAYEE-STR-ADDR", 11, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REP-PAYEE-CITY", 12, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REP-PAYEE-ST", 13, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REP-PAYEE-ZIP-CD-5", 14, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REP-PAYEE-ZIP-CD-4", 15, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-REP-PAYEE-NAME", 16, 1, FieldType.ALPHA),
-            new FieldSpec("FM22E-FILLER-1", 17, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22E-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22E-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22E-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22E-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22E-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22E-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22E-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22E-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22E-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22E-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22E-REP-PAYEE-STR-ADDR", 26, 25, ALPHA),
+        new FieldSpec("FM22E-REP-PAYEE-CITY", 51, 15, ALPHA),
+        new FieldSpec("FM22E-REP-PAYEE-ST", 66, 2, ALPHA),
+        new FieldSpec("FM22E-REP-PAYEE-ZIP-CD-5", 68, 5, ALPHA),
+        new FieldSpec("FM22E-REP-PAYEE-ZIP-CD-4", 73, 4, ALPHA),
+        new FieldSpec("FM22E-REP-PAYEE-NAME", 77, 31, ALPHA),
+        new FieldSpec("FM22E-FILLER-1", 108, 148, ALPHA)
+    );
     public static final List<FieldSpec> FM22F = List.of(
-    		new FieldSpec("FM22F-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-MED-PROV-NUM", 11, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-ADM-DT-CC", 12, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-ADM-DT-YY", 13, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-ADM-DT-MM", 14, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-ADM-DT-DD", 15, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-FROM-DT-CC", 16, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-FROM-DT-YY", 17, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-FROM-DT-MM", 18, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-FROM-DT-DD", 19, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-TO-DT-CC", 20, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-TO-DT-YY", 21, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-TO-DT-MM", 22, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-STMT-COV-TO-DT-DD", 23, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-POS-IND", 24, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-PAYER-NM", 25, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-PAYER-ADDR", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-PAYER-CITY", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-PAYER-ST", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-PAYER-ZIP-CD", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-PAYER-TAX-ID", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM22F-FILLER-1", 31, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22F-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22F-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22F-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22F-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22F-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22F-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22F-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22F-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22F-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22F-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22F-MED-PROV-NUM", 26, 13, ALPHA),
+        new FieldSpec("FM22F-ADM-DT-CC", 39, 2, ALPHA),
+        new FieldSpec("FM22F-ADM-DT-YY", 41, 2, ALPHA),
+        new FieldSpec("FM22F-ADM-DT-MM", 43, 2, ALPHA),
+        new FieldSpec("FM22F-ADM-DT-DD", 45, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-FROM-DT-CC", 47, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-FROM-DT-YY", 49, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-FROM-DT-MM", 51, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-FROM-DT-DD", 53, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-TO-DT-CC", 55, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-TO-DT-YY", 57, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-TO-DT-MM", 59, 2, ALPHA),
+        new FieldSpec("FM22F-STMT-COV-TO-DT-DD", 61, 2, ALPHA),
+        new FieldSpec("FM22F-POS-IND", 63, 1, ALPHA),
+        new FieldSpec("FM22F-PAYER-NM", 64, 50, ALPHA),
+        new FieldSpec("FM22F-PAYER-ADDR", 114, 30, ALPHA),
+        new FieldSpec("FM22F-PAYER-CITY", 144, 15, ALPHA),
+        new FieldSpec("FM22F-PAYER-ST", 159, 2, ALPHA),
+        new FieldSpec("FM22F-PAYER-ZIP-CD", 161, 9, ALPHA),
+        new FieldSpec("FM22F-PAYER-TAX-ID", 170, 9, ALPHA),
+        new FieldSpec("FM22F-FILLER-1", 179, 77, ALPHA)
+    );
     public static final List<FieldSpec> FM22G = List.of(
-    		new FieldSpec("FM22G-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-POS-IND", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PERF-PROV-NPI-CLM", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PAYER-NM", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PAYER-ADDR", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PAYER-CITY", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PAYER-ST", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PAYER-ZIP-CD", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-PAYER-TAX-ID", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM22G-FILLER-1", 152, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22G-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22G-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22G-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22G-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22G-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22G-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22G-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22G-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22G-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22G-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22G-POS-IND", 26, 1, ALPHA),
+        new FieldSpec("FM22G-PERF-PROV-NPI-CLM", 27, 10, ALPHA),
+        new FieldSpec("FM22G-PAYER-NM", 37, 50, ALPHA),
+        new FieldSpec("FM22G-PAYER-ADDR", 87, 30, ALPHA),
+        new FieldSpec("FM22G-PAYER-CITY", 117, 15, ALPHA),
+        new FieldSpec("FM22G-PAYER-ST", 132, 2, ALPHA),
+        new FieldSpec("FM22G-PAYER-ZIP-CD", 134, 9, ALPHA),
+        new FieldSpec("FM22G-PAYER-TAX-ID", 143, 9, ALPHA),
+        new FieldSpec("FM22G-FILLER-1", 152, 104, ALPHA)
+    );
     public static final List<FieldSpec> FM22H = List.of(
-    		new FieldSpec("FM22H-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM22H-FILLER-1", 26, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM22H-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM22H-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM22H-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM22H-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM22H-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM22H-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM22H-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM22H-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM22H-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM22H-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM22H-FILLER-1", 26, 230, ALPHA)
+    );
     public static final List<FieldSpec> FM23A = List.of(
-            new FieldSpec("FM23A-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("TIMES", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-BNFIT-MGMT-RED-DAY", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-DED-AMT", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-CO-INS-AMT", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-CO-PAY-AMT", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-CHRG-ALL-SERV", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-COV-CHRG", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-NON-COV-CHRG", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-AMT-APPV-PMT", 34, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PAT-LIAB-AMT", 35, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PAT-AMT-PAID", 36, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-1", 109, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-1", 110, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-2", 111, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-2", 112, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-3", 113, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-3", 114, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-4", 115, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-4", 116, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-5", 117, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-5", 118, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-CASE-MGMT-IND", 161, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-6", 162, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-6", 163, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-7", 164, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-7", 165, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-8", 166, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-8", 167, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-9", 168, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-9", 169, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-10", 170, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-TOT-PMT-RED-AMT-10", 171, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-PRIM-IND", 202, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-COB-CALC-MTD", 203, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-COB-SAV-AMT", 204, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-SEC-PAYOR-PRC-QUAL", 205, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-INC-CALC-DISC-AMT", 206, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-MPPQ-CD-ASGN", 207, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-MPPQ-CD-UNASGN", 208, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-MED-ASGNMT-IND", 209, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-INCL-MAX-SUPP-AMT", 210, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-EST-IND", 211, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-DEFLT-CLM-RSLTN-IND", 212, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-INIT-TRANSM-MODE-CD", 213, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-COV-EXP-DATE-CC", 214, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-COV-EXP-DATE-YY", 215, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-COV-EXP-DATE-MM", 216, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-COV-EXP-DATE-DD", 217, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-EXCESS-DAYS", 218, 1, FieldType.ALPHA),
-            new FieldSpec("FM23A-FILLER-1", 242, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM23A-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM23A-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM23A-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM23A-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM23A-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM23A-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM23A-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM23A-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM23A-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM23A-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM23A-DF-MSG-CD-CLM-1", 26, 4, ALPHA),
+        new FieldSpec("FM23A-DF-MSG-CD-CLM-2", 30, 4, ALPHA),
+        new FieldSpec("FM23A-DF-MSG-CD-CLM-3", 34, 4, ALPHA),
+        new FieldSpec("FM23A-DF-MSG-CD-CLM-4", 38, 4, ALPHA),
+        new FieldSpec("FM23A-DF-MSG-CD-CLM-5", 42, 4, ALPHA),
+        new FieldSpec("FM23A-TOT-BNFIT-MGMT-RED-DAY", 46, 3, NUMERIC_TEXT),
+        new FieldSpec("FM23A-TOT-DED-AMT", 49, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-CO-INS-AMT", 55, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-CO-PAY-AMT", 61, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-AMT-PAID-OTH-CARR", 67, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-CHRG-ALL-SERV", 73, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-COV-CHRG", 79, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-NON-COV-CHRG", 85, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-AMT-APPV-PMT", 91, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PAT-LIAB-AMT", 97, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PAT-AMT-PAID", 103, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-1", 109, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-1", 111, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-2", 117, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-2", 119, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-3", 125, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-3", 127, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-4", 133, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-4", 135, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-5", 141, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-5", 143, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-SUPPL-PMT-AMT-1-CLM", 149, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-SUPPL-PMT-AMT-2-CLM", 155, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-CASE-MGMT-IND", 161, 1, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-6", 162, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-6", 164, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-7", 170, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-7", 172, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-8", 178, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-8", 180, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-9", 186, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-9", 188, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-TOT-PMT-RED-RSN-CD-10", 194, 2, ALPHA),
+        new FieldSpec("FM23A-TOT-PMT-RED-AMT-10", 196, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-PRIM-IND", 202, 1, ALPHA),
+        new FieldSpec("FM23A-COB-CALC-MTD", 203, 3, ALPHA),
+        new FieldSpec("FM23A-COB-SAV-AMT", 206, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-SEC-PAYOR-PRC-QUAL", 212, 1, ALPHA),
+        new FieldSpec("FM23A-INC-CALC-DISC-AMT", 213, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-MPPQ-CD-ASGN", 219, 1, ALPHA),
+        new FieldSpec("FM23A-MPPQ-CD-UNASGN", 220, 1, ALPHA),
+        new FieldSpec("FM23A-MED-ASGNMT-IND", 221, 1, ALPHA),
+        new FieldSpec("FM23A-INCL-MAX-SUPP-AMT", 222, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23A-EST-IND", 228, 1, ALPHA),
+        new FieldSpec("FM23A-DEFLT-CLM-RSLTN-IND", 229, 1, ALPHA),
+        new FieldSpec("FM23A-INIT-TRANSM-MODE-CD", 230, 1, ALPHA),
+        new FieldSpec("FM23A-COV-EXP-DATE-CC", 231, 2, ALPHA),
+        new FieldSpec("FM23A-COV-EXP-DATE-YY", 233, 2, ALPHA),
+        new FieldSpec("FM23A-COV-EXP-DATE-MM", 235, 2, ALPHA),
+        new FieldSpec("FM23A-COV-EXP-DATE-DD", 237, 2, ALPHA),
+        new FieldSpec("FM23A-EXCESS-DAYS", 239, 3, NUMERIC_TEXT),
+        new FieldSpec("FM23A-FILLER-1", 242, 14, ALPHA)
+    );
     public static final List<FieldSpec> FM23C = List.of(
-    		new FieldSpec("FM23C-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-PRC-MTD-CLM", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-RULE-NUM-PRIM-CLM-1-3", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-RULE-NUM-PRIM-CLM-4-6", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-RULE-NUM-SEC-CLM-1-3", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-RULE-NUM-SEC-CLM-4-6", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-PCT-FCTR-CLM", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-TOT-COV-ANC-CHRG", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-TOT-DAYS-APPV-PMT", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-ACCESS-FEE-PCT", 58, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-ACCESS-FEE-AMT", 59, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-ADMIN-EXP-ALLW", 60, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-CLM-LIAB-AMT", 61, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-ALLW-PREPRC-AMT", 62, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-NON-COV-DAYS", 89, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-LNG-STAY", 90, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-FEE-SRC-CD", 91, 1, FieldType.ALPHA),
-            new FieldSpec("FM23C-FILLER-1", 106, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM23C-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM23C-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM23C-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM23C-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM23C-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM23C-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM23C-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM23C-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM23C-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM23C-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM23C-PRC-MTD-CLM", 26, 2, ALPHA),
+        new FieldSpec("FM23C-RULE-NUM-PRIM-CLM-1-3", 28, 3, ALPHA),
+        new FieldSpec("FM23C-RULE-NUM-PRIM-CLM-4-6", 31, 3, ALPHA),
+        new FieldSpec("FM23C-RULE-NUM-SEC-CLM-1-3", 34, 3, ALPHA),
+        new FieldSpec("FM23C-RULE-NUM-SEC-CLM-4-6", 37, 3, ALPHA),
+        new FieldSpec("FM23C-PCT-FCTR-CLM", 40, 3, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-TOT-COV-ACCOM-CHRG", 43, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-TOT-COV-ANC-CHRG", 49, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-TOT-DAYS-APPV-PMT", 55, 3, NUMERIC_TEXT),
+        new FieldSpec("FM23C-ACCESS-FEE-PCT", 58, 3, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-ACCESS-FEE-AMT", 61, 5, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-ADMIN-EXP-ALLW", 66, 5, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-CLM-LIAB-AMT", 71, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-ALLW-PREPRC-AMT", 77, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-OUT-NETW-SAV-PEN-AMT", 83, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-NON-COV-DAYS", 89, 4, NUMERIC_TEXT),
+        new FieldSpec("FM23C-LNG-STAY", 93, 3, NUMERIC_TEXT),
+        new FieldSpec("FM23C-TOT-PVT-RM-NONCOV-AMT", 96, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-NON-STD-ACC-FEE-PCT", 102, 3, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23C-NON-STD-ACC-FEE-PCT-X", 102, 3, ALPHA), 
+        new FieldSpec("FM23C-FEE-SRC-CD", 105, 1, ALPHA),
+        new FieldSpec("FM23C-FILLER-1", 106, 150, ALPHA)
+    );
     public static final List<FieldSpec> FM23D = List.of(
-    		new FieldSpec("FM23D-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-TOT-COV-SERV-CHRG", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-INCUR-DT-CC", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-INCUR-DT-YY", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-INCUR-DT-MM", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-INCUR-DT-DD", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-ACCESS-FEE-PCT", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-ACCESS-FEE-AMT", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-ADMIN-EXP-ALLW", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-CLM-LIAB-AMT", 34, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-ALLW-PREPRC-AMT", 35, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-PERF-PROV-POS-IND-CLM", 71, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-PREDETRMN-BNFT-ID-CLM", 72, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-FEE-SRC-CD", 73, 1, FieldType.ALPHA),
-            new FieldSpec("FM23D-FILLER-1", 106, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM23D-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM23D-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM23D-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM23D-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM23D-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM23D-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM23D-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM23D-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM23D-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM23D-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM23D-TOT-COV-SERV-CHRG", 26, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-INCUR-DT-CC", 32, 2, ALPHA),
+        new FieldSpec("FM23D-INCUR-DT-YY", 34, 2, ALPHA),
+        new FieldSpec("FM23D-INCUR-DT-MM", 36, 2, ALPHA),
+        new FieldSpec("FM23D-INCUR-DT-DD", 38, 2, ALPHA),
+        new FieldSpec("FM23D-ACCESS-FEE-PCT", 40, 3, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-ACCESS-FEE-AMT", 43, 5, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-ADMIN-EXP-ALLW", 48, 5, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-CLM-LIAB-AMT", 53, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-ALLW-PREPRC-AMT", 59, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-OUT-NETW-SAV-PEN-AMT", 65, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-PERF-PROV-POS-IND-CLM", 71, 1, ALPHA),
+        new FieldSpec("FM23D-PREDETRMN-BNFT-ID-CLM", 72, 30, ALPHA),
+        new FieldSpec("FM23D-NON-STD-ACC-FEE-PCT", 102, 3, PACKED_DECIMAL, 2),
+        new FieldSpec("FM23D-NON-STD-ACC-FEE-PCT-X", 102, 3, ALPHA), 
+        new FieldSpec("FM23D-FEE-SRC-CD", 105, 1, ALPHA),
+        new FieldSpec("FM23D-FILLER-1", 106, 150, ALPHA)
+    );
     public static final List<FieldSpec> FM24A = List.of(
-            new FieldSpec("FM24A-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-DF-MSG-CD-LN", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-SERV-CHRG", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-COV-CHRG", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-NON-COV-CHRG", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-NUM-SERV", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PAT-LIAB-AMT", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-BNFT-MGMT-RED-DAYS", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-DED-AMT", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-CO-INS-AMT", 34, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-CO-PAY-AMT", 35, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-AMT-PAID-OTH-CARR", 36, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-AMT-EXCD-MAX", 37, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-AMT-APPV-PMT", 38, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-1", 97, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-1", 98, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-2", 99, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-2", 100, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-3", 101, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-3", 102, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-4", 103, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-4", 104, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-5", 105, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-5", 106, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-ADDL-LN-BUS-IND", 137, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PRC-MTD-LN", 138, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-RULE-NUM-LN-1-3", 139, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-RULE-NUM-LN-4-6", 140, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-6", 161, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-6", 162, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-7", 163, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-7", 164, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-8", 165, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-8", 166, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-9", 167, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-9", 168, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-RSN-CD-10", 169, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PMT-RED-AMT-10", 170, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-CALC-DISC-AMT", 201, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-PERF-PROV-NPI-LN", 202, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-MAX-SUPP-AMT", 203, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-INCL-GROUPING-NBR", 204, 1, FieldType.ALPHA),
-            new FieldSpec("FM24A-FILLER-1", 225, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM24A-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM24A-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM24A-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM24A-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM24A-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM24A-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM24A-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM24A-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM24A-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM24A-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM24A-DF-MSG-CD-LN", 26, 4, ALPHA),
+        new FieldSpec("FM24A-SERV-CHRG", 30, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-COV-CHRG", 36, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-NON-COV-CHRG", 42, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-NUM-SERV", 48, 4, NUMERIC_TEXT),
+        new FieldSpec("FM24A-PAT-LIAB-AMT", 52, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-BNFT-MGMT-RED-DAYS", 58, 3, NUMERIC_TEXT),
+        new FieldSpec("FM24A-DED-AMT", 61, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-CO-INS-AMT", 67, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-CO-PAY-AMT", 73, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-AMT-PAID-OTH-CARR", 79, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-AMT-EXCD-MAX", 85, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-AMT-APPV-PMT", 91, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-1", 97, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-1", 99, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-2", 105, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-2", 107, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-3", 113, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-3", 115, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-4", 121, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-4", 123, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-5", 129, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-5", 131, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PCT-FCTR-LN", 137, 3, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-ADDL-LN-BUS-IND", 140, 1, ALPHA),
+        new FieldSpec("FM24A-PRC-MTD-LN", 141, 2, ALPHA),
+        new FieldSpec("FM24A-RULE-NUM-LN-1-3", 143, 3, ALPHA),
+        new FieldSpec("FM24A-RULE-NUM-LN-4-6", 146, 3, ALPHA),
+        new FieldSpec("FM24A-SUPPL-PMT-AMT-1-LN", 149, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-SUPPL-PMT-AMT-2-LN", 155, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-6", 161, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-6", 163, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-7", 169, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-7", 171, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-8", 177, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-8", 179, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-9", 185, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-9", 187, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PMT-RED-RSN-CD-10", 193, 2, ALPHA),
+        new FieldSpec("FM24A-PMT-RED-AMT-10", 195, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-CALC-DISC-AMT", 201, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-PERF-PROV-NPI-LN", 207, 10, ALPHA),
+        new FieldSpec("FM24A-MAX-SUPP-AMT", 217, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24A-INCL-GROUPING-NBR", 223, 2, ALPHA),
+        new FieldSpec("FM24A-FILLER-1", 225, 31, ALPHA)
+    );
     public static final List<FieldSpec> FM24B = List.of(
-    		new FieldSpec("FM24B-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-DAYS-APPV-PMT", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-REV-CD", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-ACCOM-RATE", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-CAP-IND", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-LOC-PLAN-REF-NUM", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-POS-PRC-LEV-IND", 65, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-PREATH-PRECRT-STAT-IND", 66, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-REF-STAT-IND", 67, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-REF-PCP-IND", 68, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-REVIEW-DETER-COND-CD", 69, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-CNTL-PLAN-AUTH-NUM", 70, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-CNTL-PLAN-REF-NUM", 71, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-NON-COV-DAYS", 72, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-HCPCS-PROC-CD", 73, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-HCPCS-PROC-CD-MOD-1", 74, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-HCPCS-PROC-CD-MOD-2", 75, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-PVT-RM-NONCOV-AMT", 76, 1, FieldType.ALPHA),
-            new FieldSpec("FM24B-FILLER-1", 141, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM24B-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM24B-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM24B-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM24B-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM24B-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM24B-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM24B-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM24B-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM24B-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM24B-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM24B-DAYS-APPV-PMT", 26, 3, NUMERIC_TEXT),
+        new FieldSpec("FM24B-REV-CD", 29, 4, NUMERIC_TEXT),
+        new FieldSpec("FM24B-ACCOM-RATE", 33, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24B-CAP-IND", 39, 1, ALPHA),
+        new FieldSpec("FM24B-LOC-PLAN-REF-NUM", 40, 25, ALPHA),
+        new FieldSpec("FM24B-POS-PRC-LEV-IND", 65, 1, ALPHA),
+        new FieldSpec("FM24B-PREATH-PRECRT-STAT-IND", 66, 1, ALPHA),
+        new FieldSpec("FM24B-REF-STAT-IND", 67, 1, ALPHA),
+        new FieldSpec("FM24B-REF-PCP-IND", 68, 2, ALPHA),
+        new FieldSpec("FM24B-REVIEW-DETER-COND-CD", 70, 2, ALPHA),
+        new FieldSpec("FM24B-CNTL-PLAN-AUTH-NUM", 72, 25, ALPHA),
+        new FieldSpec("FM24B-CNTL-PLAN-REF-NUM", 97, 25, ALPHA),
+        new FieldSpec("FM24B-NON-COV-DAYS", 122, 4, NUMERIC_TEXT),
+        new FieldSpec("FM24B-HCPCS-PROC-CD", 126, 5, ALPHA),
+        new FieldSpec("FM24B-HCPCS-PROC-CD-MOD-1", 131, 2, ALPHA),
+        new FieldSpec("FM24B-HCPCS-PROC-CD-MOD-2", 133, 2, ALPHA),
+        new FieldSpec("FM24B-PVT-RM-NONCOV-AMT", 135, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24B-FILLER-1", 141, 115, ALPHA)
+    );
     public static final List<FieldSpec> FM24C = List.of(
-            new FieldSpec("FM24C-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-TYPE-SERV", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-START-CC", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-START-YY", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-START-MM", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-START-DD", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-END-CC", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-END-YY", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-END-MM", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-DT-SERV-END-DD", 34, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-HCPCS-PROC-CD", 45, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-HCPCS-PROC-CD-MOD-1", 46, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-HCPCS-PROC-CD-MOD-2", 47, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-CAP-IND", 48, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-LOC-PLAN-REF-NUM", 49, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-POS-PRC-LEV-IND", 80, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-PREATH-PRECRT-STAT-IND", 81, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-REF-STAT-IND", 82, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-PERF-PCP-IND", 83, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-REF-PCP-IND", 84, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-REVIEW-DETER-COND-CD", 85, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-PERF-PROV-POS-IND-LN", 86, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-CNTL-PLAN-AUTH-NUM", 89, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-CNTL-PLAN-REF-NUM", 90, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-CLASS-PROV-LN", 139, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-PREDETRMN-BNFT-IND", 140, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-PREDETRMN-BNFT-ID-LN", 141, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-PREDETRMN-AMT", 142, 1, FieldType.ALPHA),
-            new FieldSpec("FM24C-FILLER-1", 177, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM24C-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM24C-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM24C-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM24C-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM24C-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM24C-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM24C-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM24C-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM24C-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM24C-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM24C-TYPE-SERV", 26, 3, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-START-CC", 29, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-START-YY", 31, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-START-MM", 33, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-START-DD", 35, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-END-CC", 37, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-END-YY", 39, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-END-MM", 41, 2, ALPHA),
+        new FieldSpec("FM24C-DT-SERV-END-DD", 43, 2, ALPHA),
+        new FieldSpec("FM24C-HCPCS-PROC-CD", 45, 5, ALPHA),
+        new FieldSpec("FM24C-HCPCS-PROC-CD-MOD-1", 50, 2, ALPHA),
+        new FieldSpec("FM24C-HCPCS-PROC-CD-MOD-2", 52, 2, ALPHA),
+        new FieldSpec("FM24C-CAP-IND", 54, 1, ALPHA),
+        new FieldSpec("FM24C-LOC-PLAN-REF-NUM", 55, 25, ALPHA),
+        new FieldSpec("FM24C-POS-PRC-LEV-IND", 80, 1, ALPHA),
+        new FieldSpec("FM24C-PREATH-PRECRT-STAT-IND", 81, 1, ALPHA),
+        new FieldSpec("FM24C-REF-STAT-IND", 82, 1, ALPHA),
+        new FieldSpec("FM24C-PERF-PCP-IND", 83, 1, ALPHA),
+        new FieldSpec("FM24C-REF-PCP-IND", 84, 2, ALPHA),
+        new FieldSpec("FM24C-REVIEW-DETER-COND-CD", 86, 2, ALPHA),
+        new FieldSpec("FM24C-PERF-PROV-POS-IND-LN", 88, 1, ALPHA),
+        new FieldSpec("FM24C-CNTL-PLAN-AUTH-NUM", 89, 25, ALPHA),
+        new FieldSpec("FM24C-CNTL-PLAN-REF-NUM", 114, 25, ALPHA),
+        new FieldSpec("FM24C-CLASS-PROV-LN", 139, 1, ALPHA),
+        new FieldSpec("FM24C-PREDETRMN-BNFT-IND", 140, 1, ALPHA),
+        new FieldSpec("FM24C-PREDETRMN-BNFT-ID-LN", 141, 30, ALPHA),
+        new FieldSpec("FM24C-PREDETRMN-AMT", 171, 6, PACKED_DECIMAL, 2),
+        new FieldSpec("FM24C-FILLER-1", 177, 79, ALPHA)
+    );
     public static final List<FieldSpec> FM24D = List.of(
-    		new FieldSpec("FM24D-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM24D-FILLER-1", 101, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM24D-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM24D-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM24D-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM24D-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM24D-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM24D-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM24D-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM24D-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM24D-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM24D-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM24D-HEALTH-POLICY-ID-1", 26, 15, ALPHA),
+        new FieldSpec("FM24D-HEALTH-POLICY-ID-2", 41, 15, ALPHA),
+        new FieldSpec("FM24D-HEALTH-POLICY-ID-3", 56, 15, ALPHA),
+        new FieldSpec("FM24D-HEALTH-POLICY-ID-4", 71, 15, ALPHA),
+        new FieldSpec("FM24D-HEALTH-POLICY-ID-5", 86, 15, ALPHA),
+        new FieldSpec("FM24D-FILLER-1", 101, 155, ALPHA)
+    );
     public static final List<FieldSpec> FM28A = List.of(
-    		new FieldSpec("FM28A-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SPEC-NOTE-TRNSM-IND", 11, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SPEC-NOTE-CD", 12, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-SPEC-NOTE-DATA", 13, 1, FieldType.ALPHA),
-            new FieldSpec("FM28A-FILLER-1", 14, 1, FieldType.ALPHA)
-            );
-    
+        new FieldSpec("FM28A-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM28A-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM28A-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM28A-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM28A-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM28A-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM28A-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM28A-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM28A-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM28A-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM28A-SPEC-NOTE-TRNSM-IND", 26, 1, ALPHA),
+        new FieldSpec("FM28A-SPEC-NOTE-CD", 27, 5, ALPHA),
+        new FieldSpec("FM28A-SPEC-NOTE-DATA", 32, 215, ALPHA),
+        new FieldSpec("FM28A-FILLER-1", 247, 9, ALPHA)
+    );
     public static final List<FieldSpec> FM29A = List.of(
-            new FieldSpec("FM29A-SER-NUM-LOCAL-PLAN", 1, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SER-NUM-JULDT-CC", 2, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SER-NUM-JULDT-YY", 3, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SER-NUM-JULDT-DDD", 4, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SER-NUM-SEQUENCE", 5, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SER-NUM-SUFFIX", 6, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-TRANS-ID", 7, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-TRANS-QUAL", 8, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE", 9, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SEQ-NUM", 10, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-CLERK-NUM", 11, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-DT-LAST-ACT-CC", 12, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-DT-LAST-ACT-YY", 13, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-DT-LAST-ACT-MM", 14, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-DT-LAST-ACT-DD", 15, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-TIME-LAST-ACT-HH", 16, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-TIME-LAST-ACT-MM", 17, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ONL-TIME-LAST-ACT-SS", 18, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-CHK-VCHR-NUM", 19, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-CHK-DT-CC", 20, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-CHK-DT-YY", 21, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-CHK-DT-MM", 22, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-CHK-DT-DD", 23, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-BANK-ACCT-NUM", 24, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-PHY-REC-CNT", 25, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-2X-CNT", 26, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-3X-CNT", 27, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-4A-CNT", 28, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-4B-CNT", 29, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-4C-CNT", 30, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-4D-CNT", 31, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-4X-CNT", 32, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-REC-TYPE-8X-CNT", 33, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SYS-CRT-CD", 34, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-SYS-UPDT-CD", 35, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-BLUE2-USER-ID", 36, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ADJ-RCPT-DT-CC", 37, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ADJ-RCPT-DT-YY", 38, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ADJ-RCPT-DT-MM", 39, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-ADJ-RCPT-DT-DD", 40, 1, FieldType.ALPHA),
-            new FieldSpec("FM29A-FILLER-1", 41, 1, FieldType.ALPHA)
-            );
-	
-    /** Registry: record type -> layout. */
+        new FieldSpec("FM29A-SER-NUM-LOCAL-PLAN", 1, 3, ALPHA),
+        new FieldSpec("FM29A-SER-NUM-JULDT-CC", 4, 2, ALPHA),
+        new FieldSpec("FM29A-SER-NUM-JULDT-YY", 6, 2, ALPHA),
+        new FieldSpec("FM29A-SER-NUM-JULDT-DDD", 8, 3, ALPHA),
+        new FieldSpec("FM29A-SER-NUM-SEQUENCE", 11, 5, ALPHA),
+        new FieldSpec("FM29A-SER-NUM-SUFFIX", 16, 2, ALPHA),
+        new FieldSpec("FM29A-TRANS-ID", 18, 2, ALPHA),
+        new FieldSpec("FM29A-TRANS-QUAL", 20, 2, ALPHA),
+        new FieldSpec("FM29A-REC-TYPE", 22, 2, ALPHA),
+        new FieldSpec("FM29A-SEQ-NUM", 24, 2, BINARY),
+        new FieldSpec("FM29A-CLERK-NUM", 26, 4, ALPHA),
+        new FieldSpec("FM29A-ONL-DT-LAST-ACT-CC", 30, 2, ALPHA),
+        new FieldSpec("FM29A-ONL-DT-LAST-ACT-YY", 32, 2, ALPHA),
+        new FieldSpec("FM29A-ONL-DT-LAST-ACT-MM", 34, 2, ALPHA),
+        new FieldSpec("FM29A-ONL-DT-LAST-ACT-DD", 36, 2, ALPHA),
+        new FieldSpec("FM29A-ONL-TIME-LAST-ACT-HH", 38, 2, ALPHA),
+        new FieldSpec("FM29A-ONL-TIME-LAST-ACT-MM", 40, 2, ALPHA),
+        new FieldSpec("FM29A-ONL-TIME-LAST-ACT-SS", 42, 2, ALPHA),
+        new FieldSpec("FM29A-CHK-VCHR-NUM", 44, 10, ALPHA),
+        new FieldSpec("FM29A-CHK-DT-CC", 54, 2, ALPHA),
+        new FieldSpec("FM29A-CHK-DT-YY", 56, 2, ALPHA),
+        new FieldSpec("FM29A-CHK-DT-MM", 58, 2, ALPHA),
+        new FieldSpec("FM29A-CHK-DT-DD", 60, 2, ALPHA),
+        new FieldSpec("FM29A-BANK-ACCT-NUM", 62, 15, ALPHA),
+        new FieldSpec("FM29A-PHY-REC-CNT", 77, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-2X-CNT", 81, 2, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-3X-CNT", 83, 2, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-4A-CNT", 85, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-4B-CNT", 89, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-4C-CNT", 93, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-4D-CNT", 97, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-4X-CNT", 101, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-REC-TYPE-8X-CNT", 105, 4, NUMERIC_TEXT),
+        new FieldSpec("FM29A-SYS-CRT-CD", 109, 1, ALPHA),
+        new FieldSpec("FM29A-SYS-UPDT-CD", 110, 1, ALPHA),
+        new FieldSpec("FM29A-BLUE2-USER-ID", 111, 40, ALPHA),
+        new FieldSpec("FM29A-ADJ-RCPT-DT-CC", 151, 2, ALPHA),
+        new FieldSpec("FM29A-ADJ-RCPT-DT-YY", 153, 2, ALPHA),
+        new FieldSpec("FM29A-ADJ-RCPT-DT-MM", 155, 2, ALPHA),
+        new FieldSpec("FM29A-ADJ-RCPT-DT-DD", 157, 2, ALPHA),
+        new FieldSpec("FM29A-FILLER-1", 159, 97, ALPHA)
+    );
     public static Map<RecordType, List<FieldSpec>> all() {
         Map<RecordType, List<FieldSpec>> m = new LinkedHashMap<>();
         m.put(RecordType.RT_05, FM105);
@@ -3360,4 +2807,3 @@ public static final List<FieldSpec> FM105 = List.of(
         return m;
     }
 }
-
