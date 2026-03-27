@@ -72,35 +72,43 @@ public class CsvExportService {
                         switch (f.type) {
                             case ALPHA: val = sliceTrim(rec, start, len); break;
                             case NUMERIC_TEXT: 
-                            	val = sliceTrim(rec, start, len);
-                            	if(val.chars().count() == 1){
-                            		try {
-                                    	val = String.valueOf(parseOverpunchIntSafe(val));
-                                    } catch (NullPointerException ne) {
-                                    	val = "";
+                            	int lastByte = rec[start + f.lengthBytes - 1] & 0xFF;
+                                int zone = (lastByte >>> 4) & 0x0F;
+                                if (zone != 0xF) {
+                                	// ZONED DECIMAL
+                                	val =  decodeZonedDecimal(rec, start, f.lengthBytes);
+                                } else {
+                                	val = sliceTrim(rec, start, len);
+                                	if(val.chars().count() == 1){
+                                		try {
+                                        	val = String.valueOf(parseOverpunchIntSafe(val));
+                                        } catch (NullPointerException ne) {
+                                        	val = "";
+                                        }
+                                	}
+                                    if (val.contains("}")) {
+                                        try {
+                                            val = String.valueOf(parseOverpunchIntSafe(val));
+                                        } catch (NullPointerException ne) {
+                                            val = "";
+                                        }
                                     }
-                            	}
-                                if (val.contains("}")) {
-                                    try {
-                                        val = String.valueOf(parseOverpunchIntSafe(val));
-                                    } catch (NullPointerException ne) {
-                                        val = "";
+                                    if (val.contains("{")) {
+                                        try {
+                                            val = String.valueOf(parseOverpunchIntSafe(val));
+                                        } catch (NullPointerException ne) {
+                                            val = "";
+                                        }
+                                    }
+                                	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
+                                    	try {
+                                        	val = String.valueOf(parseOverpunchIntSafe(val));
+                                        } catch (NullPointerException ne) {
+                                        	val = "";
+                                        }
                                     }
                                 }
-                                if (val.contains("{")) {
-                                    try {
-                                        val = String.valueOf(parseOverpunchIntSafe(val));
-                                    } catch (NullPointerException ne) {
-                                        val = "";
-                                    }
-                                }
-                            	if(val.chars().count() == 4  && !val.startsWith("X")) {//need to review this
-                                	try {
-                                    	val = String.valueOf(parseOverpunchIntSafe(val));
-                                    } catch (NullPointerException ne) {
-                                    	val = "";
-                                    }
-                                }
+                            	
                             	break;
                             case PACKED_DECIMAL:
                                 val = invokeParser("decodeComp3ToString", rec, start, len, f.scale);
@@ -217,6 +225,31 @@ public class CsvExportService {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+    
+    private static String decodeZonedDecimal(byte[] rec, int off, int len) {
+        boolean negative = false;
+        StringBuilder digits = new StringBuilder(len);
+
+        for (int i = 0; i < len; i++) {
+            int b = rec[off + i] & 0xFF;
+            int hi = (b >>> 4) & 0x0F;
+            int lo = b & 0x0F;
+
+            if (i == len - 1) {
+                // Sign comes from high nibble
+                if (hi == 0xD) negative = true;
+                digits.append(lo);
+            } else {
+                digits.append(lo);
+            }
+        }
+
+        String val = digits.toString();
+        // Strip leading zeros but keep "0"
+        val = val.replaceFirst("^0+(?!$)", "");
+
+        return negative ? "-" + val : val;
     }
     
     static final Map<Character, Integer> POS = Map.ofEntries(
