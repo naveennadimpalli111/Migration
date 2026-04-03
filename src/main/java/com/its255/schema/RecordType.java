@@ -13,13 +13,23 @@ public enum RecordType {
     RT_32("32"),
     RT_33("33"),
     RT_40("40"),
+    RT_40D("40D"),
     RT_41("41"),
+    RT_41A("41A"),
+    RT_41B("41B"),
+    RT_41C("41C"),
     RT_42("42"),
+    RT_42A("42A"),
+    RT_42C("42C"),
     RT_43("43"),
+    RT_43A("43A"),
+    RT_43B("43B"),
+    RT_43C("43C"),
     RT_44("44"),
     RT_45("45"),
     RT_46("46"),
     RT_47("47"),
+    RT_49A("49A"),
     RT_50("50"),
     RT_60("60"),
     RT_65("65"),
@@ -29,6 +39,10 @@ public enum RecordType {
     RT_73("73"),
     RT_74("74"),
     RT_80("80"),
+    RT_81("81"),
+    RT_82("82"),
+    RT_83("83"),
+    RT_84("84"),
     RT_90("90"),
     RT_9D("9D"),
     RT_A5("A5"),
@@ -66,7 +80,13 @@ public enum RecordType {
     RT_4D("4D"),
     RT_8A("8A"),
     RT_9A("9A"),
+    RT_5A("5A"),    // CBF → FM35A
+    RT_6A("6A"),    // CBF → FM36A
+    RT_6B("6B"),    // CBF → FM36B
+    RT_7A("7A"),    // CBF → FM37A
+    RT_7B("7B"),    // CBF → FM37B   
     UNKNOWN("??");
+
 
     public final String code;
     private static final Map<String, RecordType> BY_CODE = new HashMap<>();

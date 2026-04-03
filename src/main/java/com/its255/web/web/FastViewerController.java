@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.its255.schema.Schemas;
 import com.its255.viewer.ChunkedMMapRecordStore;
 import com.its255.viewer.FastRecordFilter;
 import com.its255.viewer.ParallelPrefixIndexBuilder;
@@ -69,12 +68,19 @@ public class FastViewerController {
   }
 
   @PostMapping("/upload")
-  public String upload(@RequestParam("file") MultipartFile file, Model model, HttpSession session) throws Exception {
-  if (file.isEmpty()) {
+  public String upload(@RequestParam("file") MultipartFile file, 
+		  @RequestParam("transactionType") String transactionType,
+		  Model model, HttpSession session) throws Exception {
+    if (file.isEmpty()) {
         model.addAttribute("error", "Please select a file.");
         return page(model, session);
     }
+    if (transactionType == null || transactionType.isBlank()) {
+        throw new IllegalStateException(
+            "Transaction type missing in ViewerSession. Upload required.");
+    }
     ViewerSession vs = getSession(session);
+    vs.transactionType = transactionType;
 
     // clean old store if present
     if (vs.store instanceof AutoCloseable ac) {
@@ -95,11 +101,12 @@ public class FastViewerController {
             cfg.getRecordLength(),
             windowBytes
     );
-
+    
+    int workers = Math.min(cfg.getIndexWorkers(), (int) getRecordCount(vs.store));
     ParallelPrefixIndexBuilder builder = new ParallelPrefixIndexBuilder(
             vs.store,
             cfg.getPrefixIndexLength(),
-            cfg.getIndexWorkers(),
+            workers,
             cfg.getProgressStep(),
             p -> vs.progress = p
     );
@@ -156,8 +163,8 @@ public class FastViewerController {
 
 	    String type = safeInvoke(vs.store, "readType", rn);
 	    String sccf = safeInvoke(vs.store, "readSccf", rn);
-
-	    SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs());
+	    String txn = safeInvoke(vs.store, "readTxn", rn);
+	    SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType);
 	    String tableHtml = renderer.render(rn);
 
 	    StringBuilder sb = new StringBuilder();
@@ -208,7 +215,7 @@ public class FastViewerController {
 	    resp.setHeader("Content-Disposition", "attachment; filename=its255_scope_export.zip");
 	
 	    CsvExportService svc = new CsvExportService(
-	            vs.store, cs(), cfg.getExportBufferSize());
+	            vs.store, cs(), cfg.getExportBufferSize(), vs.transactionType);
 	    svc.exportPerTypeZip(vs.lastFiltered, resp.getOutputStream());
 
   }
@@ -239,6 +246,14 @@ public class FastViewerController {
           session.removeAttribute("VIEWER_SESSION");
       }
       return "redirect:/viewer";
+  }
+  
+  private long getRecordCount(Object store) {
+      try {
+          return (long) store.getClass().getMethod("getRecordCount").invoke(store);
+      } catch (Exception e) {
+          throw new RuntimeException(e);
+      }
   }
  
  

@@ -10,7 +10,7 @@ import java.util.Map;
 
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
-import com.its255.schema.Schemas;
+import com.its255.schema.SchemaRegistry;
 
 /**
  * Renders ONE 255-byte record as an HTML table using the active copybook schema.
@@ -28,16 +28,19 @@ public class SchemaHtmlRenderer {
 
     private final Object store; // must expose: readRecordBytes(int), readType(int)
     private final Charset cs;
+    private final String transactionType;
 
-    public SchemaHtmlRenderer(Object store, Charset cs) {
+    public SchemaHtmlRenderer(Object store, Charset cs,
+            String transactionType) {
         this.store = store;
         this.cs = cs;
+        this.transactionType = transactionType;
     }
 
     public String render(int recordNumber1Based) {
         String type = readType(recordNumber1Based).trim();
         RecordType rt = RecordType.from(type);
-        List<FieldSpec> layout = Schemas.all().get(rt);
+        List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
         byte[] rec = readRecordBytes(recordNumber1Based);
 
         StringBuilder sb = new StringBuilder(8_192);

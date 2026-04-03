@@ -3,7 +3,7 @@ package com.its255.web.service;
 
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
-import com.its255.schema.Schemas;
+import com.its255.schema.SchemaRegistry;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -15,8 +15,15 @@ public class CsvExportService {
     private final Object store; // reflection: readRecordBytes, readType, readSccf, offsetOf
     private final Charset cs;
     private final int bufferSize;
-
-    public CsvExportService(Object store, Charset cs, int bufferSize) { this.store = store; this.cs = cs; this.bufferSize = bufferSize; }
+    private final String transactionType;
+    
+    public CsvExportService(Object store, Charset cs, int bufferSize,
+            String transactionType) { 
+    	this.store = store; 
+    	this.cs = cs; 
+    	this.bufferSize = bufferSize;
+    	this.transactionType = transactionType;
+    }
 
     private byte[] readRecordBytes(int rn) {
         try { return (byte[]) store.getClass().getMethod("readRecordBytes", int.class).invoke(store, rn); }
@@ -48,7 +55,7 @@ public class CsvExportService {
                 zip.putNextEntry(new ZipEntry(type + ".csv"));
                 OutputStreamWriter w = new OutputStreamWriter(zip, java.nio.charset.StandardCharsets.UTF_8);
                 RecordType rt = RecordType.from(type);
-                java.util.List<FieldSpec> layout = Schemas.all().get(rt);
+                java.util.List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
                 if (layout == null) {
                     w.write("REC_NO,SCCF,REC_TYPE,BYTE_OFFSET");
                     for (int rn : list) {

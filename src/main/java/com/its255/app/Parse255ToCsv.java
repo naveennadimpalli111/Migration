@@ -16,7 +16,7 @@ import com.its255.app.Parse255ToCsv.CsvSink;
 import com.its255.io.Fixed255Parser;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
-import com.its255.schema.Schemas;
+import com.its255.schema.SchemaRegistry;
 
 /** CLI that parses a 255-byte file and writes one CSV per record type. */
 public final class Parse255ToCsv {
@@ -31,7 +31,7 @@ public final class Parse255ToCsv {
         Charset cs = (args.length >= 3) ? Charset.forName(args[2]) : Charset.forName("Cp037");
 
         Files.createDirectories(outDir);
-        Map<RecordType, List<FieldSpec>> schemas = Schemas.all();
+        Map<RecordType, List<FieldSpec>> schemas = SchemaRegistry.all();
 
         Map<RecordType, CsvSink> sinks = new HashMap<>();
         Fixed255Parser parser = new Fixed255Parser(schemas, cs, /*recTypeStart*/22, /*len*/2);

@@ -17,6 +17,7 @@ public class ViewerSession implements AutoCloseable {
     public RecordNavigator nav;           // navigation state
     public List<Integer> lastFiltered;    // last result set
     public double progress;               // prefix index progress (0..1)
+    public String transactionType;
 
     public boolean hasFile() {
         return filePath != null && store != null;

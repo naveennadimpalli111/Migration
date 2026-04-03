@@ -7,430 +7,12 @@
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-  <!-- ========= SINGLE STYLE BLOCK ========= -->
-  <style>
-    /* Preserve code wrapping */
-    code { white-space: pre-wrap; }
+  
+<!-- App-specific CSS -->
+<link rel="stylesheet" th:href="@{/css/viewer.css}"  href="/css/viewer.css" />
 
-    /* Equal 25% width for the first four controls (SCCF, Txn Type, Record Type, Record #) on md+ */
-    @media (min-width: 768px) {
-      form[action="/viewer/search"] .row.g-2 > div:nth-child(1),
-      form[action="/viewer/search"] .row.g-2 > div:nth-child(2),
-      form[action="/viewer/search"] .row.g-2 > div:nth-child(3),
-      form[action="/viewer/search"] .row.g-2 > div:nth-child(4) {
-        flex: 0 0 25%;
-        max-width: 25%;
-      }
-      /* make SCCF input fill its column */
-      form[action="/viewer/search"] .row.g-2 > div:nth-child(1) input[name="sccf"] { width: 100%; }
 
-      /* Optional: avoid over-shrinking of controls */
-      #txnType,
-      #recordTypeCode,
-      form[action="/viewer/search"] input[name="sccf"],
-      form[action="/viewer/search"] input[name="recNo"] { min-width: 12rem; }
-    }
-
-    /* Prevent Record Type label from wrapping so its select stays on one row */
-    label[for="recordTypeCode"] { white-space: nowrap; }
-
-    /* BUTTON ROW: alignment, spacing, consistent sizing */
-    form[action="/viewer/search"] .actions-row {
-      margin-top: 0.75rem; /* subtle spacing above the button row */
-      display: flex;
-      align-items: center; /* vertical alignment */
-      justify-content: center;
-      gap: .5rem;          /* spacing between buttons */
-      flex-wrap: wrap;     /* graceful wrap on narrow screens */
-    }
-
-    /* Ensure UI buttons share the same height/size */
-    #btnSearch, #btnExport, #btnClear, #btnClearSearch { line-height: 1.5; }
-
-    /* Make disabled <a> truly inert (mouse + keyboard), and visually disabled */
-    a.btn[aria-disabled="true"],
-    a.btn.disabled {
-      pointer-events: none;
-      opacity: .65;
-      cursor: not-allowed;
-    }
-
-    /* Navigation rows (top and bottom) */
-    .nav-row {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      flex-wrap: wrap;
-    }
-    .nav-row .count-text { margin-left: .5rem; }
-    .meta-line { margin-top: .25rem; }
-
-    /* ---------- CHANGE: Sticky table headers (robust) ---------- */
-    /* NOTE: sticky works against the document scroll (or the nearest scrolling ancestor).
-       We don’t wrap the table in an overflowed scroller; we stick to the page scroll. */
-    .record-container { position: relative; }
-    .record-container table { border-collapse: separate; border-spacing: 0; width: 100%; }
-
-    /* We’ll add .sticky-head to <thead> in JS (or use existing thead).
-       Sticky only needs to be applied to the header cells. */
-    .sticky-head th, .sticky-head td {
-      position: sticky;
-      top: 0; /* if you later add a fixed navbar, update this offset (e.g., top: 56px) */
-      background-color: var(--bs-body-bg, #fff);
-      z-index: 2; /* keep above body cells */
-      box-shadow: 0 1px 0 rgba(0,0,0,.08);
-    }
-  </style>
-  <!-- ========= END SINGLE STYLE BLOCK ========= -->
-
-  <!-- ========= SINGLE SCRIPT BLOCK ========= -->
-  <script>
-    // ---- Server-side progress poller (existing logic) ----
-    async function poll() {
-      try {
-        const r = await fetch('/viewer/progress?ts=' + Date.now(), { cache: 'no-store' });
-        const j = await r.json();
-        const serverPct = Math.round((j.progress || 0) * 100);
-        // Upload phase maps to 0-80; server parse maps to 80-100
-        const mapped = Math.min(100, Math.max(80, 80 + Math.round(serverPct * 0.20)));
-        const el = document.getElementById('pbar');
-        if (el) {
-          el.style.width = mapped + '%';
-          el.innerText = mapped + '%';
-        }
-        if (mapped < 100) setTimeout(poll, 800);
-      } catch (e) {
-        setTimeout(poll, 1200);
-      }
-    }
-
-    // ---- Utilities for enabling/disabling Search & Export ----
-    function setActionsEnabled(enabled) {
-      const btnSearch = document.getElementById('btnSearch');
-      const btnExport = document.getElementById('btnExport');
-      if (btnSearch) btnSearch.disabled = !enabled;
-      if (btnExport) {
-        if (enabled) {
-          btnExport.classList.remove('disabled');
-          btnExport.removeAttribute('aria-disabled');
-        } else {
-          btnExport.classList.add('disabled');
-          btnExport.setAttribute('aria-disabled', 'true');
-        }
-      }
-    }
-
-    // ---- Filter Record Type by Transaction Type ----
-    function initTxnRecordTypeFilter() {
-      const txnSelect   = document.getElementById('txnType');
-      const recordType  = document.getElementById('recordTypeCode');
-      if (!txnSelect || !recordType) return;
-
-      const rtHelpId = "recordTypeHelp";
-      if (!document.getElementById(rtHelpId)) {
-        const help = document.createElement("div");
-        help.className = "form-text";
-        help.id = rtHelpId;
-        help.textContent = "This list is filtered by Transaction Type. Choose a transaction type first.";
-        recordType.insertAdjacentElement("afterend", help);
-      }
-      recordType.setAttribute("aria-describedby", rtHelpId);
-
-      // Harvest existing options (from backend)
-      const allOptions = [];
-      Array.from(recordType.querySelectorAll("option")).forEach(opt => {
-        const val = (opt.value || "").trim();
-        const label = (opt.textContent || "").trim();
-        if (val === "" || !label) return; // ignore placeholder
-        allOptions.push({ code: val, label });
-      });
-
-      // Mapping (per your spec)
-      const TXN_MAP = {
-        "SF-Institutional": new Set([
-          "05","10","15","20","30","31","32","33",
-          "40","41","42","43","44","45","46","47",
-          "50","60","65","66","71","72","73","74",
-          "80","90","9D"
-        ]),
-        "SF-Professional": new Set([
-          "A5","B0","B5","C0",
-          "D0","D1","D2","D3",
-          "E0","E1","E2","E6",
-          "F0","F1","F5","F6",
-          "G0","X0"
-        ]),
-        "DF": new Set([
-          "1A","2A","2B","2C","2E","2F","2G","2H",
-          "3A","3C","3D",
-          "4A","4B","4C","4D",
-          "8A","9A"
-        ])
-      };
-
-      function setRecordTypeDisabled(isDisabled) {
-        recordType.disabled = !!isDisabled;
-        if (isDisabled) recordType.setAttribute("aria-disabled", "true");
-        else recordType.removeAttribute("aria-disabled");
-      }
-
-      function resetRecordType() {
-        recordType.innerHTML = '<option value="">Choose…</option>';
-        setRecordTypeDisabled(true);
-      }
-
-      function populateRecordTypesFor(txn) {
-        recordType.innerHTML = '<option value="">Choose…</option>';
-        if (!txn) {
-          setRecordTypeDisabled(true);
-          return;
-        }
-        const set = TXN_MAP[txn];
-        const list = set
-          ? allOptions.filter(o => set.has(o.code))
-          : []; // unknown txn
-
-        for (const o of list) {
-          const el = document.createElement("option");
-          el.value = o.code;
-          el.textContent = o.label;
-          recordType.appendChild(el);
-        }
-        setRecordTypeDisabled(list.length === 0);
-      }
-
-      // Initial + events
-      resetRecordType();
-      txnSelect.addEventListener("change", () => {
-        recordType.value = "";
-        populateRecordTypesFor(txnSelect.value);
-      });
-      window.addEventListener("pageshow", () => {
-        populateRecordTypesFor(txnSelect.value);
-      });
-
-      // expose for session restore
-      return { resetRecordType, populateRecordTypesFor, txnSelect, recordType };
-    }
-
-    // ---- Persistence helpers ----
-    const KEY = (name) => `viewer.${name}`;
-    function clearSearchStorage() {
-      try {
-        sessionStorage.removeItem(KEY('sccf'));
-        sessionStorage.removeItem(KEY('recNo'));
-        sessionStorage.removeItem(KEY('txnType'));
-        sessionStorage.removeItem(KEY('recordTypeCode'));
-      } catch (_) {}
-    }
-
-    // ---- SessionStorage: persist & restore search fields; restart-aware; Clear buttons ----
-    (function initSessionStoragePersistence() {
-      document.addEventListener('DOMContentLoaded', () => {
-        const searchForm = document.getElementById('searchForm');
-        const sccfInput  = document.getElementById('sccf');
-        const txnSelect  = document.getElementById('txnType');
-        const rtSelect   = document.getElementById('recordTypeCode');
-        const recNoInput = document.getElementById('recNo');
-
-        // Initialize Txn/RecordType filter and get its helpers
-        const filterAPI = initTxnRecordTypeFilter();
-
-        // Restart-aware clearing using data-has-file
-        const body = document.body;
-        const hasFileNow   = body.getAttribute('data-has-file') === 'true';
-        const lastHasFile  = sessionStorage.getItem(KEY('lastHasFile')) === 'true';
-        if (lastHasFile && !hasFileNow) {
-          clearSearchStorage();
-          if (sccfInput)  sccfInput.value = '';
-          if (recNoInput) recNoInput.value = '';
-          if (txnSelect)  txnSelect.value = '';
-          if (filterAPI)  filterAPI.resetRecordType();
-          if (rtSelect)   rtSelect.value = '';
-        }
-        try { sessionStorage.setItem(KEY('lastHasFile'), hasFileNow ? 'true' : 'false'); } catch (_) {}
-
-        // RESTORE from sessionStorage
-        try {
-          const storedTxn  = sessionStorage.getItem(KEY('txnType')) || '';
-          const storedRT   = sessionStorage.getItem(KEY('recordTypeCode')) || '';
-          const storedSccf = sessionStorage.getItem(KEY('sccf')) || '';
-          const storedRec  = sessionStorage.getItem(KEY('recNo')) || '';
-
-          if (txnSelect && storedTxn) { txnSelect.value = storedTxn; }
-          if (filterAPI && txnSelect) { filterAPI.populateRecordTypesFor(txnSelect.value); }
-
-          // Try to set RT immediately…
-          if (rtSelect && storedRT) {
-            rtSelect.value = storedRT;
-          }
-
-          // …and reapply shortly after population if it didn't take yet  // PERSIST FIX
-          if (rtSelect && storedRT && rtSelect.value !== storedRT) {
-            requestAnimationFrame(() => {
-              rtSelect.value = storedRT;
-            });
-          }
-
-          if (sccfInput && storedSccf){ sccfInput.value = storedSccf; }
-          if (recNoInput && storedRec){ recNoInput.value = storedRec; }
-        } catch (e) {}
-
-        // Also reapply RT on pageshow in case of bfcache timing  // PERSIST FIX
-        window.addEventListener('pageshow', () => {
-          const storedRT = sessionStorage.getItem(KEY('recordTypeCode')) || '';
-          if (rtSelect && storedRT && rtSelect.value !== storedRT) {
-            rtSelect.value = storedRT;
-          }
-        });
-
-        // PERSIST on change/submit
-        function persist() {
-          try {
-            if (txnSelect)  sessionStorage.setItem(KEY('txnType'), txnSelect.value || '');
-            if (rtSelect)   sessionStorage.setItem(KEY('recordTypeCode'), rtSelect.value || '');
-            if (sccfInput)  sessionStorage.setItem(KEY('sccf'), sccfInput.value || '');
-            if (recNoInput) sessionStorage.setItem(KEY('recNo'), recNoInput.value || '');
-          } catch (e) {}
-        }
-        if (txnSelect)  txnSelect.addEventListener('change', () => {
-          if (filterAPI) filterAPI.populateRecordTypesFor(txnSelect.value);
-          if (rtSelect)  rtSelect.value = '';
-          persist();
-        });
-        if (rtSelect)   rtSelect.addEventListener('change', persist);
-        if (sccfInput)  sccfInput.addEventListener('input', persist);
-        if (recNoInput) recNoInput.addEventListener('input', persist);
-        if (searchForm) searchForm.addEventListener('submit', () => { persist(); setScrollToResultsFlag(); });
-
-        // Clear buttons
-        const btnClear = document.getElementById('btnClear');      // Clear cached file (server)
-        const clearForm = document.getElementById('clearForm');
-        if (btnClear && clearForm) {
-          btnClear.addEventListener('click', () => {
-            if (sccfInput)  sccfInput.value = '';
-            if (recNoInput) recNoInput.value = '';
-            if (txnSelect)  txnSelect.value = '';
-            if (filterAPI)  filterAPI.resetRecordType();
-            if (rtSelect)   rtSelect.value = '';
-            clearSearchStorage();
-            try { sessionStorage.setItem(KEY('lastHasFile'), 'false'); } catch (_) {}
-            setScrollToResultsFlag(); // consistent scroll target on reload
-          });
-        }
-
-        const btnClearSearch = document.getElementById('btnClearSearch'); // Clear Search (client only)
-        if (btnClearSearch) {
-          btnClearSearch.addEventListener('click', () => {
-            if (sccfInput)  sccfInput.value = '';
-            if (recNoInput) recNoInput.value = '';
-            if (txnSelect)  txnSelect.value = '';
-            if (filterAPI)  filterAPI.resetRecordType();
-            if (rtSelect)   rtSelect.value = '';
-            clearSearchStorage();
-            if (sccfInput) sccfInput.focus();
-          });
-        }
-      });
-    })();
-
-    // ---------- Scroll to results (table start) ----------
-    function setScrollToResultsFlag() {
-      try { sessionStorage.setItem(KEY('scrollToResults'), 'true'); } catch (_) {}
-    }
-    function maybeScrollToResults() {
-      try {
-        const flag = sessionStorage.getItem(KEY('scrollToResults')) === 'true';
-        if (flag) {
-          const anchor = document.getElementById('resultsTop') || document.querySelector('.record-container');
-          if (anchor) anchor.scrollIntoView({ behavior: 'auto', block: 'start' });
-        }
-        sessionStorage.removeItem(KEY('scrollToResults'));
-      } catch (_) {}
-    }
-
-    // ---- Main DOMContentLoaded wiring for upload & buttons ----
-    document.addEventListener('DOMContentLoaded', () => {
-      const uploadForm = document.querySelector('form[action="/viewer/upload"]');
-      const fileInput  = uploadForm?.querySelector('input[type="file"][name="file"]');
-      const pbar       = document.getElementById('pbar');
-
-      // Initialize action buttons from server-rendered state (hasFile):
-      const searchInitiallyDisabled = document.getElementById('btnSearch')?.hasAttribute('disabled');
-      const exportInitiallyDisabled = document.getElementById('btnExport')?.classList.contains('disabled');
-      setActionsEnabled(!(searchInitiallyDisabled || exportInitiallyDisabled));
-
-      if (fileInput && pbar) {
-        fileInput.addEventListener('change', () => {
-          pbar.classList.remove('bg-danger');
-          pbar.style.width = '0%';
-          pbar.innerText = '0%';
-        });
-      }
-
-      if (uploadForm && pbar) {
-        uploadForm.addEventListener('submit', (ev) => {
-          ev.preventDefault();
-          const file = fileInput?.files?.[0];
-
-          // Lock actions while uploading
-          setActionsEnabled(false);
-
-          if (!file) {
-            // No new file selected; submit normally (server may use cached file)
-            return uploadForm.submit();
-          }
-
-          const formData = new FormData(uploadForm);
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/viewer/upload', true);
-
-          xhr.upload.onprogress = (e) => {
-            if (!e.lengthComputable) return;
-            const rawPct = (e.loaded / e.total) * 100;
-            const mapped = Math.max(0, Math.min(80, Math.round(rawPct * 0.80)));
-            pbar.style.width = mapped + '%';
-            pbar.innerText = mapped + '%';
-          };
-
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              // Upload OK → enable actions and start server-side poll
-              setActionsEnabled(true);
-              setTimeout(poll, 300);
-            } else {
-              // Error → keep disabled, mark bar red
-              pbar.classList.add('bg-danger');
-              pbar.style.width = '100%';
-              pbar.innerText = 'Upload error';
-              setActionsEnabled(false);
-            }
-          };
-
-          xhr.onerror = () => {
-            pbar.classList.add('bg-danger');
-            pbar.style.width = '100%';
-            pbar.innerText = 'Network error';
-            setActionsEnabled(false);
-          };
-
-          pbar.classList.remove('bg-danger');
-          pbar.style.width = '1%';
-          pbar.innerText = '1%';
-          xhr.send(formData);
-        });
-      }
-
-      // set scroll flag when using Prev/Next forms (top & bottom)
-      document.querySelectorAll('form[data-nav="true"]').forEach((f) => {
-        f.addEventListener('submit', () => { setScrollToResultsFlag(); });
-      });
-    });
-
-    // Scroll after the page is shown (normal loads + bfcache)
-    window.addEventListener('pageshow', maybeScrollToResults);
-  </script>
-  <!-- ========= END SINGLE SCRIPT BLOCK ========= -->
+  
 </head>
 
 <!-- Keep track of hasFile for restart-aware behavior -->
@@ -447,9 +29,53 @@
 
   <!-- ========== UPLOAD FORM ========== -->
   <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
-    <div class="mb-2">
-      <label class="form-label">EBCDIC File</label>
-      <input type="file" name="file" class="form-control" required />
+    <div class="row g-3 mb-2 align-items-end">
+      <!-- Transaction Type -->
+      <div class="col-md-4">
+        <label class="form-label" id="txnTypeLabel" for="txnType">
+          Transaction Type
+        </label>
+        <select id="txnType"
+                name="transactionType"
+                class="form-select"
+                aria-labelledby="txnTypeLabel"
+                aria-describedby="txnTypeHelp">
+          <option value="">Choose…</option>
+          <option value="SFI">SF‑Institutional</option>
+          <option value="SFP">SF‑Professional</option>
+          <option value="DF">DF</option>
+          <option value="CBF">CBF</option>
+          <option value="RF">RF</option>
+        <!-- <option value="NF">NF</option>
+           <option value="MEF">Member Exchange</option> -->
+        </select>
+        <div class="form-text txn-hint" id="txnTypeHelp">
+          Pick a Transaction Type before uploading the file.
+        </div>
+        <!-- <div id="uploadTxnError"
+             class="alert alert-danger mt-2 d-none"
+             role="alert"
+             aria-live="assertive">
+          Transaction Type is required before uploading the file.
+        </div> -->
+      </div>
+    
+      <!-- File Upload -->
+      <div class="col-md-8">
+        <label class="form-label">EBCDIC File</label>
+        <input type="file"
+               name="file"
+               class="form-control"
+               required />
+        <div id="fileHelp" class="form-text">
+          <span th:if="${hasFile}">
+            Optional — leave empty to reuse the cached file from this session.
+          </span>
+          <span th:if="${!hasFile}">
+            The viewer reads fixed‑length 255‑byte records from the uploaded file.
+          </span>
+        </div>
+      </div>
     </div>
 
     <button class="btn btn-primary">Upload</button>
@@ -485,23 +111,9 @@
     <div class="row g-2">
       <div class="col-md-4">
         <label class="form-label" for="sccf">SCCF (prefix allowed)</label>
-        <input id="sccf" type="text" name="sccf" class="form-control" placeholder="e.g., 12345" aria-describedby="scffHelp"/>
+        <input id="sccf" type="text" name="sccf" class="form-control" placeholder="e.g., 010202504106399" aria-describedby="scffHelp"/>
         <div class="form-text" id="scffHelp">
           15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).
-        </div>
-      </div>
-
-      <!-- Transaction Type -->
-      <div class="col-md-2">
-        <label class="form-label" id="txnTypeLabel" for="txnType">Transaction Type</label>
-        <select id="txnType" class="form-select" aria-labelledby="txnTypeLabel" aria-describedby="txnTypeHelp">
-          <option value="">Choose…</option>
-          <option value="SF-Institutional">SF-Institutional</option>
-          <option value="SF-Professional">SF-Professional</option>
-          <option value="DF">DF</option>
-        </select>
-        <div class="form-text" id="txnTypeHelp">
-          Pick a Transaction Type to filter the Record Type list. If empty, Record Type is disabled.
         </div>
       </div>
 
@@ -580,6 +192,36 @@
             <option value="8A">8A — FM28A</option>
             <option value="9A">9A — FM29A</option>
           </optgroup>
+          <optgroup label="CBF series">
+            <option value="5A">5A — FM35A</option>
+            <option value="6A">6A — FM36A</option>
+            <option value="6B">6B — FM36B</option>
+            <option value="7A">7A — FM37A</option>
+            <option value="7B">7B — FM37B</option>
+            <option value="9A">9A — FM39A</option>
+          </optgroup>
+          <optgroup label="Reconciliation Format series">
+            <option value="1A">31 — FM31A</option>
+            <option value="2A">32 — FM32A</option>
+          </optgroup>
+          <!-- <optgroup label="Notification Format">
+            <option value="81">81 — FM81A</option>
+            <option value="82">82 — FM82A</option>
+            <option value="83">83 — FM83A</option>
+            <option value="84">84 — FM84A</option>
+          </optgroup>
+          <optgroup label="Member Exchange Format">
+            <option value="40D">40D — FM40D</option>
+            <option value="41A">41A — FM41A</option>
+            <option value="41B">41B — FM41B</option>
+            <option value="41C">41C — FM41C</option>
+            <option value="42A">42A — FM42A</option>
+            <option value="42C">42C — FM42C</option>
+            <option value="43A">43A — FM43A</option>
+            <option value="43B">43B — FM43B</option>
+            <option value="43C">43C — FM43C</option>
+            <option value="49A">49A — FM49A</option>
+          </optgroup> -->
         </select>
       </div>
 
@@ -652,6 +294,10 @@
     </form>
     <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
   </div>
+
+  
+ <!-- App JS -->
+ <script th:src="@{/js/viewer.js}"  src="/js/viewer.js" defer></script>
 
 </body>
 </html>
