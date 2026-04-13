@@ -84,7 +84,8 @@ public enum RecordType {
     RT_6A("6A"),    // CBF → FM36A
     RT_6B("6B"),    // CBF → FM36B
     RT_7A("7A"),    // CBF → FM37A
-    RT_7B("7B"),    // CBF → FM37B   
+    RT_7B("7B"),    // CBF → FM37B 
+    RT_CBFBD("CBFBD"),
     UNKNOWN("??");
 
 

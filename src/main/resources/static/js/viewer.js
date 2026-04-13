@@ -12,6 +12,7 @@
         if (el) {
           el.style.width = mapped + '%';
           el.innerText = mapped + '%';
+          el.setAttribute('aria-valuenow', String(mapped));
         }
         if (mapped < 100) setTimeout(poll, 800);
       } catch (e) {
@@ -142,8 +143,12 @@
     ],
 
     "RF": [
-      ["31","31 — FM31A"],
-      ["32","32 — FM32A"]
+      ["1A","1A — FM31A"],
+      ["2A","2A — FM32A"]
+    ],
+
+    "CBFBD": [
+      ["CBFBD","CBFBD— ITCBFBD"]
     ],
 
     "NF": [
@@ -312,6 +317,7 @@
           const txnHint = document.getElementById('txnTypeHelp');
           if (txnHint) {
             txnHint.classList.remove('txn-hint-error');
+            txnHint.removeAttribute('role');   // stop alerting
           }
 
           if (rtSelect)  rtSelect.value = '';
@@ -398,6 +404,7 @@
           if (!txnSelect || !txnSelect.value) {
             if (txnHint) {
               txnHint.classList.add('txn-hint-error');
+              txnHint.setAttribute('role', 'alert');
             }
             txnSelect && txnSelect.focus();
             return; // stop upload

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.its255.schema.SchemaRegistry;
 import com.its255.viewer.ChunkedMMapRecordStore;
 import com.its255.viewer.FastRecordFilter;
 import com.its255.viewer.ParallelPrefixIndexBuilder;
@@ -95,11 +96,16 @@ public class FastViewerController {
     vs.progress = 0.0;
 
     long windowBytes = Math.max(1, cfg.getWindowSizeMB()) * 1024L * 1024L;
+    
+
+	int recordLength = SchemaRegistry.getRecordLength(transactionType);
+
 
     vs.store = new ChunkedMMapRecordStore(
             tmp, cs(),
-            cfg.getRecordLength(),
-            windowBytes
+            recordLength,
+            windowBytes,
+            transactionType
     );
     
     int workers = Math.min(cfg.getIndexWorkers(), (int) getRecordCount(vs.store));
@@ -168,11 +174,11 @@ public class FastViewerController {
 	    String tableHtml = renderer.render(rn);
 
 	    StringBuilder sb = new StringBuilder();
-	    sb.append("<pre>")
+	    sb.append("<h5 id='record-context'>")
 	      .append("Record #").append(rn)
 	      .append(" SCCF=").append(sccf)
 	      .append(" Type=").append(type.trim())
-	      .append("</pre>\n")
+	      .append("</h5>\n")
 	      .append(tableHtml)
 	      .append("<pre>")
 	      .append("Record #").append(rn)

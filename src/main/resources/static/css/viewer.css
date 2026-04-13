@@ -87,3 +87,25 @@
 .txn-hint.txn-hint-error::before {
   content: "⚠ ";
 }
+
+table th[scope="row"] {
+  font-weight: 500; /* instead of bold */
+}
+
+table td {
+  font-weight: 450;
+}
+
+table caption {
+  caption-side: top;
+  font-weight: 600;
+  text-align: left;
+  padding-bottom: 0.5rem;
+}
+
+.record-context {
+  font-size: 0.50rem;        /* Smaller than default h3 */
+  font-weight: 600;          /* Slight emphasis /* Tight spacing */ 
+  line-height: 1.3;
+}
+

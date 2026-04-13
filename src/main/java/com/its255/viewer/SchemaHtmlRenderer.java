@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.its255.constants.FileViewerConstants;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.SchemaRegistry;
@@ -44,8 +45,8 @@ public class SchemaHtmlRenderer {
         byte[] rec = readRecordBytes(recordNumber1Based);
 
         StringBuilder sb = new StringBuilder(8_192);
-        sb.append("<div class='table-responsive'>\n<table class='table table-sm table-striped table-bordered'>\n");
-        sb.append("<thead><tr><th style='white-space:nowrap'>Field</th><th>Value</th></tr></thead><tbody>\n");
+        sb.append("<div class='table-responsive'>\n<table  aria-labelledby='record-context' class='table table-sm table-striped table-bordered'>\n");
+        sb.append("<thead><tr><th scope='col' style='white-space:nowrap'>Field</th><th scope='col'>Value</th></tr></thead><tbody>\n");
 
         if (layout == null || layout.isEmpty()) {
             // Fallback: minimal metadata view
@@ -112,11 +113,6 @@ public class SchemaHtmlRenderer {
                         break;
                     case BINARY:
                         val = invokeFixed("decodeBinary", rec, start, len, f.scale);
-//                        System.out.println("BINARY");
-//                        System.out.println(Arrays.toString(rec));
-//                        System.out.println(start);
-//                        System.out.println(len);
-//                        System.out.println(f.scale);
                         break;
                     default:
                         val = "";
@@ -131,9 +127,9 @@ public class SchemaHtmlRenderer {
 
     private String row(String name, String value) {
         return new StringBuilder()
-                .append("<tr><td style='white-space:nowrap'>")
+                .append("<tr><th scope='row' style='white-space:nowrap'>")
                 .append(escape(name))
-                .append("</td><td><pre style='margin:0'>")
+                .append("</th><td><pre style='margin:0'>")
                 .append(value)
                 .append("</pre></td></tr>\n")
                 .toString();
@@ -169,8 +165,12 @@ public class SchemaHtmlRenderer {
     }
 
     private String readType(int rn) {
-        try { return String.valueOf(store.getClass().getMethod("readType", int.class).invoke(store, rn)); }
-        catch (Exception e) { return ""; }
+    	if (transactionType.equals(FileViewerConstants.CBFBD)) {
+    		return FileViewerConstants.CBFBD;
+    	} else {
+    		try { return String.valueOf(store.getClass().getMethod("readType", int.class).invoke(store, rn)); }
+            catch (Exception e) { return ""; }
+    	}
     }
 
     private static String escape(String s) {

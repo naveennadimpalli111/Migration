@@ -4,6 +4,7 @@ package com.its255.viewer;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 /**
  * Patch: trims record type comparisons so inputs like "1" match underlying "1 " values.
  */

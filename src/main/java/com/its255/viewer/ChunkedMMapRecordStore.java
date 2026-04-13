@@ -8,6 +8,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import com.its255.constants.FileViewerConstants;
+
 /**
  * Windowed (chunked) MMAP store for files > 2GB.
  * Maps the file in windows of size windowSizeBytes and remaps on boundary crossings.
@@ -29,8 +31,9 @@ public class ChunkedMMapRecordStore implements AutoCloseable {
     private long currentWindowStart = 0L;
     private long currentWindowSize = 0L;
     private MappedByteBuffer current;
+    private String transactionType;
 
-    public ChunkedMMapRecordStore(Path path, Charset cs, int recordLen, long windowSizeBytes) throws IOException {
+    public ChunkedMMapRecordStore(Path path, Charset cs, int recordLen, long windowSizeBytes, String transactionType) throws IOException {
         if (windowSizeBytes <= 0) throw new IllegalArgumentException("windowSizeBytes must be > 0");
         this.path = path;
         this.cs = cs;
@@ -38,7 +41,11 @@ public class ChunkedMMapRecordStore implements AutoCloseable {
         this.windowSizeBytes = windowSizeBytes;
         this.ch = FileChannel.open(path, StandardOpenOption.READ);
         this.size = ch.size();
-        if (size % RECORD_LEN != 0) throw new IOException("File size not multiple of record length: " + RECORD_LEN);
+        this.transactionType = transactionType;
+	
+        if (size % RECORD_LEN != 0) {
+        	throw new IOException("File size not multiple of record length: " + RECORD_LEN);
+        }
         this.recordCount = size / RECORD_LEN;
         // lazy map on first read
     }
@@ -96,10 +103,14 @@ public class ChunkedMMapRecordStore implements AutoCloseable {
     }
 
     public String readType(int recordNumber1Based) throws IOException {
-        long off = offsetOf(recordNumber1Based) + (TYPE_START_1_BASED - 1);
-        byte[] b = new byte[TYPE_LEN];
-        getBytes(off, b, TYPE_LEN);
-        return new String(b, cs);
+    	if (transactionType.equals(FileViewerConstants.CBFBD)) {
+    		return FileViewerConstants.CBFBD;
+    	} else {
+    		long off = offsetOf(recordNumber1Based) + (TYPE_START_1_BASED - 1);
+            byte[] b = new byte[TYPE_LEN];
+            getBytes(off, b, TYPE_LEN);
+            return new String(b, cs);
+    	}
     }
 
     public byte[] readRecordBytes(int recordNumber1Based) throws IOException {

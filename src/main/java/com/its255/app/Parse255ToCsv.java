@@ -34,7 +34,8 @@ public final class Parse255ToCsv {
         Map<RecordType, List<FieldSpec>> schemas = SchemaRegistry.all();
 
         Map<RecordType, CsvSink> sinks = new HashMap<>();
-        Fixed255Parser parser = new Fixed255Parser(schemas, cs, /*recTypeStart*/22, /*len*/2);
+        int recordLength = SchemaRegistry.getRecordLength("default");
+        Fixed255Parser parser = new Fixed255Parser(schemas, cs, recordLength, /*recTypeStart*/22, /*len*/2);
 
         parser.parse(input, (recNo, rt, values) -> {
         	values.put("REC_NO", String.valueOf(recNo));

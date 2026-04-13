@@ -42,13 +42,22 @@ public final class Fixed255Parser {
     // COBOL 1-based position of the record type and its length
     private final int recTypeStart1Based;
     private final int recTypeLen;
+    
+    private final int recordLength;
 
     public Fixed255Parser(Map<RecordType, List<FieldSpec>> schemas,
                           Charset charset,
+                          int recordLength,
                           int recTypeStart1Based,
                           int recTypeLen) {
         this.schemas = Objects.requireNonNull(schemas, "schemas");
         this.charset = Objects.requireNonNull(charset, "charset");
+
+		if (recordLength <= 0) {
+		        throw new IllegalArgumentException("recordLength must be > 0");
+		    }
+		this.recordLength = recordLength;
+		
         this.recTypeStart1Based = recTypeStart1Based;
         this.recTypeLen = recTypeLen;
 
@@ -88,12 +97,12 @@ public final class Fixed255Parser {
      */
     public void parseFast(Path input, RecordConsumer consumer, int recordsPerBatch) throws IOException {
         if (recordsPerBatch <= 0) throw new IllegalArgumentException("recordsPerBatch must be > 0");
-        final int CHUNK = RECORD_LEN * recordsPerBatch;
+        final int CHUNK = recordLength * recordsPerBatch;
 
         try (FileChannel ch = FileChannel.open(input, StandardOpenOption.READ)) {
             long size = ch.size();
-            if ((size % RECORD_LEN) != 0) {
-                long partialIndex = (size / RECORD_LEN) + 1;
+            if ((size % recordLength) != 0) {
+                long partialIndex = (size / recordLength) + 1;
                 throw new EOFException("Partial record at #" + partialIndex);
             }
 
@@ -111,7 +120,7 @@ public final class Fixed255Parser {
                 }
                 filled += read;
 
-                int usable = (filled / RECORD_LEN) * RECORD_LEN;
+                int usable = (filled / recordLength) * recordLength;
                 int off = 0;
 
                 while (off < usable) {
@@ -122,14 +131,14 @@ public final class Fixed255Parser {
                     RecordType rt = RecordType.from(typeCode);
                     List<FieldSpec> layout = schemas.get(rt);
                     if (layout == null) {
-                        byte[] raw = Arrays.copyOfRange(buf, recBase, recBase + RECORD_LEN);
+                        byte[] raw = Arrays.copyOfRange(buf, recBase, recBase + recordLength);
                         consumer.onUnknown(recNo, rt, typeCode, raw);
                     } else {
                         Map<String, String> values = parseFieldsFromArray(buf, recBase, layout);
                         consumer.onRecord(recNo, rt, values);
                     }
 
-                    off += RECORD_LEN;
+                    off += recordLength;
                 }
 
                 int leftover = filled - usable;
@@ -147,14 +156,14 @@ public final class Fixed255Parser {
      */
     public void parseParallel(Path input, RecordConsumer consumer, int workers, int batchBytes) throws IOException {
         if (workers <= 0) throw new IllegalArgumentException("workers must be > 0");
-        if (batchBytes < RECORD_LEN) throw new IllegalArgumentException("batchBytes must be >= " + RECORD_LEN);
+        if (batchBytes < recordLength) throw new IllegalArgumentException("batchBytes must be >= " + recordLength);
 
-        final int batchSizeBytes = Math.max(RECORD_LEN, (batchBytes / RECORD_LEN) * RECORD_LEN);
+        final int batchSizeBytes = Math.max(recordLength, (batchBytes / recordLength) * recordLength);
         final int POOL = Math.max(2, workers) + 1;
 
         class Batch {
             final byte[] data;
-            int len;           // usable bytes (multiple of RECORD_LEN)
+            int len;           // usable bytes (multiple of recordLength)
             long startRecNo;   // first record number (1-based) in this batch
             long seq;          // batch sequence
             Batch(int size) { this.data = new byte[size]; }
@@ -173,8 +182,8 @@ public final class Fixed255Parser {
         Thread reader = new Thread(() -> {
             try (FileChannel ch = FileChannel.open(input, StandardOpenOption.READ)) {
                 long size = ch.size();
-                if ((size % RECORD_LEN) != 0) {
-                    long partialIndex = (size / RECORD_LEN) + 1;
+                if ((size % recordLength) != 0) {
+                    long partialIndex = (size / recordLength) + 1;
                     throw new EOFException("Partial record at #" + partialIndex);
                 }
 
@@ -201,7 +210,7 @@ public final class Fixed255Parser {
                     }
 
                     int filled = writePos + n;
-                    int usable = (filled / RECORD_LEN) * RECORD_LEN;
+                    int usable = (filled / recordLength) * recordLength;
                     int leftover = filled - usable;
 
                     if (leftover > 0) {
@@ -211,7 +220,7 @@ public final class Fixed255Parser {
                     }
 
                     b.len = usable;
-                    b.startRecNo = nextGlobalRecNo.getAndAdd((long) usable / RECORD_LEN) + 1;
+                    b.startRecNo = nextGlobalRecNo.getAndAdd((long) usable / recordLength) + 1;
                     b.seq = seqGen.getAndIncrement();
                     ready.put(b);
                 }
@@ -238,13 +247,13 @@ public final class Fixed255Parser {
                             RecordType rt = RecordType.from(typeCode);
                             List<FieldSpec> layout = schemas.get(rt);
                             if (layout == null) {
-                                byte[] raw = Arrays.copyOfRange(b.data, recBase, recBase + RECORD_LEN);
+                                byte[] raw = Arrays.copyOfRange(b.data, recBase, recBase + recordLength);
                                 consumer.onUnknown(recNo, rt, typeCode, raw);
                             } else {
                                 Map<String, String> values = parseFieldsFromArray(b.data, recBase, layout);
                                 consumer.onRecord(recNo, rt, values);
                             }
-                            off += RECORD_LEN;
+                            off += recordLength;
                             recNo++;
                         }
                         b.len = 0;
@@ -282,17 +291,17 @@ public final class Fixed255Parser {
                                      int batchBytes,
                                      int queueCapacity) throws IOException {
         if (workers <= 0) throw new IllegalArgumentException("workers must be > 0");
-        if (batchBytes < RECORD_LEN) throw new IllegalArgumentException("batchBytes must be >= " + RECORD_LEN);
+        if (batchBytes < recordLength) throw new IllegalArgumentException("batchBytes must be >= " + recordLength);
         if (queueCapacity <= 0) throw new IllegalArgumentException("queueCapacity must be > 0");
 
-        final int batchSizeBytes = Math.max(RECORD_LEN, (batchBytes / RECORD_LEN) * RECORD_LEN);
+        final int batchSizeBytes = Math.max(recordLength, (batchBytes / recordLength) * recordLength);
         final int POOL = Math.max(2, workers) + 1;
 
         /* ================= Structures ================= */
 
         class Batch {
             final byte[] data;
-            int len;           // usable bytes (multiple of RECORD_LEN)
+            int len;           // usable bytes (multiple of recordLength)
             long startRecNo;   // 1-based record number of first record in this batch
             long seq;          // 0-based batch sequence
             Batch(int size) { this.data = new byte[size]; }
@@ -351,8 +360,8 @@ public final class Fixed255Parser {
         Thread reader = new Thread(() -> {
             try (FileChannel ch = FileChannel.open(input, StandardOpenOption.READ)) {
                 long size = ch.size();
-                if ((size % RECORD_LEN) != 0) {
-                    long partialIndex = (size / RECORD_LEN) + 1;
+                if ((size % recordLength) != 0) {
+                    long partialIndex = (size / recordLength) + 1;
                     throw new EOFException("Partial record at #" + partialIndex);
                 }
 
@@ -380,7 +389,7 @@ public final class Fixed255Parser {
                     }
 
                     int filled = writePos + n;
-                    int usable = (filled / RECORD_LEN) * RECORD_LEN;
+                    int usable = (filled / recordLength) * recordLength;
                     int leftover = filled - usable;
 
                     if (leftover > 0) {
@@ -390,7 +399,7 @@ public final class Fixed255Parser {
                     }
 
                     b.len = usable;
-                    b.startRecNo = nextGlobalRecNo.getAndAdd((long) usable / RECORD_LEN) + 1;
+                    b.startRecNo = nextGlobalRecNo.getAndAdd((long) usable / recordLength) + 1;
                     b.seq = seqGen.getAndIncrement();
 
                     // Allocate output channel for this batch before handing to workers
@@ -434,14 +443,14 @@ public final class Fixed255Parser {
                             RecordType rt = RecordType.from(typeCode);
                             List<FieldSpec> layout = schemas.get(rt);
                             if (layout == null) {
-                                byte[] raw = Arrays.copyOfRange(b.data, recBase, recBase + RECORD_LEN);
+                                byte[] raw = Arrays.copyOfRange(b.data, recBase, recBase + recordLength);
                                 bo.q.put(new UnknownEvent(recNo, rt, typeCode, raw));
                             } else {
                                 String[] vals = parseFieldsToArray(b.data, recBase, layout);
                                 bo.q.put(new KnownEvent(recNo, rt, layout, vals));
                             }
 
-                            off += RECORD_LEN;
+                            off += recordLength;
                             recNo++;
                         }
 

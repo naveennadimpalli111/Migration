@@ -68,6 +68,7 @@ import static com.its255.schema.SFProfessionalSchemas.FM1F5;
 import static com.its255.schema.SFProfessionalSchemas.FM1F6;
 import static com.its255.schema.SFProfessionalSchemas.FM1G0;
 import static com.its255.schema.SFProfessionalSchemas.FM1X0;
+import static com.its255.schema.ValueBasedProgramSchemas.CBFBD;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -76,7 +77,9 @@ import java.util.Map;
 
 public final class SchemaRegistry {
 
-    private static final Map<String, EnumMap<RecordType, List<FieldSpec>>> registry = new HashMap<>();;
+    private static final Map<String, EnumMap<RecordType, List<FieldSpec>>> registry = new HashMap<>();
+    
+    private static final Map<String, Integer> recordLengths = new HashMap<>();
 
     static {
         registerAll();
@@ -105,6 +108,7 @@ public final class SchemaRegistry {
         registerSFProfessional();
         registerDisposition();
         registerCapitatedBilling();
+        registerVBPCBFBD();
     }
 
     private static void registerCapitatedBilling() {
@@ -117,6 +121,7 @@ public final class SchemaRegistry {
 	    m.put(RecordType.RT_7B, CapitatedBillingSchemas.FM37B);
 	    m.put(RecordType.RT_9A, CapitatedBillingSchemas.FM39A);
 	    registry.put("CBF", m);
+	    recordLengths.put("CBF", 255);
 		
 	}
 
@@ -128,6 +133,7 @@ public final class SchemaRegistry {
         m.put(RecordType.RT_2A, ReconciliationSchemas.FM32A);
 
         registry.put("RF", m);
+        recordLengths.put("RF", 255);
     }
 
     private static void registerSFInstitutional() {
@@ -163,6 +169,7 @@ public final class SchemaRegistry {
         m.put(RecordType.RT_9D, FM9D);
 
         registry.put("SFI", m);
+        recordLengths.put("SFI", 255);
     }
     
     private static void registerSFProfessional() {
@@ -189,6 +196,7 @@ public final class SchemaRegistry {
         m.put(RecordType.RT_X0, FM1X0);
 
         registry.put("SFP", m);
+        recordLengths.put("SFP", 255);
     }
     
     private static void registerDisposition() {
@@ -214,7 +222,19 @@ public final class SchemaRegistry {
         m.put(RecordType.RT_9A, FM29A);
 
         registry.put("DF", m);
+        recordLengths.put("DF", 255);
     }
+    
+    private static void registerVBPCBFBD() {
+        EnumMap<RecordType, List<FieldSpec>> m =
+            new EnumMap<>(RecordType.class);
+
+        m.put(RecordType.RT_CBFBD, CBFBD);
+        registry.put("CBFBD", m);
+
+        recordLengths.put("CBFBD", 804); 
+    }
+    
     
     public static Map<RecordType, List<FieldSpec>> all() {
         EnumMap<RecordType, List<FieldSpec>> allSchemas =
@@ -227,5 +247,10 @@ public final class SchemaRegistry {
         }
 
         return allSchemas;
+    }
+    
+    public static int getRecordLength(String transactionType) {
+        Integer len = recordLengths.getOrDefault(transactionType, 255);
+        return len;
     }
 }
