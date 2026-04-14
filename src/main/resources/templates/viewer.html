@@ -40,7 +40,8 @@
                 name="transactionType"
                 class="form-select"
                 aria-labelledby="txnTypeLabel"
-                aria-describedby="txnTypeHelp">
+                aria-describedby="txnTypeHelp"
+                th:disabled="${hasFile}">
           <option value="">Choose…</option>
           <option value="SFI">SF‑Institutional</option>
           <option value="SFP">SF‑Professional</option>
@@ -67,9 +68,12 @@
         <label class="form-label">EBCDIC File</label>
         <input type="file"
                name="file"
+               id = "fileInput"
                class="form-control"
                aria-describedby="fileHelp"
+               th:disabled="${hasFile}"
                required />  
+                 
         <div id="fileHint"
           class="form-text"
           aria-live="polite">
@@ -78,7 +82,7 @@
       </div>
     </div>
 
-    <button class="btn btn-primary">Upload</button>
+    <button class="btn btn-primary"  id="btnUpload">Upload</button>
     <div id="fileHelp" class="form-text">
       <span th:if="${hasFile}">
         Optional — leave empty to reuse the cached file from this session.
@@ -274,9 +278,12 @@
       <button id="btnClear"
               class="btn btn-outline-danger"
               form="clearForm"
-              th:if="${hasFile}">
+              disabled  aria-describedby="clearHelp">
         Clear cached file
       </button>
+      <span id="clearHelp" class="visually-hidden">
+        Clears the cached file so a new file can be uploaded.
+      </span>
 
       <!-- Clear Search (client-side only) -->
       <button id="btnClearSearch" type="button" class="btn btn-outline-secondary">

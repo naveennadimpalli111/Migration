@@ -1,4 +1,58 @@
+    
+    function setClearCacheEnabled(enabled) {
+      const btn = document.getElementById('btnClear');
+      if (!btn) return;
+    
+      btn.disabled = !enabled;
+    
+      if (!enabled) {
+        btn.setAttribute('aria-disabled', 'true');
+      } else {
+        btn.removeAttribute('aria-disabled');
+      }
+    }
+    
+    function setUploadEnabled(enabled) {
+      const fileInput = document.getElementById('fileInput');
+      const txnSelect = document.getElementById('txnType');
+      const uploadBtn = document.getElementById('btnUpload');
 
+      if (fileInput) {
+        fileInput.disabled = !enabled;
+        if (!enabled) fileInput.value = ''; // safety
+      }
+
+      if (txnSelect) {
+        txnSelect.disabled = !enabled;
+        if (!enabled) {
+          txnSelect.setAttribute('aria-disabled', 'true');
+        } else {
+          txnSelect.removeAttribute('aria-disabled');
+        }
+      }
+      if (uploadBtn) {
+        uploadBtn.disabled = !enabled;
+        if (!enabled) {
+          uploadBtn.setAttribute('aria-disabled', 'true');
+        } else {
+          uploadBtn.removeAttribute('aria-disabled');
+        }
+      }
+    }
+    
+    function updateUploadHint(hasFile) {
+      const hint = document.getElementById('fileHint');
+      if (!hint) return;
+    
+      if (hasFile) {
+        hint.textContent =
+          'A file is already cached for this session. Clear the cached file to upload a new one.';
+        hint.classList.add('text-warning');
+      } else {
+        hint.textContent = 'Choose a file to upload.';
+        hint.classList.remove('text-warning');
+      }
+    }
     
     // ---- Server-side progress poller (existing logic) ----
     async function poll() {
@@ -280,6 +334,10 @@
             });
           }
 
+          setUploadEnabled(!hasFileNow);
+          updateUploadHint(hasFileNow);
+          setClearCacheEnabled(hasFileNow);
+
           if (hasFileNow && txnSelect && txnSelect.value) {
             txnSelect.disabled = true;
             txnSelect.setAttribute('aria-disabled', 'true');
@@ -339,6 +397,8 @@
             if (filterAPI)  filterAPI.resetRecordType();
             if (rtSelect)   rtSelect.value = '';
             clearSearchStorage();
+            setUploadEnabled(true); // UNLOCK upload
+            updateUploadHint(false); // restore message
             try { sessionStorage.setItem(KEY('lastHasFile'), 'false'); } catch (_) {}
             setScrollToResultsFlag(); // consistent scroll target on reload
           });
@@ -436,6 +496,9 @@
             if (xhr.status >= 200 && xhr.status < 300) {
               // Upload OK → enable actions and start server-side poll
               setActionsEnabled(true);
+              setUploadEnabled(false); // LOCK upload after success
+              updateUploadHint(true);   // switch message
+              setClearCacheEnabled(true);
               const txnSelect = document.getElementById('txnType');
               const recordType = document.getElementById('recordTypeCode');
 
@@ -480,4 +543,5 @@
 
     // Scroll after the page is shown (normal loads + bfcache)
     window.addEventListener('pageshow', maybeScrollToResults);
-  
+    
+    
