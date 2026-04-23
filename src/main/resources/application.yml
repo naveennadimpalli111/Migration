@@ -33,6 +33,9 @@ server:
             max: 200
         accept-count: 200
     max-http-header-size: 16KB
+    servlet:
+        session:
+            timeout: 30m
 viewer:
   recordLength: 255
   charset: Cp037
@@ -45,3 +48,18 @@ viewer:
   chunk:
     enabled: true
     windowSizeMB: 512
+  cleanup:
+    # Delay before starting cleanup after user clicks "Clear Cache"
+    initial-delay-minutes: 10
+
+    # Retry delay between cleanup attempts
+    retry-delay-ms: 60000
+
+    # Maximum cleanup retry attempts
+    max-attempts: 10
+
+    # Maximum concurrent cleanup workers
+    worker-count: 3
+
+    # Startup cleanup: delete session dirs older than this
+    startup-cleanup-minutes: 30
