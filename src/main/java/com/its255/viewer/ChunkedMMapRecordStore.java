@@ -16,7 +16,8 @@ import com.its255.constants.FileViewerConstants;
  */
 public class ChunkedMMapRecordStore implements AutoCloseable {
     private final int RECORD_LEN;
-    private static final int TYPE_START_1_BASED = 22; // COBOL 1-based
+    private static final int DEFAULT_TYPE_START_1_BASED = 22; // COBOL 1-based
+    private static final int PLAN_PROFILE_TYPE_START_1_BASED = 3; // COBOL 1-based
     private static final int TYPE_LEN = 2;
 
     private final Path path;
@@ -66,6 +67,7 @@ public class ChunkedMMapRecordStore implements AutoCloseable {
             this.currentWindowIndex = windowIndex;
             this.currentWindowStart = start;
             this.currentWindowSize = mapSize;
+            
         }
     }
 
@@ -106,7 +108,8 @@ public class ChunkedMMapRecordStore implements AutoCloseable {
     	if (transactionType.equals(FileViewerConstants.CBFBD)) {
     		return FileViewerConstants.CBFBD;
     	} else {
-    		long off = offsetOf(recordNumber1Based) + (TYPE_START_1_BASED - 1);
+    	    int start1Based = recordTypeStart1Based();
+    		long off = offsetOf(recordNumber1Based) + (start1Based - 1);
             byte[] b = new byte[TYPE_LEN];
             getBytes(off, b, TYPE_LEN);
             return new String(b, cs);
@@ -120,5 +123,30 @@ public class ChunkedMMapRecordStore implements AutoCloseable {
         return b;
     }
 
-    @Override public void close() throws IOException { ch.close(); }
+    
+    @Override
+    public void close() throws IOException {
+    	 current = null;
+         currentWindowIndex = -1;
+         currentWindowStart = 0;
+         currentWindowSize = 0;
+
+         // Close channel (this is critical)
+         if (ch.isOpen()) {
+             ch.close();
+         }
+    }
+     
+    
+    private int recordTypeStart1Based() {
+        switch (transactionType) {
+            case FileViewerConstants.PLAN_PROFILE_UPDATE, FileViewerConstants.PLAN_PROFILE_ACKNOWLEDGMENT: // "PP"
+                return PLAN_PROFILE_TYPE_START_1_BASED;
+            case FileViewerConstants.CBFBD:
+                return -1; // handled specially
+            default:
+                return DEFAULT_TYPE_START_1_BASED; // SFI, SFP, DF, CBF, RF
+        }
+    }
+
 }

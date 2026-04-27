@@ -1,8 +1,11 @@
 package com.its255.web.web;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.its255.schema.SchemaRegistry;
+import com.its255.util.LoggingUtil;
 import com.its255.viewer.ChunkedMMapRecordStore;
 import com.its255.viewer.FastRecordFilter;
 import com.its255.viewer.ParallelPrefixIndexBuilder;
@@ -28,6 +32,8 @@ import com.its255.viewer.RecordQuery;
 import com.its255.viewer.SchemaHtmlRenderer;
 import com.its255.viewer.ViewerConfig;
 import com.its255.viewer.ViewerSession;
+import com.its255.web.cleanup.AsyncFileDeleter;
+import com.its255.web.cleanup.CleanupScheduler;
 import com.its255.web.service.CsvExportService;
 
 import jakarta.servlet.http.HttpSession;
@@ -36,9 +42,13 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/viewer")
 public class FastViewerController {
   private final ViewerConfig cfg;
+  private final CleanupScheduler  cleanupScheduler;
   
 
-  public FastViewerController(ViewerConfig cfg) { this.cfg = cfg; }
+  public FastViewerController(ViewerConfig cfg, CleanupScheduler cleanupScheduler) { 
+	  this.cfg = cfg; 
+	  this.cleanupScheduler = cleanupScheduler;
+  }
   private Charset cs() { return Charset.forName(cfg.getCharset()); }
 
   @GetMapping
@@ -88,10 +98,20 @@ public class FastViewerController {
         try { ac.close(); } catch (Exception ignore) {}
     }
 
-    Path tmp = Files.createTempFile("its255_v3_", ".dat");
-    file.transferTo(tmp.toFile());
+ // create app-specific temp root
+    Path appTmpRoot = getAppTempRoot();
 
-    vs.filePath = tmp;
+    // create per-session directory
+    Path sessionDir = Files.createTempDirectory(appTmpRoot, "session_");
+
+    // store uploaded file inside session directory
+    Path uploadedFile = sessionDir.resolve("uploaded.dat");
+    
+    file.transferTo(uploadedFile.toFile());
+
+ // save paths in session
+    vs.sessionDir = sessionDir;
+    vs.filePath = uploadedFile;
     vs.originalFilename = file.getOriginalFilename();
     vs.progress = 0.0;
 
@@ -102,11 +122,18 @@ public class FastViewerController {
 
 
     vs.store = new ChunkedMMapRecordStore(
-            tmp, cs(),
+    		uploadedFile, cs(),
             recordLength,
             windowBytes,
             transactionType
     );
+
+	 // TEMP debug print (remove later)
+	 LoggingUtil.debug(
+	     "Viewer upload: sessionDir=" + sessionDir +
+	     ", filePath=" + uploadedFile
+	 );
+
     
     int workers = Math.min(cfg.getIndexWorkers(), (int) getRecordCount(vs.store));
     ParallelPrefixIndexBuilder builder = new ParallelPrefixIndexBuilder(
@@ -243,14 +270,39 @@ public class FastViewerController {
   }
   
   @PostMapping("/clear")
-  public String clear(HttpSession session) {
+  public String clear(HttpSession session) throws IOException {
       ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
+      session.removeAttribute("VIEWER_SESSION");
       if (vs != null) {
-          try { vs.close(); } catch (Exception ignore) {}
-          // delete temp file
-          try { if (vs.filePath != null) Files.deleteIfExists(vs.filePath); } catch (Exception ignore) {}
-          session.removeAttribute("VIEWER_SESSION");
+    	  LoggingUtil.debug(
+      		    "Clear cache invoked. sessionDir=" +
+      		    (vs != null ? vs.sessionDir : null));
+    	  try { 
+    		  vs.close(); 
+    		  } catch (Exception ignore) {
+    			  LoggingUtil.error(ignore);
+    		  }
+
+    	  // 2. Explicitly break references (important on Windows)
+         vs.store = null;
+         vs.filter = null;
+         vs.pidx = null;
+         vs.nav = null;
+         vs.lastFiltered = null;
+
+    	  if (vs.sessionDir != null) {
+    	      LoggingUtil.debug(
+    	          "PHASE2_CLEAR: deleting sessionDir=" + vs.sessionDir
+    	      );
+
+    	   Path sessionDir = vs.sessionDir;
+   	       vs = null;
+   	       cleanupScheduler.scheduleCleanup(sessionDir);
+    	  }
+          
       }
+     
+
       return "redirect:/viewer";
   }
   
@@ -261,6 +313,15 @@ public class FastViewerController {
           throw new RuntimeException(e);
       }
   }
+  
+  private Path getAppTempRoot() throws IOException {
+	    Path root = Paths.get(
+	        System.getProperty("java.io.tmpdir"), 
+	        "its255Files"
+	    );
+	    Files.createDirectories(root);
+	    return root;
+	}
  
  
 }

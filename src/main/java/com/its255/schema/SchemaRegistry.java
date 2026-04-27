@@ -68,7 +68,19 @@ import static com.its255.schema.SFProfessionalSchemas.FM1F5;
 import static com.its255.schema.SFProfessionalSchemas.FM1F6;
 import static com.its255.schema.SFProfessionalSchemas.FM1G0;
 import static com.its255.schema.SFProfessionalSchemas.FM1X0;
+
 import static com.its255.schema.ValueBasedProgramSchemas.CBFBD;
+
+import static com.its255.schema.PlanProfileSchemas.FM51A;
+import static com.its255.schema.PlanProfileSchemas.FM52A;
+import static com.its255.schema.PlanProfileSchemas.FM53A;
+import static com.its255.schema.PlanProfileSchemas.FM54A;
+import static com.its255.schema.PlanProfileSchemas.FM55A;
+import static com.its255.schema.PlanProfileSchemas.FM56A;
+import static com.its255.schema.PlanProfileSchemas.FM57A;
+import static com.its255.schema.PlanProfileSchemas.FM59A;
+import static com.its255.schema.PlanProfileSchemas.FM61A;
+import static com.its255.schema.PlanProfileSchemas.FM62A;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -109,6 +121,8 @@ public final class SchemaRegistry {
         registerDisposition();
         registerCapitatedBilling();
         registerVBPCBFBD();
+        registerPlanProfileUpdate();
+        registerPlanProfileAcknowledgment();
     }
 
     private static void registerCapitatedBilling() {
@@ -233,6 +247,36 @@ public final class SchemaRegistry {
         registry.put("CBFBD", m);
 
         recordLengths.put("CBFBD", 804); 
+    }
+    
+    private static void registerPlanProfileUpdate() {
+        EnumMap<RecordType, List<FieldSpec>> m =
+            new EnumMap<>(RecordType.class);
+
+        m.put(RecordType.RT_1A, FM51A);
+        m.put(RecordType.RT_2A, FM52A);
+        m.put(RecordType.RT_3A, FM53A);
+        m.put(RecordType.RT_4A, FM54A);
+        m.put(RecordType.RT_5A, FM55A);
+        m.put(RecordType.RT_6A, FM56A);
+        m.put(RecordType.RT_7A, FM57A);
+        m.put(RecordType.RT_9A, FM59A);
+        m.put(RecordType.RT_61, FM61A);
+        m.put(RecordType.RT_62, FM62A);
+
+        registry.put("PPU", m);
+        recordLengths.put("PPU", 255);
+    }
+    
+    private static void registerPlanProfileAcknowledgment() {
+        EnumMap<RecordType, List<FieldSpec>> m =
+            new EnumMap<>(RecordType.class);
+
+        m.put(RecordType.RT_1A, FM61A);
+        m.put(RecordType.RT_2A, FM62A);
+
+        registry.put("PPA", m);
+        recordLengths.put("PPA", 255);
     }
     
     

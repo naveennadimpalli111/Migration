@@ -3,6 +3,8 @@ package com.its255.viewer;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.its255.util.LoggingUtil;
+
 /**
  * One-per-HTTP-session state bucket for Fast Viewer.
  * This replaces controller fields (which were singletons).
@@ -18,12 +20,22 @@ public class ViewerSession implements AutoCloseable {
     public List<Integer> lastFiltered;    // last result set
     public double progress;               // prefix index progress (0..1)
     public String transactionType;
+    public Path sessionDir; // per-session temp directory
 
     public boolean hasFile() {
         return filePath != null && store != null;
     }
     
-    @Override public void close() {
-        if (store instanceof AutoCloseable ac) try { ac.close(); } catch (Exception ignore) {}
+    @Override
+    public void close() {
+        if (store instanceof AutoCloseable ac) {
+            try {
+                ac.close();
+            } catch (Exception ignore) {
+            	LoggingUtil.error(ignore);
+            } finally {
+                store = null;
+            }
+        }
     }
 }
