@@ -33,7 +33,7 @@ public class ViewerTempStartupCleaner {
 
         long cutoff =
             System.currentTimeMillis() -
-            TimeUnit.MINUTES.toMillis(30);
+            TimeUnit.MINUTES.toMillis(1);
 
         try (DirectoryStream<Path> dirs =
                  Files.newDirectoryStream(root, "session_*")) {
