@@ -11,11 +11,20 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Component;
 
 import com.its255.util.LoggingUtil;
+import com.its255.web.cleanup.CleanupProperties;
 
 import jakarta.annotation.PostConstruct;
 
 @Component
 public class ViewerTempStartupCleaner {
+	
+
+	private final CleanupProperties cleanupProperties;
+
+    public ViewerTempStartupCleaner(CleanupProperties cleanupProperties) {
+        this.cleanupProperties = cleanupProperties;
+    }
+
 
     @PostConstruct
 	public void cleanup() throws Exception {
@@ -33,7 +42,7 @@ public class ViewerTempStartupCleaner {
 
         long cutoff =
             System.currentTimeMillis() -
-            TimeUnit.MINUTES.toMillis(30);
+            TimeUnit.MINUTES.toMillis(cleanupProperties.getStartupCleanupMinutes());
 
         try (DirectoryStream<Path> dirs =
                  Files.newDirectoryStream(root, "session_*")) {
