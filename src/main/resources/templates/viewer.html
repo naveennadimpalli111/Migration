@@ -9,16 +9,17 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   
 <!-- App-specific CSS -->
-<link rel="stylesheet" th:href="@{/css/viewer.css}"  href="/css/viewer.css" />
-
-
+<!-- <link rel="stylesheet" th:href="@{/css/viewer.css}"  href="/css/viewer.css" /> -->
+<link rel="stylesheet" th:href="@{/css/viewer.css}" href="/css/viewer.css" />
   
 </head>
 
 <!-- Keep track of hasFile for restart-aware behavior -->
 <body class="container py-3" th:attr="data-has-file=${hasFile}">
   <main id="main-content">
-  <h1 class="mb-3">EBCDIC File Viewer — v3.2 (Chunked Mapping)</h1>
+    <h1 class="mb-3">EBCDIC File Viewer — v3.2 (Chunked Mapping)</h1>
+
+  
   <p class="text-muted">
     Upload a raw ITS file and either enter a <strong>record number</strong>,
     <strong>record type</strong>, or enter a <strong>SCCF</strong> to preview.
@@ -40,17 +41,16 @@
                 name="transactionType"
                 class="form-select"
                 aria-labelledby="txnTypeLabel"
-                aria-describedby="txnTypeHelp"
-                th:disabled="${hasFile}">
+                aria-describedby="txnTypeHelp">
           <option value="">Choose…</option>
           <option value="SFI">SF‑Institutional</option>
           <option value="SFP">SF‑Professional</option>
           <option value="DF">DF</option>
           <option value="CBF">CBF</option>
           <option value="RF">RF</option>
-          <option value="CBFBD">VBP (CBFBD)</option>
-          <option value="PPU">PP - Update</option>
-          <option value="PPA">PP - Acknowledgment</option>
+          <option value="CBFBD">
+            VBP (CBFBD)
+          </option>
         <!-- <option value="NF">NF</option>
            <option value="MEF">Member Exchange</option> -->
         </select>
@@ -67,13 +67,13 @@
       <div class="col-md-8">
         <label class="form-label">EBCDIC File</label>
         <input type="file"
+        id="fileInput"
                name="file"
-               id = "fileInput"
                class="form-control"
                aria-describedby="fileHelp"
-               th:disabled="${hasFile}"
+                th:disabled="${hasFile}"
                required />  
-                 
+              
         <div id="fileHint"
           class="form-text"
           aria-live="polite">
@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <button class="btn btn-primary"  id="btnUpload">Upload</button>
+    <button class="btn btn-primary">Upload</button>
     <div id="fileHelp" class="form-text">
       <span th:if="${hasFile}">
         Optional — leave empty to reuse the cached file from this session.
@@ -259,7 +259,7 @@
 
       
     <!-- Export -->
-     <!--  <button
+      <button
       id="btnExport"
       type="submit"
       class="btn btn-outline-secondary"
@@ -272,18 +272,15 @@
 
       <span id="exportHelp" class="visually-hidden">
         Exports the filtered records as ZIP containing CSV files per record type.
-      </span> -->
+      </span>
 
       <!-- Clear cached file (submits the external clearForm; only when a file is cached) -->
       <button id="btnClear"
               class="btn btn-outline-danger"
               form="clearForm"
-              disabled  aria-describedby="clearHelp">
+              th:if="${hasFile}">
         Clear cached file
       </button>
-      <span id="clearHelp" class="visually-hidden">
-        Clears the cached file so a new file can be uploaded.
-      </span>
 
       <!-- Clear Search (client-side only) -->
       <button id="btnClearSearch" type="button" class="btn btn-outline-secondary">
@@ -307,10 +304,18 @@
 
   <!-- RECORD TABLE (wrapped for sticky header styling) -->
   <!-- CHANGE: anchor to scroll to after Prev/Next/Search -->
+  <form th:action="@{/viewer/save}" method="post">
   <div id="resultsTop"></div>
   <div class="record-container">
     <div th:utext="${html}"></div>
   </div>
+ <a class="btn btn-primary mt-2" th:if="${editMode!=true}"
+ th:href="@{/viewer/edit}">Edit</a>
+  <button class="btn btn-success mt-2" type="submit" th:if="${editMode==true}">Save</button>
+  <a class="btn btn-secondary mt-2" th:if="${editMode==true}"
+ th:href="@{/viewer/view}">Cancel</a>
+  
+  </form>
 
   <!-- ========== NAVIGATION ROW — BOTTOM (mirrors top) ========== -->
   <!-- NAV FIX: hide nav if there are no results -->
@@ -325,8 +330,17 @@
   </div>
 
   
- <!-- App JS -->
- <script th:src="@{/js/viewer.js}"  src="/js/viewer.js" defer></script>
+ 
 </main>
+<!-- App JS -->
+ <script th:src="@{/js/viewer.js}"  src="/js/viewer.js" defer></script>
+<script th:inline="javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    const hasFile = /*[[${hasFile}]]*/ false;
+    updateUploadHint(hasFile);
+  });
+</script>
+
+
 </body>
 </html>

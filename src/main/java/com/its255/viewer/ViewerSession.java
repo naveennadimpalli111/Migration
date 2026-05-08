@@ -1,7 +1,9 @@
 package com.its255.viewer;
 
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.its255.util.LoggingUtil;
 
@@ -21,11 +23,13 @@ public class ViewerSession implements AutoCloseable {
     public double progress;               // prefix index progress (0..1)
     public String transactionType;
     public Path sessionDir; // per-session temp directory
+    public  boolean editMode=false;
+    
 
     public boolean hasFile() {
         return filePath != null && store != null;
     }
-    
+    public Map<Integer,Map<String,String>>editOverlay=new HashMap<>();
     @Override
     public void close() {
         if (store instanceof AutoCloseable ac) {

@@ -48,11 +48,23 @@
         hint.textContent =
           'A file is already cached for this session. Clear the cached file to upload a new one.';
         hint.classList.add('text-warning');
+        disableFileUpload(true);
       } else {
         hint.textContent = 'Choose a file to upload.';
         hint.classList.remove('text-warning');
+        disableFileUpload(false);
       }
     }
+    function disableFileUpload(hasFile){
+const fileInput=document.getElementById('fileInput');
+if(!fileInput)return;
+fileInput.disabled=hasFile;
+if(hasFile){
+fileInput.classList.add('disabled');
+}else {
+fileInput.classList.remove('disabled');
+}
+}
     
     // ---- Server-side progress poller (existing logic) ----
     async function poll() {
@@ -235,17 +247,16 @@
   };
 
 
-
-      function setRecordTypeDisabled(isDisabled) {
+ function setRecordTypeDisabled(isDisabled) {
         recordType.disabled = !!isDisabled;
         if (isDisabled) recordType.setAttribute("aria-disabled", "true");
         else recordType.removeAttribute("aria-disabled");
-      }
-
-      function resetRecordType() {
+      } 
+	  function resetRecordType() {
         recordType.innerHTML = '<option value="">Choose…</option>';
         setRecordTypeDisabled(true);
       }
+
 
       function populateRecordTypesFor(txn) {
         recordType.innerHTML = '<option value="">Choose…</option>';
@@ -433,7 +444,7 @@
           });
         }
       });
-    })();
+    })();    
 
     // ---------- Scroll to results (table start) ----------
     function setScrollToResultsFlag() {
@@ -524,6 +535,7 @@
               if (recordType && txnSelect) {
                 filterAPI.populateRecordTypesFor(txnSelect.value);
                 recordType.disabled = false;
+               
               }
               setTimeout(poll, 300);
             } else {
@@ -557,5 +569,6 @@
 
     // Scroll after the page is shown (normal loads + bfcache)
     window.addEventListener('pageshow', maybeScrollToResults);
+
     
     

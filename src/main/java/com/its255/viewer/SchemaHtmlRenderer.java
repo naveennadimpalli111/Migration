@@ -1,10 +1,8 @@
 
 package com.its255.viewer;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -30,13 +28,51 @@ public class SchemaHtmlRenderer {
     private final Object store; // must expose: readRecordBytes(int), readType(int)
     private final Charset cs;
     private final String transactionType;
+    private final boolean editMode;
+    private final Map<Integer,Map<String,String>>editOverlay;
 
     public SchemaHtmlRenderer(Object store, Charset cs,
-            String transactionType) {
+            String transactionType,boolean editMode,Map<Integer,Map<String,String>>editOverlay) {
         this.store = store;
         this.cs = cs;
         this.transactionType = transactionType;
+        this.editMode=editMode;
+        this.editOverlay=editOverlay;
     }
+   
+    
+    private String row(String name,String value,int recordNo,FieldSpec fieldSpec) {
+    	boolean editable = editMode && isEditableField(name);
+    	StringBuilder sb=new StringBuilder();
+    	sb.append("<tr>");
+    			 sb.append("<th scope='row' style='white-space:nowrap'>").append(escape(name)).append("</th>");
+    			 sb.append("<td>");
+    			 if(editable) {
+    				 sb.append("<input type='text'")
+    				 .append("class='form-control form-control-sm editable-field'")
+    				 .append("name='field_")
+    				 .append(recordNo)
+    				 .append("_")
+    				 .append(escape(name))
+    				 .append("' ")
+    				 .append("value='")
+    				 .append(escape(value))
+    				 .append("' ");
+    				 if(fieldSpec !=null) {
+                     sb.append("maxlength='")
+    					 		.append(fieldSpec.lengthBytes)
+    					 		.append("'");
+    				 }
+    				 sb.append("/>");
+    				 
+    			 } else {
+    				 sb.append("<pre style='margin:0'>").append(escape(value)).append("</pre>");
+    			 }
+    			 sb.append("</td>");
+    			 sb.append("</tr>\n");
+    			 return sb.toString();
+    }
+    
 
     public String render(int recordNumber1Based) {
         String type = readType(recordNumber1Based).trim();
@@ -49,9 +85,17 @@ public class SchemaHtmlRenderer {
         sb.append("<thead><tr><th scope='col' style='white-space:nowrap'>Field</th><th scope='col'>Value</th></tr></thead><tbody>\n");
 
         if (layout == null || layout.isEmpty()) {
-            // Fallback: minimal metadata view
-            sb.append(row("REC_TYPE", type));
-            sb.append(row("BYTE_LEN", String.valueOf(rec.length)));
+        	String recTypeValue=type;
+        	String byteLenValue=String.valueOf(rec.length);
+        	Map<String,String>recordOverlay=editOverlay!=null?
+        			editOverlay.get(recordNumber1Based):null;
+        	if(recordOverlay!=null) {
+        		recTypeValue=recordOverlay.getOrDefault("REC_TYPE",recTypeValue);
+        		byteLenValue=recordOverlay.getOrDefault("BYTE_LEN",byteLenValue);
+        	}
+        	 sb.append(row("REC_TYPE", recTypeValue,recordNumber1Based,null));
+             sb.append(row("BYTE_LEN",byteLenValue ,recordNumber1Based,null));
+        	
         } else {
             for (FieldSpec f : layout) {
                 int start = f.start1Based - 1;
@@ -118,7 +162,13 @@ public class SchemaHtmlRenderer {
                         val = "";
                 }
                
-                sb.append(row(f.name, escape(val)));
+                Map<String,String>recordOverlay=editOverlay!=null?
+                		editOverlay.get(recordNumber1Based):null;
+                		if(recordOverlay!=null &&recordOverlay.containsKey(f.name)
+                		){
+                		val=recordOverlay.get(f.name);
+                		}
+                sb.append(row(f.name,val,recordNumber1Based,f));
             }
         }
         sb.append("</tbody></table></div>\n");
@@ -173,6 +223,7 @@ public class SchemaHtmlRenderer {
     	}
     }
 
+   
     private static String escape(String s) {
         if (s == null) return "";
         return s
@@ -180,6 +231,11 @@ public class SchemaHtmlRenderer {
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace("\"", "&quot;");
+    }
+
+    private boolean isEditableField(String fieldName) {
+    	return !List.of("REC_TYPE","BYTE_LEN").contains(fieldName);
+    	
     }
     
     static int parseOverpunchInt(String s) {

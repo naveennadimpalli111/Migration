@@ -2,18 +2,17 @@ package com.its255.web.web;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,17 +25,17 @@ import com.its255.util.LoggingUtil;
 import com.its255.viewer.ChunkedMMapRecordStore;
 import com.its255.viewer.FastRecordFilter;
 import com.its255.viewer.ParallelPrefixIndexBuilder;
-import com.its255.viewer.PrefixIndex;
 import com.its255.viewer.RecordNavigator;
 import com.its255.viewer.RecordQuery;
 import com.its255.viewer.SchemaHtmlRenderer;
 import com.its255.viewer.ViewerConfig;
 import com.its255.viewer.ViewerSession;
-import com.its255.web.cleanup.AsyncFileDeleter;
 import com.its255.web.cleanup.CleanupScheduler;
 import com.its255.web.service.CsvExportService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+
 
 @Controller
 @RequestMapping("/viewer")
@@ -185,6 +184,7 @@ public class FastViewerController {
   @GetMapping("/current")
   public String current(Model model, HttpSession session) {
 	  ViewerSession vs = getSession(session);
+	  model.addAttribute("editMode",Boolean.TRUE.equals(vs.editMode));
 
 	    if (!vs.hasFile() || vs.nav == null || vs.nav.size() == 0) {
 	        model.addAttribute("html",
@@ -193,12 +193,28 @@ public class FastViewerController {
 	    }
 
 	    int rn = vs.nav.currentRecordNumber();
+	  
 
 	    String type = safeInvoke(vs.store, "readType", rn);
 	    String sccf = safeInvoke(vs.store, "readSccf", rn);
 	    String txn = safeInvoke(vs.store, "readTxn", rn);
-	    SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType);
+	    SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType,vs.editMode,vs.editOverlay);
 	    String tableHtml = renderer.render(rn);
+	    Map<String,String>recordOverlay=vs.editOverlay.get(rn);
+	    if(recordOverlay!=null) {
+	    	sccf=recordOverlay.getOrDefault("SCCF",sccf);
+	    	String localPlan=recordOverlay.get("FM105-SER-NUM-LOCAL-PLAN");
+	    	String cc=recordOverlay.get("FM105-SER-NUM-JULDT-CC");
+	    	String yy=recordOverlay.get("FM105-SER-NUM-JULDT-YY");
+	    	String ddd=recordOverlay.get("FM105-SER-NUM-JULDT-DDD");
+	    	String sequence=recordOverlay.get("FM105-SER-NUM-SEQUENCE");
+	    	String suffix=recordOverlay.get("FM105-SER-NUM-SUFFIX");
+	    	if(localPlan!=null && cc!=null && ddd!=null && sequence!=null &&suffix!=null) {
+	    		sccf=localPlan+cc+yy+ddd+sequence+suffix;
+	    	}
+	    	type=recordOverlay.getOrDefault("REC_TYPE",type);
+	    	type=recordOverlay.getOrDefault("FM105-REC-TYPE",type);
+	    }
 
 	    StringBuilder sb = new StringBuilder();
 	    sb.append("<h5 id='record-context'>")
@@ -220,6 +236,7 @@ public class FastViewerController {
 	    model.addAttribute("hasPrev", vs.nav.hasPrev());
 	    model.addAttribute("hasNext", vs.nav.hasNext());
 	    model.addAttribute("html", sb.toString());
+	    model.addAttribute("editMode",vs.editMode);
 
 	    return "viewer";
 
@@ -267,6 +284,56 @@ public class FastViewerController {
 	    } catch (Exception e) {
 	        return "";
 	    }
+  }
+  @GetMapping("/edit")
+  public String enableEdit(HttpSession session) {
+	  ViewerSession vs=getSession(session);
+	  vs.editMode=true;
+	  return "redirect:/viewer/current";
+  }
+  @PostMapping("/save")
+
+  public String save(HttpServletRequest request,HttpSession session) {
+	  ViewerSession vs=getSession(session);
+	  request.getParameterMap().forEach((key,value)->{
+	  if(key.startsWith("field_")) {
+			  String[]parts=key.split("_",3);
+			  int recordNo=Integer.parseInt(parts[1]);
+			  String fieldName=parts[2];
+			  String newValue=value[0];
+	  Map<String,String>recordEdits=vs.editOverlay.computeIfAbsent(recordNo,k->new HashMap<>());		 
+			  recordEdits.put(fieldName, newValue);
+			  System.out.println("OVERLAY SAVED:record="+recordNo+",field="+fieldName+",value="+newValue);
+		  }
+	  });
+	  vs.editMode=false;
+	  try {
+		  StringBuilder content=new StringBuilder();
+		  vs.editOverlay.forEach((recordNo,fields)->{
+			  content.append("Record").append(recordNo).append("\n");
+			  fields.forEach((field,value)->{
+				  content.append(field).append("=")
+				  .append(value)
+				  .append("\n");
+			  });
+			  content.append("\n");
+		  });
+		  Path outputPath=Paths.get("C:/edited-files/edited-records.txt");
+		  Files.createDirectories(outputPath.getParent());
+		  Files.write(outputPath,content.toString().getBytes(StandardCharsets.UTF_8)
+		  );
+		  System.out.println("LOCAL FILE SAVED:"+outputPath);
+		  
+	  }catch(Exception e) {
+		  e.printStackTrace();
+	  }
+	  return "redirect:/viewer/current";
+  }
+  @GetMapping("/view")
+  public String disableEdit(HttpSession session) {
+	  ViewerSession vs=getSession(session);
+	  vs.editMode=false;
+	  return "redirect:/viewer/current";
   }
   
   @PostMapping("/clear")
