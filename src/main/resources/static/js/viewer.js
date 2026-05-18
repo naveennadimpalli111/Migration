@@ -302,6 +302,24 @@ fileInput.classList.remove('disabled');
         sessionStorage.removeItem(KEY('recordTypeCode'));
       } catch (_) {}
     }
+    
+    //
+    /*if record type is not select show vertical view hide Horizontal view*/
+function toggleViewBasedOnRecordType(){
+	const recordType=document.getElementById("recordTypeCode").value;
+	const verticalView=document.getElementById("verticalView");
+	const horizontalView=document.getElementById("horizontalView");
+	if(recordType && recordType.trim()!==""){
+		verticalView.style.display="none";
+		horizontalView.style.display="block";
+	} else {
+		verticalView.style.display="block";
+		horizontalView.style.display="none";
+		
+	}
+}
+    
+    //
 
     // ---- SessionStorage: persist & restore search fields; restart-aware; Clear buttons ----
     (function initSessionStoragePersistence() {
@@ -569,6 +587,137 @@ fileInput.classList.remove('disabled');
 
     // Scroll after the page is shown (normal loads + bfcache)
     window.addEventListener('pageshow', maybeScrollToResults);
+    // Simplified client-side validation: only alphanumeric edits allowed.
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('saveForm') || document.querySelector('form[action="/viewer/save"]');
+      const saveBtn = document.getElementById('btnSave');
 
-    
+      function setInvalid(el, msg) {
+        el.classList.add('is-invalid');
+        const fb = el.parentElement && el.parentElement.querySelector('.invalid-feedback');
+        if (fb) { fb.style.display = 'block'; fb.textContent = msg; }
+        let icon = el.parentElement && el.parentElement.querySelector('.val-icon');
+        if (!icon && el.parentElement) {
+          icon = document.createElement('span');
+          icon.className = 'val-icon';
+          el.parentElement.appendChild(icon);
+        }
+      }
+
+      function clearInvalid(el) {
+        el.classList.remove('is-invalid');
+        const fb = el.parentElement && el.parentElement.querySelector('.invalid-feedback');
+        if (fb) { fb.style.display = 'none'; fb.textContent = ''; }
+        const icon = el.parentElement && el.parentElement.querySelector('.val-icon');
+        if (icon) icon.remove();
+      }
+
+      function validateField(el) {
+        if (!el) return true;
+        if (el.readOnly) { clearInvalid(el); return true; }
+        const flen = parseInt(el.getAttribute('data-flen') || '0', 10) || 0;
+        const val = el.value || '';
+        if (flen > 0 && val.length > flen) {
+          setInvalid(el, `Max length ${flen} characters`);
+          return false;
+        }
+        // Allow all printable characters except control codes.
+        if (val && /[\u0000-\u001F\u007F]/.test(val)) {
+          setInvalid(el, 'Invalid characters');
+          return false;
+        }
+        clearInvalid(el);
+        return true;
+      }
+
+      function updateSaveState() {
+        const inputs = Array.from(document.querySelectorAll('.editable-field'));
+        const anyInvalid = inputs.some(i => !i.readOnly && i.classList.contains('is-invalid'));
+        if (saveBtn) saveBtn.disabled = anyInvalid;
+      }
+
+      // Block control characters for editable fields
+      document.body.addEventListener('keypress', (ev) => {
+        const el = ev.target;
+        if (!el || !el.classList || !el.classList.contains('editable-field')) return;
+        if (ev.key.length !== 1) return; // allow control keys
+        if (/[ -]/.test(ev.key)) ev.preventDefault();
+      }, true);
+
+      // Validate on blur
+      document.body.addEventListener('blur', (ev) => {
+        const t = ev.target;
+        if (t && t.classList && t.classList.contains('editable-field')) {
+          validateField(t);
+          updateSaveState();
+        }
+      }, true);
+
+      // Initial pass: make packed/binary fields readonly and validate others
+      document.querySelectorAll('.editable-field').forEach((el) => {
+        const ftype = (el.getAttribute('data-ftype') || '').toUpperCase();
+        if (ftype === 'PACKED_DECIMAL' || ftype === 'BINARY') {
+          el.readOnly = true;
+          el.classList.add('non-editable');
+          const fb = el.parentElement && el.parentElement.querySelector('.invalid-feedback');
+          if (fb) fb.textContent = 'Not editable';
+        }
+        validateField(el);
+      });
+
+      // Form submit: validate all editable fields, prevent submit if invalid
+      if (form) {
+        form.addEventListener('submit', (ev) => {
+          const inputs = Array.from(form.querySelectorAll('.editable-field'));
+          let ok = true;
+          for (const i of inputs) if (!validateField(i)) ok = false;
+          updateSaveState();
+          if (!ok) {
+            ev.preventDefault();
+            const first = form.querySelector('.is-invalid');
+            if (first) first.focus();
+            alert('Please fix validation errors before saving.');
+          }
+        });
+      }
+
+      // Revalidate while typing so Save stays enabled when fields are valid
+      document.body.addEventListener('input', (ev) => {
+        const t = ev.target;
+        if (t && t.classList && t.classList.contains('editable-field')) {
+          validateField(t);
+          updateSaveState();
+        }
+      });
+
+      // Keep API compatibility with older code that may call this function
+      window.restrictByFirstFieldType = function () { /* intentionally left no-op */ };
+    });
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+
     
