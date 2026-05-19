@@ -240,6 +240,7 @@
             <option value="49A">49A — FM49A</option>
           </optgroup> -->
         </select>
+        <small id="recordTypeError" class="text-danger d-none">Record Type Mandatory</small>
       </div>
 
       <div class="col-md-2">
@@ -291,7 +292,8 @@
 
   <!-- ========== NAVIGATION ROW — TOP ========== -->
   <!-- NAV FIX: hide nav if there are no results -->
-  <div class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
+ <!--  <div class="nav-row mb-1" th:if="${hasFile} and ${count} > 0"> -->
+ <div id="navTop" class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
     <form th:action="@{/viewer/prev}" method="post" data-nav="true">
       <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
     </form>
@@ -304,22 +306,82 @@
 
   <!-- RECORD TABLE (wrapped for sticky header styling) -->
   <!-- CHANGE: anchor to scroll to after Prev/Next/Search -->
-  <form th:action="@{/viewer/save}" method="post">
-  <div id="resultsTop"></div>
-  <div class="record-container">
-    <div th:utext="${html}"></div>
+  <div style="margin-bottom:10px;">
+  
+<!-- <button type="button" id="toggleViewBtn"  class="btn btn-primary btn-sm" onclick="toggleViewBasedOnRecordType()">
+  Switch to Horizontal View
+</button> -->
+<button type="button" id="toggleViewBtn"  class="btn btn-primary btn-sm" onclick="toggleViewBasedOnRecordType()">
+  Switch to Horizontal View
+</button>
+
   </div>
+
+  <form id="saveForm" th:action="@{/viewer/save}" method="post">
+  <input type="hidden" id="viewMode" name="viewMode" th:value="${viewMode}">
+  <div id="resultsTop" class="mb-2" th:if="${count > 0}">
+    <span class="badge bg-info text-dark me-2" th:if="${viewMode == 'horizontal'}">
+      Showing <span th:text="${count}"></span> records
+    </span>
+    <span class="badge bg-info text-dark" th:if="${viewMode != 'horizontal'}">
+      Record <span th:text="${position}"></span> of <span th:text="${count}"></span>
+    </span>
+  </div>
+ 
+ <div class="record-container">
+
+    <!-- VERTICAL -->
+    <div id="verticalView"
+         th:style="${viewMode=='horizontal'}?'display:none;':'display:block;'"
+         style="max-height:700px;overflow:auto;">
+
+        <div id="verticalTableContainer"
+             th:utext="${verticalHtml}">
+        </div>
+
+        <div id="loadMoreVertical" style="display:none;text-align:center;">
+            Loading...
+        </div>
+    </div>
+
+    <!-- HORIZONTAL -->
+    <div id="horizontalView"
+         th:style="${viewMode=='horizontal'}?'display:block;':'display:none;'"
+         style="max-height:700px;overflow:auto;">
+
+        <div id="horizontalContent"
+             th:utext="${horizontalHtml}">
+        </div>
+
+        <div id="loadMoreHorizontal" style="display:none;text-align:center;">
+            Loading...
+        </div>
+    </div>
+
+</div>
  <a class="btn btn-primary mt-2" th:if="${editMode!=true}"
  th:href="@{/viewer/edit}">Edit</a>
-  <button class="btn btn-success mt-2" type="submit" th:if="${editMode==true}">Save</button>
+ <!--  <button id="btnSave" class="btn btn-success mt-2" type="button" th:if="${editMode==true}">Save</button>  -->
+  
+<button id="btnSave"
+        class="btn btn-success mt-2"
+        type="submit"
+        th:if="${editMode==true}">
+    Save
+</button>
+  
+
+  
   <a class="btn btn-secondary mt-2" th:if="${editMode==true}"
  th:href="@{/viewer/view}">Cancel</a>
   
   </form>
+  
 
   <!-- ========== NAVIGATION ROW — BOTTOM (mirrors top) ========== -->
   <!-- NAV FIX: hide nav if there are no results -->
-  <div class="nav-row mt-3" th:if="${hasFile} and ${count} > 0">
+  <!-- <div class="nav-row mt-3" th:if="${hasFile} and ${count} > 0"> -->
+  <div id="navBottom" class="nav-row mt-3" th:if="${hasFile} and ${count} > 0">
     <form th:action="@{/viewer/prev}" method="post" data-nav="true">
       <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
     </form>
@@ -333,13 +395,305 @@
  
 </main>
 <!-- App JS -->
+<link rel="stylesheet" th:href="@{/css/validation.css}"
+href="/css/validation.css"/>
  <script th:src="@{/js/viewer.js}"  src="/js/viewer.js" defer></script>
-<script th:inline="javascript">
+<!-- <script th:inline="javascript">
   document.addEventListener("DOMContentLoaded", function () {
     const hasFile = /*[[${hasFile}]]*/ false;
     updateUploadHint(hasFile);
   });
+</script> -->
+<script>
+/*switch btn by default vertical view*/
+let isHorizontal = false;
+
+function updateView() {
+	  const vertical = document.getElementById("verticalView");
+	  const horizontal = document.getElementById("horizontalView");
+	  const btn = document.getElementById("toggleViewBtn");
+
+	  // ✅ NEW: get navigation elements
+	  const navTop = document.getElementById("navTop");
+	  const navBottom = document.getElementById("navBottom");
+
+	  if (!vertical || !horizontal || !btn) return;
+
+	  if (isHorizontal) {
+	    // ✅ show horizontal
+	    vertical.style.display = "none";
+	    horizontal.style.display = "block";
+	    btn.innerText = "Switch to Vertical View";
+
+	    // ✅ ✅ HIDE navigation
+	    if (navTop) navTop.style.display = "none";
+	    if (navBottom) navBottom.style.display = "none";
+
+	  } else {
+	    // ✅ show vertical
+	    vertical.style.display = "block";
+	    horizontal.style.display = "none";
+	    btn.innerText = "Switch to Horizontal View";
+
+	    // ✅ ✅ SHOW navigation
+	    if (navTop) navTop.style.display = "flex";
+	    if (navBottom) navBottom.style.display = "flex";
+	  }
+	}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  const recordTypeDropdown = document.getElementById("recordTypeCode");
+  const searchBtn = document.getElementById("btnSearch");
+  const btn = document.getElementById("toggleViewBtn");
+
+  // ✅ Default view = Vertical
+  const saved = sessionStorage.getItem("viewMode");
+  isHorizontal = (saved === "horizontal");
+
+  updateView();
+
+  // ✅ FIX: attach click INSIDE DOMContentLoaded
+ if (btn) {
+  btn.addEventListener("click", function () {
+
+    const recordTypeDropdown = document.getElementById("recordTypeCode");
+
+    // ✅ STEP: enforce record type
+    if (!isHorizontal) {
+      if (!recordTypeDropdown || !recordTypeDropdown.value) {
+        alert("Please select Record Type to view Horizontal table");
+        return;
+      }
+    }
+
+    isHorizontal = !isHorizontal;
+
+    sessionStorage.setItem("viewMode",
+      isHorizontal ? "horizontal" : "vertical"
+    );
+    const hiddenViewMode=document.getElementById("viewMode");
+    if(hiddenViewMode){
+    	hiddenViewMode.value=isHorizontal?"horizontal":"vertical";
+    }
+
+    updateView();
+  });
+}
+
+
+  // ✅ Search behavior
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function () {
+      if (recordTypeDropdown && recordTypeDropdown.value) {
+        isHorizontal = true;
+        sessionStorage.setItem("viewMode", "horizontal");
+      }
+    });
+  }
+
+});
+//document.getElementById("viewMode").value="horizontal";
+//document.getElementById("viewMode").value="horizontal";
+const hiddenViewMode=document.getElementById("viewMode");
+if(hiddenViewMode){
+	hiddenViewMode.value=isHorizontal?"horizontal":"vertical";
+}
+
+
+const clearBtn = document.getElementById("btnClear");
+
+if (clearBtn) {
+  clearBtn.addEventListener("click", function () {
+
+    // ✅ RESET to vertical
+    sessionStorage.setItem("viewMode", "vertical");
+  });
+}
+
 </script>
+
+<!-- <script>
+/*Handle  search button dynamical switch to table*/
+document.addEventListener("DOMContentLoaded", function () {
+	const searchBtn = document.getElementById("searchBtn");
+/*   const btn = document.getElementById("toggleViewBtn"); */
+  const recordType = document.getElementById("recordTypeCode");
+ /*  const error = document.getElementById("recordTypeError"); */
+  const verticalView = document.getElementById("verticalView");
+  const horizontalView = document.getElementById("horizontalView");
+  searchBtn.addEventListener("click",function(){
+	  if (recordType.value && recordType.value.trim() !== "") {
+		  verticalView.style.display = "none";
+	      horizontalView.style.display = "block";
+	  }else {
+		  verticalView.style.display = "block";
+	      horizontalView.style.display = "none";
+	  }
+	  });
+  });
+</script> -->
+<!-- <script>
+let offset=20;
+const limit=20;
+let loading=false;let hasMore=true;
+function loadMoreRecords(){
+	if(loading||!hasMore){
+		return;
+	}
+	loading=true;
+	document.getElementById("loadingMore").style.display="block";
+	const selectedType=document.getElementById("recordTypeCode")?.value||"";
+	fetch(`/viewer/loadMore?selectedType=${selectedType}&offset=${offset}&limit=${limit}`)
+    .then(response=>response.text())
+    .then(html=>{
+    	if(html.trim()===""){
+    		hasMore=false;
+    		loading=false;
+    	document.getElementById("loadingMore").style.display="none";
+    	 return; 
+     } 
+     document.getElementById("verticalTableContainer").insertAdjacentHTML("beforeend", html);("beforeend",html);
+	offset+=limit;
+	loading=false;  
+	document.getElementById("loadingMore").style.display="none";
+})
+	.catch(err=>{
+		console.error(err);
+	loading=false;
+	document.getElementById("loadingMore").style.display="none";
+	});
+	}
+
+document.getElementById("verticalView").addEventListener("scroll",function(){
+	const div=this;
+	if(div.scrollTop+div.clientHeight>=div.scrollHeight-100){
+		loadMoreRecords();
+	}
+});
+</script> -->
+
+<script>
+const limit = 10;
+
+let verticalOffset = 10;
+let horizontalOffset = 10;
+
+let verticalLoading = false;
+let horizontalLoading = false;
+
+let verticalHasMore = true;
+let horizontalHasMore = true;
+
+// ✅ LOAD FUNCTION
+function loadMoreRecords(viewType) {
+
+    const isVertical = viewType === "vertical";
+
+    if (isVertical && (verticalLoading || !verticalHasMore)) return;
+    if (!isVertical && (horizontalLoading || !horizontalHasMore)) return;
+
+    if (isVertical) verticalLoading = true;
+    else horizontalLoading = true;
+
+    const loadingId = isVertical ? "loadMoreVertical" : "loadMoreHorizontal";
+    document.getElementById(loadingId).style.display = "block";
+
+    const selectedType = document.getElementById("recordTypeCode")?.value || "";
+    const offset = isVertical ? verticalOffset : horizontalOffset;
+
+    fetch(`/viewer/loadMore?selectedType=${selectedType}&offset=${offset}&limit=${limit}&viewType=${viewType}`)
+        .then(res => res.text())
+        .then(html => {
+
+            document.getElementById(loadingId).style.display = "none";
+
+            if (!html || html.trim() === "") {
+                if (isVertical) verticalHasMore = false;
+                else horizontalHasMore = false;
+
+                if (isVertical) verticalLoading = false;
+                else horizontalLoading = false;
+
+                return;
+            }
+
+            if (isVertical) {
+                document.getElementById("verticalTableContainer")
+                    .insertAdjacentHTML("beforeend", html);
+
+                verticalOffset += limit;
+                verticalLoading = false;
+                //Replace client-side type restriction for newly added rows
+                try{
+                	window.restrictByFirstFieldType && window.restrictByFirstFieldType(); }catch(_){}
+
+            } else {
+
+                const tbody = document.getElementById("horizontalTbody");
+
+                if (tbody) {
+                 	/* tbody.insertAdjancentHTML() */ 
+                 	 tbody.insertAdjacentHTML("beforeend", html);
+                    try{
+                    	window.restrictByFirstFieldType && window.restrictByFirstFieldType(); }catch(_){}
+                    }
+
+                horizontalOffset += limit;
+                horizontalLoading = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+
+            document.getElementById(loadingId).style.display = "none";
+
+            if (isVertical) verticalLoading = false;
+            else horizontalLoading = false;
+        });
+}
+
+
+// ✅ ✅ SCROLL LISTENERS (OUTSIDE FUNCTION — VERY IMPORTANT)
+document.addEventListener("DOMContentLoaded", function () {
+
+    const verticalDiv = document.getElementById("verticalView");
+    const horizontalDiv = document.getElementById("horizontalView");
+
+    // ✅ Vertical scroll
+    if (verticalDiv) {
+        verticalDiv.addEventListener("scroll", function () {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                loadMoreRecords("vertical");
+            }
+        });
+    }
+
+    // ✅ Horizontal scroll
+    if (horizontalDiv) {
+        horizontalDiv.addEventListener("scroll", function () {
+
+            if (this.scrollLeft + this.clientWidth >= this.scrollWidth - 100 ||
+                this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                loadMoreRecords("horizontal");
+            }
+        });
+    }
+});
+document.addEventListener("DOMContentLoaded",function(){
+	const saveBtn=document.getElementById("btnSave");
+const saveForm=document.getElementById("saveForm");
+if(saveBtn && saveForm){
+	saveBtn.addEventListener("click",function(e){
+		e.prevedntDefault(); 
+	console.log("Submitting form....");
+	saveForm.submit();
+	});
+}
+})
+ 
+</script>
+
 
 
 </body>
