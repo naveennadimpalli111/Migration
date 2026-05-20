@@ -22,6 +22,7 @@ public class ViewerSession implements AutoCloseable {
     public List<Integer> lastFiltered;    // last result set
     public double progress;               // prefix index progress (0..1)
     public String transactionType;
+    public String selectedRecordType;      // selected record type for horizontal rendering
     public Path sessionDir; // per-session temp directory
     public  boolean editMode=false;
     
