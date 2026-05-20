@@ -587,26 +587,298 @@ function toggleViewBasedOnRecordType(){
 
     // Scroll after the page is shown (normal loads + bfcache)
     window.addEventListener('pageshow', maybeScrollToResults);
-   
-   //simplified client-side validation :only alphanumeric edits allowed
+   /* =========================================================
+   CLEAN EDITABLE FIELD VALIDATION
+   ========================================================= */
 
- document.addEventListener("DOMContentLoaded", function () {
-	const form=document.getElementById('saveForm')||document.querySelector('form[action="/viewer/save"]');
-	const saveBtn=document.getElementById('btnSave');
-	function setInvalid(el,msg){
-		el.classList.add('is-invalid');
-		const fb=el.parentElement && el.parentElement.querySelector('.invalid-feedback');
-		
-		if(fb){fb.style.display='block';
-		fb.textContent=msg;}
-		//add/show icon
-		let icon=el.parentElement.querySelector('.val-icon');
-		if(!icon && el.parentElement){
-			icon=document.createElement('span');
-			icon.className='val-icon';
-			el.parentElement.appendChild(icon);
-		}
-	}
+document.addEventListener('DOMContentLoaded', function () {
+
+    const form =
+        document.getElementById('saveForm') ||
+        document.querySelector('form[action="/viewer/save"]');
+
+    function setInvalid(el, msg) {
+
+        if (!el) {
+            return;
+        }
+
+        el.classList.add('is-invalid');
+
+        const fb =
+            el.parentElement &&
+            el.parentElement.querySelector(
+                '.invalid-feedback'
+            );
+
+        if (fb) {
+            fb.style.display = 'block';
+            fb.textContent = msg;
+        }
+    }
+
+    function clearInvalid(el) {
+
+        if (!el) {
+            return;
+        }
+
+        el.classList.remove('is-invalid');
+
+        const fb =
+            el.parentElement &&
+            el.parentElement.querySelector(
+                '.invalid-feedback'
+            );
+
+        if (fb) {
+            fb.style.display = 'none';
+            fb.textContent = '';
+        }
+    }
+
+    function validateField(el) {
+
+        if (!el) {
+            return true;
+        }
+
+        const type =
+            (el.dataset.ftype || '')
+                .toUpperCase();
+
+        const value = el.value || '';
+
+        // =========================
+        // BINARY
+        // =========================
+
+        if (type === 'BINARY') {
+
+            el.readOnly = true;
+
+            clearInvalid(el);
+
+            return true;
+        }
+
+        // =========================
+        // NUMERIC_TEXT
+        // =========================
+
+        if (type === 'NUMERIC_TEXT') {
+
+            if (!/^[0-9]*$/.test(value)) {
+
+                setInvalid(
+                    el,
+                    'Only numbers allowed'
+                );
+
+                return false;
+            }
+        }
+
+        // =========================
+        // PACKED_DECIMAL
+        // =========================
+
+        else if (type === 'PACKED_DECIMAL') {
+
+            if (
+                !/^[0-9]*\.?[0-9]*$/.test(value)
+            ) {
+
+                setInvalid(
+                    el,
+                    'Invalid decimal value'
+                );
+
+                return false;
+            }
+
+            const dots =
+                (value.match(/\./g) || []).length;
+
+            if (dots > 1) {
+
+                setInvalid(
+                    el,
+                    'Only one decimal allowed'
+                );
+
+                return false;
+            }
+        }
+
+        // =========================
+        // ALPHA
+        // =========================
+
+        else {
+
+            if (
+                !/^[a-zA-Z0-9\s]*$/.test(value)
+            ) {
+
+                setInvalid(
+                    el,
+                    'Only alphanumeric values allowed'
+                );
+
+                return false;
+            }
+        }
+
+        clearInvalid(el);
+
+        return true;
+    }
+
+    // =========================================
+    // LIVE VALIDATION
+    // =========================================
+
+    document.addEventListener(
+        'input',
+        function (event) {
+
+            const el = event.target;
+
+            if (
+                !el ||
+                !el.classList.contains(
+                    'editable-field'
+                )
+            ) {
+                return;
+            }
+
+            const type =
+                (el.dataset.ftype || '')
+                    .toUpperCase();
+
+            let value = el.value || '';
+
+            // NUMERIC_TEXT
+            if (type === 'NUMERIC_TEXT') {
+
+                value =
+                    value.replace(/[^0-9]/g, '');
+            }
+
+            // PACKED_DECIMAL
+            else if (
+                type === 'PACKED_DECIMAL'
+            ) {
+
+                value =
+                    value.replace(
+                        /[^0-9.]/g,
+                        ''
+                    );
+
+                const firstDot =
+                    value.indexOf('.');
+
+                if (firstDot !== -1) {
+
+                    value =
+                        value.substring(
+                            0,
+                            firstDot + 1
+                        ) +
+                        value
+                            .substring(firstDot + 1)
+                            .replace(/\./g, '');
+                }
+            }
+
+            // ALPHA
+            else {
+
+                value =
+                    value.replace(
+                        /[^a-zA-Z0-9\s-]/g,
+                        ''
+                    );
+            }
+
+            el.value = value;
+
+            validateField(el);
+        }
+    );
+
+    // =========================================
+    // INITIAL FIELD SETUP
+    // =========================================
+
+    document
+        .querySelectorAll('.editable-field')
+        .forEach(function (el) {
+
+            validateField(el);
+
+            const type =
+                (el.dataset.ftype || '')
+                    .toUpperCase();
+
+            if (type === 'BINARY') {
+
+                el.readOnly = true;
+
+                el.classList.add(
+                    'non-editable'
+                );
+            }
+        });
+
+    // =========================================
+    // SAVE VALIDATION
+    // =========================================
+
+    if (form) {
+
+        form.addEventListener(
+            'submit',
+            function (event) {
+
+                let valid = true;
+
+                document
+                    .querySelectorAll(
+                        '.editable-field'
+                    )
+                    .forEach(function (el) {
+
+                        if (!validateField(el)) {
+                            valid = false;
+                        }
+                    });
+
+                if (!valid) {
+
+                    event.preventDefault();
+
+                    alert(
+                        'Please fix validation errors before saving.'
+                    );
+
+                    const first =
+                        document.querySelector(
+                            '.is-invalid'
+                        );
+
+                    if (first) {
+                        first.focus();
+                    }
+                }
+            }
+        );
+    }
+});
+
 	function clearInvalid(el){
 		el.classList.remove('is-invalid');
     const fb=el.parentElement && el.parentElement.querySelector('.invalid-feedback');
@@ -617,32 +889,267 @@ function toggleViewBasedOnRecordType(){
 		if(icon)
 			icon.remove();
 		}
-		function validateField(el){
-			if(!el) return true;
-			if(el.readOnly){
-				clearInvalid(el);
-				return true;
-			}
-			/*const ftype=(el.getAttribute('data-ftype')||'').toUpperCase();*/
-			const flen =parseInt(el.getAttribute('data-flen')||'0',10)||0;
-			const val=(el.value||'');
-			if(flen>0 && val.length>flen){
-				setInvalid(el,`Max length ${flen} characters`)
-				return false;
-			}
-			//Allow all printed characters except control codes.
-      if(val &&/[^\x20-\x7E\u00A0-\uFFFF]/.test(val)){
-        setInvalid(el,'Invalid characters');
-				return false;	
-		}
-		clearInvalid(el);
-		return true;
-		}
+		function validateField(el) {
+
+    if (!el) {
+        return true;
+    }
+
+    if (el.readOnly) {
+        clearInvalid(el);
+        return true;
+    }
+
+    const ftype =
+        (el.getAttribute('data-ftype') || '')
+            .toUpperCase();
+
+    const flen =
+        parseInt(
+            el.getAttribute('data-flen') || '0',
+            10
+        ) || 0;
+
+    const val = (el.value || '');
+    /* ==========================================
+   FINAL SAVE VALIDATION
+   ========================================== */
+
+/* ==========================================
+   FORM SAVE VALIDATION
+   ========================================== */
+
+if (form) {
+
+    form.addEventListener('submit', function (event) {
+
+        let valid = true;
+
+        const fields =
+            document.querySelectorAll('.editable-field');
+
+        fields.forEach(function (field) {
+
+            if (!validateField(field)) {
+                valid = false;
+            }
+        });
+
+        if (!valid) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            alert(
+                'Please fix validation errors before saving.'
+            );
+
+            const firstInvalid =
+                document.querySelector('.is-invalid');
+
+            if (firstInvalid) {
+                firstInvalid.focus();
+            }
+
+            return false;
+        }
+
+        return true;
+    });
+}
+
+    // Length validation
+    if (flen > 0 && val.length > flen) {
+
+        setInvalid(
+            el,
+            `Max length ${flen} characters`
+        );
+
+        return false;
+    }
+
+    // =========================
+    // NUMERIC_TEXT
+    // =========================
+    if (ftype === 'NUMERIC_TEXT') {
+
+        if (val && !/^[0-9]+$/.test(val)) {
+
+            setInvalid(
+                el,
+                'Only numbers allowed'
+            );
+
+            return false;
+        }
+    }
+
+    // =========================
+    // PACKED_DECIMAL
+    // =========================
+    else if (ftype === 'PACKED_DECIMAL') {
+
+        if (val && !/^[0-9]+(\.[0-9]+)?$/.test(val)) {
+
+            setInvalid(
+                el,
+                'Invalid decimal value'
+            );
+
+            return false;
+        }
+    }
+
+    // =========================
+    // ALPHA
+    // =========================
+    else if (ftype === 'ALPHA') {
+
+        if (val && !/^[a-zA-Z0-9\s]+$/.test(val)) {
+
+            setInvalid(
+                el,
+                'Only alphanumeric characters allowed'
+            );
+
+            return false;
+        }
+    }
+
+    clearInvalid(el);
+
+    return true;
+}
+
+/* =========================================================
+   Editable Field Validation
+   ========================================================= */
+
+/* ==========================================
+   LIVE INPUT VALIDATION
+   ========================================== */
+
+(function initEditableFieldValidation() {
+
+    function getType(input) {
+
+        if (!input) {
+            return 'ALPHA';
+        }
+
+        const fieldType =
+            (input.dataset.ftype || '')
+                .toUpperCase();
+
+        if (fieldType === 'NUMERIC_TEXT') {
+            return 'INTEGER';
+        }
+
+        if (fieldType === 'PACKED_DECIMAL') {
+            return 'DECIMAL';
+        }
+
+        if (fieldType === 'BINARY') {
+            return 'BINARY';
+        }
+
+        return 'ALPHA';
+    }
+
+    function sanitize(value, type) {
+
+        if (!value) {
+            return '';
+        }
+
+        switch (type) {
+
+            case 'INTEGER':
+
+                return value.replace(/[^0-9]/g, '');
+
+            case 'DECIMAL': {
+
+                let cleaned =
+                    value.replace(/[^0-9.]/g, '');
+
+                const firstDot =
+                    cleaned.indexOf('.');
+
+                if (firstDot >= 0) {
+
+                    cleaned =
+                        cleaned.substring(0, firstDot + 1) +
+                        cleaned
+                            .substring(firstDot + 1)
+                            .replace(/\./g, '');
+                }
+
+                return cleaned;
+            }
+
+            case 'ALPHA':
+
+                return value.replace(
+                    /[^a-zA-Z0-9\s-]/g,
+                    ''
+                );
+
+            default:
+                return value;
+        }
+    }
+
+    document.addEventListener(
+        'input',
+        function (event) {
+
+            const input = event.target;
+
+            if (
+                !input ||
+                !input.classList.contains(
+                    'editable-field'
+                )
+            ) {
+                return;
+            }
+
+            const type = getType(input);
+
+            if (type === 'BINARY') {
+                return;
+            }
+
+            const cleaned =
+                sanitize(input.value, type);
+
+            if (input.value !== cleaned) {
+
+                input.value = cleaned;
+            }
+
+            validateField(input);
+        }
+    );
+
+})();
     function updateSaveState() {
+
       const inputs=Array.from(document.querySelectorAll('.editable-field'));
       const anyInvalid=inputs.some(i=>!i.readOnly && i.classList.contains('is-invalid'));
       if(saveBtn)saveBtn.disabled=anyInvalid;
     };
+    document
+    .querySelectorAll('.editable-field')
+    .forEach(function (el) {
+
+        const ftype =
+            (el.dataset.ftype || '')
+                .toUpperCase();
+
+
 		document.body.addEventListener('keypress',(ev)=>{
 			const el=ev.target;
 			if(!el||!el.classList||!el.classList.contains('editable-field'))
@@ -662,16 +1169,7 @@ function toggleViewBasedOnRecordType(){
 			}
 		},true);
 		//make sure packed/nbinary fields are readonly on initial load
-		document.querySelectorAll('.editable-field').forEach((el)=>{
-			const ftype=(el.getAttribute('data-ftype')||'').toUpperCase();
-			if(ftype==='PACKED_DECIMAL' ||ftype==='BINARY'){
-				el.readOnly=true;
-				el.classList.add('non-editable');
-				const fb=el.parentElement && el.parentElement.querySelector('.invalid-feedback');
-				if(fb) fb.textContent='Not editable';
-			}
-			validateField(el);
-		});
+
 		//Form submit:validate all editable fields,prevent submit if invalid
 		if(form){
 			form.addEventListener('submit',(ev)=>{

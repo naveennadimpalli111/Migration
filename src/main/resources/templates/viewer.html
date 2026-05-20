@@ -294,13 +294,21 @@
   <!-- NAV FIX: hide nav if there are no results -->
  <!--  <div class="nav-row mb-1" th:if="${hasFile} and ${count} > 0"> -->
  <div id="navTop" class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
-    <form th:action="@{/viewer/prev}" method="post" data-nav="true">
-      <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
-    </form>
-    <form th:action="@{/viewer/next}" method="post" data-nav="true">
-      <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
-    </form>
-    <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+    <div id="verticalNavTop" class="d-flex align-items-center gap-2">
+      <form th:action="@{/viewer/prev}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
+      </form>
+      <form th:action="@{/viewer/next}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
+      </form>
+      <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+    </div>
+    <div id="horizontalNavTop" class="d-flex align-items-center gap-2" style="display:none;">
+      <button id="horizontalPrevTop" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
+      <button id="horizontalNextTop" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
+      <span class="count-text" id="horizontalPageInfoTop"></span>
+    </div>
+    <div id="horizontalPagerData" data-current-page="${horizontalPage}" data-total-pages="${horizontalTotalPages}" data-has-prev="${horizontalHasPrev}" data-has-next="${horizontalHasNext}" style="display:none;"></div>
   </div>
 
 
@@ -382,13 +390,20 @@
   <!-- NAV FIX: hide nav if there are no results -->
   <!-- <div class="nav-row mt-3" th:if="${hasFile} and ${count} > 0"> -->
   <div id="navBottom" class="nav-row mt-3" th:if="${hasFile} and ${count} > 0">
-    <form th:action="@{/viewer/prev}" method="post" data-nav="true">
-      <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
-    </form>
-    <form th:action="@{/viewer/next}" method="post" data-nav="true">
-      <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
-    </form>
-    <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+    <div id="verticalNavBottom" class="d-flex align-items-center gap-2">
+      <form th:action="@{/viewer/prev}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
+      </form>
+      <form th:action="@{/viewer/next}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
+      </form>
+      <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+    </div>
+    <div id="horizontalNavBottom" class="d-flex align-items-center gap-2" style="display:none;">
+      <button id="horizontalPrevBottom" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
+      <button id="horizontalNextBottom" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
+      <span class="count-text" id="horizontalPageInfoBottom"></span>
+    </div>
   </div>
 
   
@@ -491,6 +506,31 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  function goToHorizontalPage(page) {
+    if (!page || page < 1) return;
+    sessionStorage.setItem("viewMode", "horizontal");
+    window.location.href = "/viewer/current?page=" + page;
+  }
+
+  function setupHorizontalPaginationButton(btn, delta) {
+    if (!btn) return;
+    btn.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (!isHorizontal) return;
+      const pagerData = document.getElementById("horizontalPagerData");
+      if (!pagerData) return;
+      const currentPage = Number(pagerData.dataset.currentPage || 1);
+      const newPage = currentPage + delta;
+      if (newPage < 1) return;
+      goToHorizontalPage(newPage);
+    });
+  }
+
+  setupHorizontalPaginationButton(document.getElementById("horizontalPrevTop"), -1);
+  setupHorizontalPaginationButton(document.getElementById("horizontalNextTop"), 1);
+  setupHorizontalPaginationButton(document.getElementById("horizontalPrevBottom"), -1);
+  setupHorizontalPaginationButton(document.getElementById("horizontalNextBottom"), 1);
 
 });
 //document.getElementById("viewMode").value="horizontal";

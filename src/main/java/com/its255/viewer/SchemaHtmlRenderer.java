@@ -162,7 +162,8 @@ public class SchemaHtmlRenderer {
 						if (recordOverlay != null && recordOverlay.containsKey(f.name)) {
 							val = recordOverlay.get(f.name);
 						}
-						boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type == FieldType.BINARY;
+						//boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type == FieldType.BINARY;
+						boolean nonEditableType = f.type == FieldType.BINARY;
 						boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name)
 								&& !nonEditableType;
 						sb.append("<td>");
@@ -270,7 +271,8 @@ public class SchemaHtmlRenderer {
 					if(recordOverlay !=null && recordOverlay.containsKey(f.name)) {
 						val=recordOverlay.get(f.name);
 					}
-					boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type == FieldType.BINARY;
+					//boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type == FieldType.BINARY;
+					boolean nonEditableType = f.type == FieldType.BINARY;
 					boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name)
 							&& !nonEditableType;
 					sb.append("<td>");
