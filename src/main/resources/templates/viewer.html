@@ -422,8 +422,139 @@ href="/css/validation.css"/>
 <script>
 /*switch btn by default vertical view*/
 let isHorizontal = false;
-
 function updateView() {
+
+    const vertical =
+        document.getElementById(
+            "verticalView"
+        );
+
+    const horizontal =
+        document.getElementById(
+            "horizontalView"
+        );
+
+    const btn =
+        document.getElementById(
+            "toggleViewBtn"
+        );
+
+    // =====================================
+    // NAVIGATION SECTIONS
+    // =====================================
+
+    const verticalNavTop =
+        document.getElementById(
+            "verticalNavTop"
+        );
+
+    const verticalNavBottom =
+        document.getElementById(
+            "verticalNavBottom"
+        );
+
+    const horizontalNavTop =
+        document.getElementById(
+            "horizontalNavTop"
+        );
+
+    const horizontalNavBottom =
+        document.getElementById(
+            "horizontalNavBottom"
+        );
+
+    if (!vertical || !horizontal || !btn) {
+        return;
+    }
+
+    // =====================================
+    // HORIZONTAL VIEW
+    // =====================================
+
+    if (isHorizontal) {
+
+        // TABLES
+        vertical.style.display = "none";
+        horizontal.style.display = "block";
+
+        // BUTTON TEXT
+        btn.innerText =
+            "Switch to Vertical View";
+
+        // =====================================
+        // HIDE VERTICAL NAVIGATION
+        // =====================================
+
+        if (verticalNavTop) {
+            verticalNavTop.style.display =
+                "none";
+        }
+
+        if (verticalNavBottom) {
+            verticalNavBottom.style.display =
+                "none";
+        }
+
+        // =====================================
+        // SHOW HORIZONTAL NAVIGATION
+        // =====================================
+
+        if (horizontalNavTop) {
+            horizontalNavTop.style.display =
+                "flex";
+        }
+
+        if (horizontalNavBottom) {
+            horizontalNavBottom.style.display =
+                "flex";
+        }
+    }
+
+    // =====================================
+    // VERTICAL VIEW
+    // =====================================
+
+    else {
+
+        // TABLES
+        vertical.style.display = "block";
+        horizontal.style.display = "none";
+
+        // BUTTON TEXT
+        btn.innerText =
+            "Switch to Horizontal View";
+
+        // =====================================
+        // SHOW VERTICAL NAVIGATION
+        // =====================================
+
+        if (verticalNavTop) {
+            verticalNavTop.style.display =
+                "flex";
+        }
+
+        if (verticalNavBottom) {
+            verticalNavBottom.style.display =
+                "flex";
+        }
+
+        // =====================================
+        // HIDE HORIZONTAL NAVIGATION
+        // =====================================
+
+        if (horizontalNavTop) {
+            horizontalNavTop.style.display =
+                "none";
+        }
+
+        if (horizontalNavBottom) {
+            horizontalNavBottom.style.display =
+                "none";
+        }
+    }
+}
+
+/*function updateView() {
 	  const vertical = document.getElementById("verticalView");
 	  const horizontal = document.getElementById("horizontalView");
 	  const btn = document.getElementById("toggleViewBtn");
@@ -454,7 +585,8 @@ function updateView() {
 	    if (navTop) navTop.style.display = "flex";
 	    if (navBottom) navBottom.style.display = "flex";
 	  }
-	}
+	}*/
+  
 
 document.addEventListener("DOMContentLoaded", function () {
 

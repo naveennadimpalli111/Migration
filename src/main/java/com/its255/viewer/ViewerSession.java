@@ -21,10 +21,10 @@ public class ViewerSession implements AutoCloseable {
     public RecordNavigator nav;           // navigation state
     public List<Integer> lastFiltered;    // last result set
     public double progress;               // prefix index progress (0..1)
-    public String transactionType;
+    public String transactionType;         // selected transaction type for Horizontal rendering
     public String selectedRecordType;      // selected record type for horizontal rendering
     public Path sessionDir; // per-session temp directory
-    public  boolean editMode=false;
+    public  boolean editMode=false;  // whether we're in edit mode (vs. view-only)
     
 
     public boolean hasFile() {
