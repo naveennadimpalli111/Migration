@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EBCDIC File Viewer — v3.2 (Chunked Mapping)</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  
+<!-- App-specific CSS -->
+<!-- <link rel="stylesheet" th:href="@{/css/viewer.css}"  href="/css/viewer.css" /> -->
+<link rel="stylesheet" th:href="@{/css/viewer.css}" href="/css/viewer.css" />
+  
+</head>
+
+<!-- Keep track of hasFile for restart-aware behavior -->
+<body class="container py-3" th:attr="data-has-file=${hasFile}">
+  <main id="main-content">
+    <h1 class="mb-3">EBCDIC File Viewer — v3.2 (Chunked Mapping)</h1>
+
+  
+  <p class="text-muted">
+    Upload a raw ITS file and either enter a <strong>record number</strong>,
+    <strong>record type</strong>, or enter a <strong>SCCF</strong> to preview.
+  </p>
+  <!-- Session cache announcement -->
+  <div th:if="${hasFile}" class="alert alert-info" role="status" aria-live="polite">
+    <strong>Cached file available.</strong> You can search again without uploading a new file.
+  </div>
+
+  <!-- ========== UPLOAD FORM ========== -->
+  <form action="/viewer/upload" method="post" enctype="multipart/form-data" class="mb-3 border p-3 rounded">
+    <div class="row g-3 mb-2 align-items-end">
+      <!-- Transaction Type -->
+      <div class="col-md-4">
+        <label class="form-label" id="txnTypeLabel" for="txnType">
+          Transaction Type
+        </label>
+        <select id="txnType"
+                name="transactionType"
+                class="form-select"
+                aria-labelledby="txnTypeLabel"
+                aria-describedby="txnTypeHelp">
+          <option value="">Choose…</option>
+          <option value="SFI">SF‑Institutional</option>
+          <option value="SFP">SF‑Professional</option>
+          <option value="DF">DF</option>
+          <option value="CBF">CBF</option>
+          <option value="RF">RF</option>
+          <option value="CBFBD">
+            VBP (CBFBD)
+          </option>
+        <!-- <option value="NF">NF</option>
+           <option value="MEF">Member Exchange</option> -->
+        </select>
+        <div
+          class="form-text txn-hint"
+          id="txnTypeHelp"
+          aria-live="polite"
+          aria-atomic="true">
+          Pick a Transaction Type before uploading the file.
+        </div>       
+      </div>
+    
+      <!-- File Upload -->
+      <div class="col-md-8">
+        <label class="form-label">EBCDIC File</label>
+        <input type="file"
+        id="fileInput"
+               name="file"
+               class="form-control"
+               aria-describedby="fileHelp"
+                th:disabled="${hasFile}"
+               required />  
+              
+        <div id="fileHint"
+          class="form-text"
+          aria-live="polite">
+            Choose a file to upload.
+        </div>      
+      </div>
+    </div>
+
+    <button class="btn btn-primary">Upload</button>
+    <div id="fileHelp" class="form-text">
+      <span th:if="${hasFile}">
+        Optional — leave empty to reuse the cached file from this session.
+      </span>
+      <span th:if="${!hasFile}">
+        The viewer reads fixed‑length records from the uploaded file.
+      </span>
+    </div>
+    <div class="form-text mt-2" th:if="${hasFile}" role="status" aria-live="polite">
+      <span class="badge rounded-pill text-bg-primary fs-5 py-2 px-4" th:text="${filename}">
+        yourfile.dat
+      </span>
+      <span class="visually-hidden"> is cached for this session.</span>
+    </div>
+    
+    <div class="progress mt-3" style="height:24px">
+      <div
+        id="pbar"
+        class="progress-bar"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        aria-live="polite"
+        style="width: 0%;">
+        0%
+      </div>
+    </div>
+
+    <div class="form-text">
+      Chunked mapping is enabled (default 512MB windows). Prefix index length and workers are configurable via application.yml.
+    </div>
+  </form>
+
+  <!-- Standalone CLEAR form (empty) -->
+  <form id="clearForm" th:action="@{/viewer/clear}" method="post"></form>
+
+  <!-- ========== SEARCH FORM ========== -->
+  <form id="searchForm" action="/viewer/search" method="post" class="mb-3 border p-3 rounded">
+    <div class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label" for="sccf">SCCF (prefix allowed)</label>
+        <input id="sccf" type="text" name="sccf" class="form-control" placeholder="e.g., 010202504106399" aria-describedby="scffHelp"/>
+        <div class="form-text" id="scffHelp">
+          15 chars ⇒ strict match; shorter ⇒ prefix match via indexed buckets (configurable).
+        </div>
+      </div>
+
+      <!-- Record type (full list from backend; JS filters this list) -->
+      <div class="col-md-3">
+        <label class="form-label" for="recordTypeCode">Record type</label>
+        <select id="recordTypeCode" class="form-select" name="recordTypeCode">
+          <option value="" selected>Choose…</option>
+          <optgroup label="05–47 series">
+            <option value="05">05 — FM105</option>
+            <option value="10">10 — FM110</option>
+            <option value="15">15 — FM115</option>
+            <option value="20">20 — FM120</option>
+            <option value="30">30 — FM130</option>
+            <option value="31">31 — FM131</option>
+            <option value="32">32 — FM132</option>
+            <option value="33">33 — FM133</option>
+            <option value="40">40 — FM140</option>
+            <option value="41">41 — FM141</option>
+            <option value="42">42 — FM142</option>
+            <option value="43">43 — FM143</option>
+            <option value="44">44 — FM144</option>
+            <option value="45">45 — FM145</option>
+            <option value="46">46 — FM146</option>
+            <option value="47">47 — FM147</option>
+          </optgroup>
+          <optgroup label="50–9D series">
+            <option value="50">50 — FM150</option>
+            <option value="60">60 — FM160</option>
+            <option value="65">65 — FM165</option>
+            <option value="66">66 — FM166</option>
+            <option value="71">71 — FM171</option>
+            <option value="72">72 — FM172</option>
+            <option value="73">73 — FM173</option>
+            <option value="74">74 — FM174</option>
+            <option value="80">80 — FM180</option>
+            <option value="90">90 — FM190</option>
+            <option value="9D">9D — FM9D</option>
+          </optgroup>
+          <optgroup label="A5–X0 series">
+            <option value="A5">A5 — FM1A5</option>
+            <option value="B0">B0 — FM1B0</option>
+            <option value="B5">B5 — FM1B5</option>
+            <option value="C0">C0 — FM1C0</option>
+            <option value="D0">D0 — FM1D0</option>
+            <option value="D1">D1 — FM1D1</option>
+            <option value="D2">D2 — FM1D2</option>
+            <option value="D3">D3 — FM1D3</option>
+            <option value="E0">E0 — FM1E0</option>
+            <option value="E1">E1 — FM1E1</option>
+            <option value="E2">E2 — FM1E2</option>
+            <option value="E6">E6 — FM1E6</option>
+            <option value="F0">F0 — FM1F0</option>
+            <option value="F1">F1 — FM1F1</option>
+            <option value="F5">F5 — FM1F5</option>
+            <option value="F6">F6 — FM1F6</option>
+            <option value="G0">G0 — FM1G0</option>
+            <option value="X0">X0 — FM1X0</option>
+          </optgroup>
+          <optgroup label="1A–9A series">
+            <option value="1A">1A — FM21A</option>
+            <option value="2A">2A — FM22A</option>
+            <option value="2B">2B — FM22B</option>
+            <option value="2C">2C — FM22C</option>
+            <option value="2E">2E — FM22E</option>
+            <option value="2F">2F — FM22F</option>
+            <option value="2G">2G — FM22G</option>
+            <option value="2H">2H — FM22H</option>
+            <option value="3A">3A — FM23A</option>
+            <option value="3C">3C — FM23C</option>
+            <option value="3D">3D — FM23D</option>
+            <option value="4A">4A — FM24A</option>
+            <option value="4B">4B — FM24B</option>
+            <option value="4C">4C — FM24C</option>
+            <option value="4D">4D — FM24D</option>
+            <option value="8A">8A — FM28A</option>
+            <option value="9A">9A — FM29A</option>
+          </optgroup>
+          <optgroup label="CBF series">
+            <option value="5A">5A — FM35A</option>
+            <option value="6A">6A — FM36A</option>
+            <option value="6B">6B — FM36B</option>
+            <option value="7A">7A — FM37A</option>
+            <option value="7B">7B — FM37B</option>
+            <option value="9A">9A — FM39A</option>
+          </optgroup>
+          <optgroup label="Reconciliation Format series">
+            <option value="1A">31 — FM31A</option>
+            <option value="2A">32 — FM32A</option>
+          </optgroup>
+          <optgroup label="VBP series">
+            <option value="CBFBD">CBFBD — ITCBFBD</option>
+          </optgroup>
+          <!-- <optgroup label="Notification Format">
+            <option value="81">81 — FM81A</option>
+            <option value="82">82 — FM82A</option>
+            <option value="83">83 — FM83A</option>
+            <option value="84">84 — FM84A</option>
+          </optgroup>
+          <optgroup label="Member Exchange Format">
+            <option value="40D">40D — FM40D</option>
+            <option value="41A">41A — FM41A</option>
+            <option value="41B">41B — FM41B</option>
+            <option value="41C">41C — FM41C</option>
+            <option value="42A">42A — FM42A</option>
+            <option value="42C">42C — FM42C</option>
+            <option value="43A">43A — FM43A</option>
+            <option value="43B">43B — FM43B</option>
+            <option value="43C">43C — FM43C</option>
+            <option value="49A">49A — FM49A</option>
+          </optgroup> -->
+        </select>
+        <small id="recordTypeError" class="text-danger d-none">Record Type Mandatory</small>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label" for="recNo">Record #</label>
+        <input id="recNo" type="number" name="recNo" class="form-control" min="1" />
+      </div>
+    </div>
+
+    <!-- BUTTON ROW: Search, Export, Clear Cache, Clear Search -->
+    <div class="actions-row">
+      <!-- Search (disabled until upload succeeds or cached file exists) -->
+      <button id="btnSearch"
+              class="btn btn-success"
+              th:disabled="${!hasFile}">
+        Search
+      </button>
+
+      
+    <!-- Export -->
+      <button
+      id="btnExport"
+      type="submit"
+      class="btn btn-outline-secondary"
+      formaction="/viewer/export"
+      formmethod="get"
+      th:disabled="${!hasFile}"
+      aria-describedby="exportHelp">
+      Export (ZIP per type)
+    </button>
+
+      <span id="exportHelp" class="visually-hidden">
+        Exports the filtered records as ZIP containing CSV files per record type.
+      </span>
+
+      <!-- Clear cached file (submits the external clearForm; only when a file is cached) -->
+      <button id="btnClear"
+              class="btn btn-outline-danger"
+              form="clearForm"
+              th:if="${hasFile}">
+        Clear cached file
+      </button>
+
+      <!-- Clear Search (client-side only) -->
+      <button id="btnClearSearch" type="button" class="btn btn-outline-secondary">
+        Clear Search
+      </button>
+    </div>
+  </form>
+
+  <!-- ========== NAVIGATION ROW — TOP ========== -->
+  <!-- NAV FIX: hide nav if there are no results -->
+ <!--  <div class="nav-row mb-1" th:if="${hasFile} and ${count} > 0"> -->
+ <div id="navTop" class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
+    <div id="verticalNavTop" class="d-flex align-items-center gap-2">
+      <form th:action="@{/viewer/prev}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
+      </form>
+      <form th:action="@{/viewer/next}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
+      </form>
+      <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+    </div>
+    <div id="horizontalNavTop" class="d-flex align-items-center gap-2" style="display:none;">
+      <button id="horizontalPrevTop" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
+      <button id="horizontalNextTop" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
+      <span class="count-text" id="horizontalPageInfoTop"></span>
+    </div>
+    <div id="horizontalPagerData" data-current-page="${horizontalPage}" data-total-pages="${horizontalTotalPages}" data-has-prev="${horizontalHasPrev}" data-has-next="${horizontalHasNext}" style="display:none;"></div>
+  </div>
+
+
+  <!-- RECORD TABLE (wrapped for sticky header styling) -->
+  <!-- CHANGE: anchor to scroll to after Prev/Next/Search -->
+  <div style="margin-bottom:10px;">
+  
+<!-- <button type="button" id="toggleViewBtn"  class="btn btn-primary btn-sm" onclick="toggleViewBasedOnRecordType()">
+  Switch to Horizontal View
+</button> -->
+<button type="button" id="toggleViewBtn"  class="btn btn-primary btn-sm" onclick="toggleViewBasedOnRecordType()">
+  Switch to Horizontal View
+</button>
+
+  </div>
+
+  <form id="saveForm" th:action="@{/viewer/save}" method="post">
+  <input type="hidden" id="viewMode" name="viewMode" th:value="${viewMode}">
+  <div id="resultsTop" class="mb-2" th:if="${count > 0}">
+    <span class="badge bg-info text-dark me-2" th:if="${viewMode == 'horizontal'}">
+      Showing <span th:text="${count}"></span> records
+    </span>
+    <span class="badge bg-info text-dark" th:if="${viewMode != 'horizontal'}">
+      Record <span th:text="${position}"></span> of <span th:text="${count}"></span>
+    </span>
+  </div>
+ 
+ <div class="record-container">
+
+    <!-- VERTICAL -->
+    <div id="verticalView"
+         th:style="${viewMode=='horizontal'}?'display:none;':'display:block;'"
+         style="max-height:700px;overflow:auto;">
+
+        <div id="verticalTableContainer"
+             th:utext="${verticalHtml}">
+        </div>
+
+        <div id="loadMoreVertical" style="display:none;text-align:center;">
+            Loading...
+        </div>
+    </div>
+
+    <!-- HORIZONTAL -->
+    <div id="horizontalView"
+         th:style="${viewMode=='horizontal'}?'display:block;':'display:none;'"
+         style="max-height:700px;overflow:auto;">
+
+        <div id="horizontalContent"
+             th:utext="${horizontalHtml}">
+        </div>
+
+        <div id="loadMoreHorizontal" style="display:none;text-align:center;">
+            Loading...
+        </div>
+    </div>
+
+</div>
+ <a class="btn btn-primary mt-2" th:if="${editMode!=true}"
+ th:href="@{/viewer/edit}">Edit</a>
+ <!--  <button id="btnSave" class="btn btn-success mt-2" type="button" th:if="${editMode==true}">Save</button>  -->
+  
+<button id="btnSave"
+        class="btn btn-success mt-2"
+        type="submit"
+        th:if="${editMode==true}">
+    Save
+</button>
+  
+
+  
+  <a class="btn btn-secondary mt-2" th:if="${editMode==true}"
+ th:href="@{/viewer/view}">Cancel</a>
+  
+  </form>
+  
+
+  <!-- ========== NAVIGATION ROW — BOTTOM (mirrors top) ========== -->
+  <!-- NAV FIX: hide nav if there are no results -->
+  <!-- <div class="nav-row mt-3" th:if="${hasFile} and ${count} > 0"> -->
+  <div id="navBottom" class="nav-row mt-3" th:if="${hasFile} and ${count} > 0">
+    <div id="verticalNavBottom" class="d-flex align-items-center gap-2">
+      <form th:action="@{/viewer/prev}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
+      </form>
+      <form th:action="@{/viewer/next}" method="post" data-nav="true">
+        <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
+      </form>
+      <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
+    </div>
+    <div id="horizontalNavBottom" class="d-flex align-items-center gap-2" style="display:none;">
+      <button id="horizontalPrevBottom" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
+      <button id="horizontalNextBottom" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
+      <span class="count-text" id="horizontalPageInfoBottom"></span>
+    </div>
+  </div>
+
+  
+ 
+</main>
+<!-- App JS -->
+<link rel="stylesheet" th:href="@{/css/validation.css}"
+href="/css/validation.css"/>
+ <script th:src="@{/js/viewer.js}"  src="/js/viewer.js" defer></script>
+<!-- <script th:inline="javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    const hasFile = /*[[${hasFile}]]*/ false;
+    updateUploadHint(hasFile);
+  });
+</script> -->
+<script>
+/*switch btn by default vertical view*/
+let isHorizontal = false;
+
+function updateView() {
+	  const vertical = document.getElementById("verticalView");
+	  const horizontal = document.getElementById("horizontalView");
+	  const btn = document.getElementById("toggleViewBtn");
+
+	  // ✅ NEW: get navigation elements
+	  const navTop = document.getElementById("navTop");
+	  const navBottom = document.getElementById("navBottom");
+
+	  if (!vertical || !horizontal || !btn) return;
+
+	  if (isHorizontal) {
+	    // ✅ show horizontal
+	    vertical.style.display = "none";
+	    horizontal.style.display = "block";
+	    btn.innerText = "Switch to Vertical View";
+
+	    // ✅ ✅ HIDE navigation
+	    if (navTop) navTop.style.display = "none";
+	    if (navBottom) navBottom.style.display = "none";
+
+	  } else {
+	    // ✅ show vertical
+	    vertical.style.display = "block";
+	    horizontal.style.display = "none";
+	    btn.innerText = "Switch to Horizontal View";
+
+	    // ✅ ✅ SHOW navigation
+	    if (navTop) navTop.style.display = "flex";
+	    if (navBottom) navBottom.style.display = "flex";
+	  }
+	}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  const recordTypeDropdown = document.getElementById("recordTypeCode");
+  const searchBtn = document.getElementById("btnSearch");
+  const btn = document.getElementById("toggleViewBtn");
+
+  // ✅ Default view = Vertical
+  const saved = sessionStorage.getItem("viewMode");
+  isHorizontal = (saved === "horizontal");
+
+  updateView();
+
+  // ✅ FIX: attach click INSIDE DOMContentLoaded
+ if (btn) {
+  btn.addEventListener("click", function () {
+
+    const recordTypeDropdown = document.getElementById("recordTypeCode");
+
+    // ✅ STEP: enforce record type
+    if (!isHorizontal) {
+      if (!recordTypeDropdown || !recordTypeDropdown.value) {
+        alert("Please select Record Type to view Horizontal table");
+        return;
+      }
+    }
+
+    isHorizontal = !isHorizontal;
+
+    sessionStorage.setItem("viewMode",
+      isHorizontal ? "horizontal" : "vertical"
+    );
+    const hiddenViewMode=document.getElementById("viewMode");
+    if(hiddenViewMode){
+    	hiddenViewMode.value=isHorizontal?"horizontal":"vertical";
+    }
+
+    updateView();
+  });
+}
+
+
+  // ✅ Search behavior
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function () {
+      if (recordTypeDropdown && recordTypeDropdown.value) {
+        isHorizontal = true;
+        sessionStorage.setItem("viewMode", "horizontal");
+      }
+    });
+  }
+
+  function goToHorizontalPage(page) {
+    if (!page || page < 1) return;
+    sessionStorage.setItem("viewMode", "horizontal");
+    window.location.href = "/viewer/current?page=" + page;
+  }
+
+  function setupHorizontalPaginationButton(btn, delta) {
+    if (!btn) return;
+    btn.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (!isHorizontal) return;
+      const pagerData = document.getElementById("horizontalPagerData");
+      if (!pagerData) return;
+      const currentPage = Number(pagerData.dataset.currentPage || 1);
+      const newPage = currentPage + delta;
+      if (newPage < 1) return;
+      goToHorizontalPage(newPage);
+    });
+  }
+
+  setupHorizontalPaginationButton(document.getElementById("horizontalPrevTop"), -1);
+  setupHorizontalPaginationButton(document.getElementById("horizontalNextTop"), 1);
+  setupHorizontalPaginationButton(document.getElementById("horizontalPrevBottom"), -1);
+  setupHorizontalPaginationButton(document.getElementById("horizontalNextBottom"), 1);
+
+});
+//document.getElementById("viewMode").value="horizontal";
+//document.getElementById("viewMode").value="horizontal";
+const hiddenViewMode=document.getElementById("viewMode");
+if(hiddenViewMode){
+	hiddenViewMode.value=isHorizontal?"horizontal":"vertical";
+}
+
+
+const clearBtn = document.getElementById("btnClear");
+
+if (clearBtn) {
+  clearBtn.addEventListener("click", function () {
+
+    // ✅ RESET to vertical
+    sessionStorage.setItem("viewMode", "vertical");
+  });
+}
+
+</script>
+
+<!-- <script>
+/*Handle  search button dynamical switch to table*/
+document.addEventListener("DOMContentLoaded", function () {
+	const searchBtn = document.getElementById("searchBtn");
+/*   const btn = document.getElementById("toggleViewBtn"); */
+  const recordType = document.getElementById("recordTypeCode");
+ /*  const error = document.getElementById("recordTypeError"); */
+  const verticalView = document.getElementById("verticalView");
+  const horizontalView = document.getElementById("horizontalView");
+  searchBtn.addEventListener("click",function(){
+	  if (recordType.value && recordType.value.trim() !== "") {
+		  verticalView.style.display = "none";
+	      horizontalView.style.display = "block";
+	  }else {
+		  verticalView.style.display = "block";
+	      horizontalView.style.display = "none";
+	  }
+	  });
+  });
+</script> -->
+<!-- <script>
+let offset=20;
+const limit=20;
+let loading=false;let hasMore=true;
+function loadMoreRecords(){
+	if(loading||!hasMore){
+		return;
+	}
+	loading=true;
+	document.getElementById("loadingMore").style.display="block";
+	const selectedType=document.getElementById("recordTypeCode")?.value||"";
+	fetch(`/viewer/loadMore?selectedType=${selectedType}&offset=${offset}&limit=${limit}`)
+    .then(response=>response.text())
+    .then(html=>{
+    	if(html.trim()===""){
+    		hasMore=false;
+    		loading=false;
+    	document.getElementById("loadingMore").style.display="none";
+    	 return; 
+     } 
+     document.getElementById("verticalTableContainer").insertAdjacentHTML("beforeend", html);("beforeend",html);
+	offset+=limit;
+	loading=false;  
+	document.getElementById("loadingMore").style.display="none";
+})
+	.catch(err=>{
+		console.error(err);
+	loading=false;
+	document.getElementById("loadingMore").style.display="none";
+	});
+	}
+
+document.getElementById("verticalView").addEventListener("scroll",function(){
+	const div=this;
+	if(div.scrollTop+div.clientHeight>=div.scrollHeight-100){
+		loadMoreRecords();
+	}
+});
+</script> -->
+
+<script>
+const limit = 10;
+
+let verticalOffset = 10;
+let horizontalOffset = 10;
+
+let verticalLoading = false;
+let horizontalLoading = false;
+
+let verticalHasMore = true;
+let horizontalHasMore = true;
+
+// ✅ LOAD FUNCTION
+function loadMoreRecords(viewType) {
+
+    const isVertical = viewType === "vertical";
+
+    if (isVertical && (verticalLoading || !verticalHasMore)) return;
+    if (!isVertical && (horizontalLoading || !horizontalHasMore)) return;
+
+    if (isVertical) verticalLoading = true;
+    else horizontalLoading = true;
+
+    const loadingId = isVertical ? "loadMoreVertical" : "loadMoreHorizontal";
+    document.getElementById(loadingId).style.display = "block";
+
+    const selectedType = document.getElementById("recordTypeCode")?.value || "";
+    const offset = isVertical ? verticalOffset : horizontalOffset;
+
+    fetch(`/viewer/loadMore?selectedType=${selectedType}&offset=${offset}&limit=${limit}&viewType=${viewType}`)
+        .then(res => res.text())
+        .then(html => {
+
+            document.getElementById(loadingId).style.display = "none";
+
+            if (!html || html.trim() === "") {
+                if (isVertical) verticalHasMore = false;
+                else horizontalHasMore = false;
+
+                if (isVertical) verticalLoading = false;
+                else horizontalLoading = false;
+
+                return;
+            }
+
+            if (isVertical) {
+                document.getElementById("verticalTableContainer")
+                    .insertAdjacentHTML("beforeend", html);
+
+                verticalOffset += limit;
+                verticalLoading = false;
+                //Replace client-side type restriction for newly added rows
+                try{
+                	window.restrictByFirstFieldType && window.restrictByFirstFieldType(); }catch(_){}
+
+            } else {
+
+                const tbody = document.getElementById("horizontalTbody");
+
+                if (tbody) {
+                 	/* tbody.insertAdjancentHTML() */ 
+                 	 tbody.insertAdjacentHTML("beforeend", html);
+                    try{
+                    	window.restrictByFirstFieldType && window.restrictByFirstFieldType(); }catch(_){}
+                    }
+
+                horizontalOffset += limit;
+                horizontalLoading = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+
+            document.getElementById(loadingId).style.display = "none";
+
+            if (isVertical) verticalLoading = false;
+            else horizontalLoading = false;
+        });
+}
+
+
+// ✅ ✅ SCROLL LISTENERS (OUTSIDE FUNCTION — VERY IMPORTANT)
+document.addEventListener("DOMContentLoaded", function () {
+
+    const verticalDiv = document.getElementById("verticalView");
+    const horizontalDiv = document.getElementById("horizontalView");
+
+    // ✅ Vertical scroll
+    if (verticalDiv) {
+        verticalDiv.addEventListener("scroll", function () {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                loadMoreRecords("vertical");
+            }
+        });
+    }
+
+    // ✅ Horizontal scroll
+    if (horizontalDiv) {
+        horizontalDiv.addEventListener("scroll", function () {
+
+            if (this.scrollLeft + this.clientWidth >= this.scrollWidth - 100 ||
+                this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                loadMoreRecords("horizontal");
+            }
+        });
+    }
+});
+document.addEventListener("DOMContentLoaded",function(){
+	const saveBtn=document.getElementById("btnSave");
+const saveForm=document.getElementById("saveForm");
+if(saveBtn && saveForm){
+	saveBtn.addEventListener("click",function(e){
+		e.prevedntDefault(); 
+	console.log("Submitting form....");
+	saveForm.submit();
+	});
+}
+})
+ 
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+
+
+    /* Preserve code wrapping */
+    code { white-space: pre-wrap; }
+
+    /* Equal 25% width for the first four controls (SCCF, Txn Type, Record Type, Record #) on md+ */
+    @media (min-width: 768px) {
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(1),
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(2),
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(3),
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(4) {
+        flex: 0 0 25%;
+        max-width: 25%;
+      }
+      /* make SCCF input fill its column */
+      form[action="/viewer/search"] .row.g-2 > div:nth-child(1) input[name="sccf"] { width: 100%; }
+
+      /* Optional: avoid over-shrinking of controls */
+      #txnType,
+      #recordTypeCode,
+      form[action="/viewer/search"] input[name="sccf"],
+      form[action="/viewer/search"] input[name="recNo"] { min-width: 12rem; }
+    }
+
+    /* Prevent Record Type label from wrapping so its select stays on one row */
+    label[for="recordTypeCode"] { white-space: nowrap; }
+
+    /* BUTTON ROW: alignment, spacing, consistent sizing */
+    form[action="/viewer/search"] .actions-row {
+      margin-top: 0.75rem; /* subtle spacing above the button row */
+      display: flex;
+      align-items: center; /* vertical alignment */
+      justify-content: center;
+      gap: .5rem;          /* spacing between buttons */
+      flex-wrap: wrap;     /* graceful wrap on narrow screens */
+    }
+
+    /* Ensure UI buttons share the same height/size */
+    #btnSearch, #btnExport, #btnClear, #btnClearSearch { line-height: 1.5; }
+
+    /* Make disabled <a> truly inert (mouse + keyboard), and visually disabled */
+    a.btn[aria-disabled="true"],
+    a.btn.disabled {
+      pointer-events: none;
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    /* Navigation rows (top and bottom) */
+    .nav-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .nav-row .count-text { margin-left: .5rem; }
+    .meta-line { margin-top: .25rem; }
+
+    /* ---------- CHANGE: Sticky table headers (robust) ---------- */
+    /* NOTE: sticky works against the document scroll (or the nearest scrolling ancestor).
+       We don’t wrap the table in an overflowed scroller; we stick to the page scroll. */
+    .record-container { position: relative; }
+    .record-container table { border-collapse: separate; border-spacing: 0; width: 100%; }
+
+    /* We’ll add .sticky-head to <thead> in JS (or use existing thead).
+       Sticky only needs to be applied to the header cells. */
+    .sticky-head th, .sticky-head td {
+      position: sticky;
+      top: 0; /* if you later add a fixed navbar, update this offset (e.g., top: 56px) */
+      background-color: var(--bs-body-bg, #fff);
+      z-index: 2; /* keep above body cells */
+      box-shadow: 0 1px 0 rgba(0,0,0,.08);
+    }
+  
+/* Normal instructional state */
+.txn-hint {
+  color: #6c757d; /* Bootstrap muted */
+  transition: color 0.2s ease, font-weight 0.2s ease;
+}
+
+/* Error-emphasis state */
+.txn-hint.txn-hint-error {
+  color: #dc3545;           /* Bootstrap danger red */
+  font-weight: 600;
+}
+
+.txn-hint.txn-hint-error::before {
+  content: "⚠ ";
+}
+
+table th[scope="row"] {
+  font-weight: 500; /* instead of bold */
+}
+
+table td {
+  font-weight: 450;
+}
+
+table caption {
+  caption-side: top;
+  font-weight: 600;
+  text-align: left;
+  padding-bottom: 0.5rem;
+}
+
+.record-context {
+  font-size: 0.50rem;        /* Smaller than default h3 */
+  font-weight: 600;          /* Slight emphasis /* Tight spacing */ 
+  line-height: 1.3;
+}
+
