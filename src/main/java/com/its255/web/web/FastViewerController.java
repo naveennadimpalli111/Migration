@@ -39,7 +39,7 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/viewer")
 public class FastViewerController {
-	private static final int HORIZONTAL_PAGE_SIZE = 250;
+	private static final int HORIZONTAL_PAGE_SIZE = 2;
 
 	private final ViewerConfig cfg;
 	private final CleanupScheduler cleanupScheduler;

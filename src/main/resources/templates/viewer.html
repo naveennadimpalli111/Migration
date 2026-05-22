@@ -303,11 +303,11 @@
       </form>
       <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
     </div>
-    <div id="horizontalNavTop" class="d-flex align-items-center gap-2" style="display:none;">
+      <div id="horizontalNavTop" class="d-flex align-items-center gap-2" style="display:none;">
       <button id="horizontalPrevTop" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
       <button id="horizontalNextTop" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
       <span class="count-text" id="horizontalPageInfoTop"></span>
-    </div>
+    </div>  
     <div id="horizontalPagerData" data-current-page="${horizontalPage}" data-total-pages="${horizontalTotalPages}" data-has-prev="${horizontalHasPrev}" data-has-next="${horizontalHasNext}" style="display:none;"></div>
   </div>
 
@@ -399,26 +399,20 @@
       </form>
       <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
     </div>
-    <div id="horizontalNavBottom" class="d-flex align-items-center gap-2" style="display:none;">
+     <!-- <div id="horizontalNavBottom" class="d-flex align-items-center gap-2" style="display:none;">
       <button id="horizontalPrevBottom" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
       <button id="horizontalNextBottom" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
       <span class="count-text" id="horizontalPageInfoBottom"></span>
-    </div>
+    </div>  -->
   </div>
 
   
  
 </main>
 <!-- App JS -->
-<link rel="stylesheet" th:href="@{/css/validation.css}"
-href="/css/validation.css"/>
+
  <script th:src="@{/js/viewer.js}"  src="/js/viewer.js" defer></script>
-<!-- <script th:inline="javascript">
-  document.addEventListener("DOMContentLoaded", function () {
-    const hasFile = /*[[${hasFile}]]*/ false;
-    updateUploadHint(hasFile);
-  });
-</script> -->
+
 <script>
 /*switch btn by default vertical view*/
 let isHorizontal = false;
@@ -638,7 +632,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-
+  
   function goToHorizontalPage(page) {
     if (!page || page < 1) return;
     sessionStorage.setItem("viewMode", "horizontal");

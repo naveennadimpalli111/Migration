@@ -1,5 +1,4 @@
-    
-    function setClearCacheEnabled(enabled) {
+  function setClearCacheEnabled(enabled) {
       const btn = document.getElementById('btnClear');
       if (!btn) return;
     
@@ -592,6 +591,8 @@ function toggleViewBasedOnRecordType(){
    ========================================================= */
 
 document.addEventListener('DOMContentLoaded', function () {
+
+  
 
     const form =
         document.getElementById('saveForm') ||
