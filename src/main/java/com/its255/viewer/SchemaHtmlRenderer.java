@@ -198,117 +198,211 @@ public class SchemaHtmlRenderer {
 
 		return sb.toString();
 	}
+	public String renderHorizontalPage(
+        HttpSession session,
+        String selectedType,
+        int offset,
+        int limit) {
 
-	
-	public String renderHorizontalPage(HttpSession session, String selectedType, int offset, int limit) {
+    ViewerSession vs =
+            (ViewerSession)
+            session.getAttribute("VIEWER_SESSION");
 
-		ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
-		List<?> records = vs.lastFiltered;
+    List<?> records = vs.lastFiltered;
 
-		if (records == null || records.isEmpty()) {
-			return "";
-		}
+    if (records == null || records.isEmpty()) {
+        return "";
+    }
 
-		int total = records.size();
-		if (offset >= total) {
-			return "";
-		}
+    int total = records.size();
 
-		int end = Math.min(offset + limit, total);
-		boolean fullTable = offset == 0;
-		StringBuilder sb = new StringBuilder();
+    if (offset >= total) {
+        return "";
+    }
 
-		if (fullTable) {
-			sb.append("<table class='table table-sm table-striped table-bordered table-hover' style='min-width:2200px; border-top:3px solid black;'>");
-			sb.append("<thead><tr>");
-			sb.append("<th style='min-width:180px;  border-top:3px;'>Record No</th>");
-			sb.append("<th style='min-width:180px;  border-top:3px;'>SCCF ID</th>");
-			sb.append("<th style='min-width:120px;  border-top:3px;'>Type</th>");
-			List<FieldSpec> headerLayout = SchemaRegistry.getSchema(transactionType,
-				(selectedType != null && !selectedType.isEmpty()) ? selectedType : "05");
+    int end = Math.min(offset + limit, total);
 
-			if (headerLayout != null) {
-				for (FieldSpec f : headerLayout) {
-					if ("SCCF".equalsIgnoreCase(f.name) || "REC_TYPE".equalsIgnoreCase(f.name)) {
-						continue;
-					}
-					sb.append("<th>").append(escape(f.name)).append("</th>");
-				}
-			}
+    StringBuilder sb = new StringBuilder();
 
-			sb.append("</tr></thead><tbody id='horizontalTbody'>");
-		}
+    sb.append("<table class='table table-sm table-striped table-bordered table-hover' ")
+      .append("style='min-width:2200px; border-top:3px solid black;'>");
 
-		for (int i = offset; i < end; i++) {
+    sb.append("<thead><tr>");
 
-			int recordNo = Integer.parseInt(records.get(i).toString());
-			byte[] rec = readRecordBytes(recordNo);
-			String type = readType(recordNo).trim();
+    sb.append("<th style='min-width:180px;'>Record No</th>");
+    sb.append("<th style='min-width:180px;'>SCCF ID</th>");
+    sb.append("<th style='min-width:120px;'>Type</th>");
 
-			RecordType rt = RecordType.from(type);
-			List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
+    List<FieldSpec> headerLayout =
+            SchemaRegistry.getSchema(
+                    transactionType,
+                    (selectedType != null
+                     && !selectedType.isEmpty())
+                     ? selectedType
+                     : "05"
+            );
 
-			sb.append("<tr>");
-			sb.append("<td>").append(recordNo).append("</td>");
-			sb.append("<td>").append(escape(sliceTrim(rec, 0, 15))).append("</td>");
-			sb.append("<td>").append(escape(type)).append("</td>");
+    if (headerLayout != null) {
 
-			if (layout != null) {
-				for (FieldSpec f : layout) {
+        for (FieldSpec f : headerLayout) {
 
-					if ("SCCF".equalsIgnoreCase(f.name) || "REC_TYPE".equalsIgnoreCase(f.name)) {
-						continue;
-					}
-					int start = f.start1Based - 1;
-					int len = f.lengthBytes;
+            if ("SCCF".equalsIgnoreCase(f.name)
+                    || "REC_TYPE".equalsIgnoreCase(f.name)) {
+                continue;
+            }
 
-					String val = switch (f.type) {
-					case ALPHA, NUMERIC_TEXT -> sliceTrim(rec, start, len);
-					case PACKED_DECIMAL -> invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
-					default -> "";
-					};
-					Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNo) : null;
-					if(recordOverlay !=null && recordOverlay.containsKey(f.name)) {
-						val=recordOverlay.get(f.name);
-					}
-					//boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type == FieldType.BINARY;
-					boolean nonEditableType = f.type == FieldType.BINARY;
-					boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name)
-							&& !nonEditableType;
-					sb.append("<td>");
-					
-					if(editable){ 
-						sb.append("<input type='text'")
-						  .append("class='form-control form-control-sm editable-field' " )
-						  .append("name='field_").append(recordNo).append("_").append(f.name).append("'")
-						  .append(" value='").append(escape(val))
-						  .append("'").append("maxlength='").append(f.lengthBytes).append("'")
-						  .append("data-ftype='").append(f.type.name()).append("'")
-						  .append("data-flen='").append(f.lengthBytes).append("'")
-						  .append("data-fscale='").append(f.scale).append("'")
-						  .append(f.type==FieldType.NUMERIC_TEXT ?
-						  " inputmode='numeric'":"")
-						  .append("/>").append("<div class='invalid-feedback' style='display:none;'></div>");
+            sb.append("<th>")
+              .append(escape(f.name))
+              .append("</th>");
+        }
+    }
 
-					
-				}else {
-					
-					sb.append(escape(val));
-			
-				}
-					sb.append("</td>");
-			}
-		}
+    sb.append("</tr></thead><tbody>");
 
-			sb.append("</tr>");
-			}
+    for (int i = offset; i < end; i++) {
 
-		if (fullTable) {
-			sb.append("</tbody></table>");
-		}
+        int recordNo =
+                Integer.parseInt(
+                        records.get(i).toString()
+                );
 
-		return sb.toString();
-	}
+        byte[] rec = readRecordBytes(recordNo);
+
+        String type =
+                readType(recordNo).trim();
+
+        RecordType rt =
+                RecordType.from(type);
+
+        List<FieldSpec> layout =
+                SchemaRegistry.getSchema(
+                        transactionType,
+                        rt.code
+                );
+
+       // sb.append("<tr>");
+	   sb.append("<tr data-recordno='").append(recordNo).append("'>");
+
+        sb.append("<td>")
+          .append(recordNo)
+          .append("</td>");
+
+        sb.append("<td>")
+          .append(escape(sliceTrim(rec, 0, 15)))
+          .append("</td>");
+
+        sb.append("<td>")
+          .append(escape(type))
+          .append("</td>");
+
+        if (layout != null) {
+
+            for (FieldSpec f : layout) {
+
+                if ("SCCF".equalsIgnoreCase(f.name)
+                        || "REC_TYPE".equalsIgnoreCase(f.name)) {
+                    continue;
+                }
+
+                int start = f.start1Based - 1;
+                int len = f.lengthBytes;
+
+                String val = switch (f.type) {
+
+                    case ALPHA,
+                         NUMERIC_TEXT ->
+                            sliceTrim(rec, start, len);
+
+                    case PACKED_DECIMAL ->
+                            invokeFixed(
+                                    "decodeComp3ToString",
+                                    rec,
+                                    start,
+                                    len,
+                                    f.scale
+                            );
+
+                    default -> "";
+                };
+
+                Map<String, String> recordOverlay =
+                        editOverlay != null
+                        ? editOverlay.get(recordNo)
+                        : null;
+
+                if (recordOverlay != null
+                        && recordOverlay.containsKey(f.name)) {
+
+                    val = recordOverlay.get(f.name);
+                }
+
+                boolean nonEditableType =
+                        f.type == FieldType.BINARY;
+
+                boolean editable =
+                        editMode
+                        && !List.of("SCCF", "REC_TYPE").contains(f.name)
+                        && !nonEditableType;
+
+                sb.append("<td>");
+
+                if (editable) {
+
+                    sb.append("<input type='text' ")
+                      .append("class='form-control form-control-sm editable-field' ")
+
+                      .append("name='field_")
+                      .append(recordNo)
+                      .append("_")
+                      .append(f.name)
+                      .append("' ")
+
+                      .append("value='")
+                      .append(escape(val))
+                      .append("' ")
+
+                      .append("maxlength='")
+                      .append(f.lengthBytes)
+                      .append("' ")
+
+                      .append("data-ftype='")
+                      .append(f.type.name())
+                      .append("' ")
+
+                      .append("data-flen='")
+                      .append(f.lengthBytes)
+                      .append("' ")
+
+                      .append("data-fscale='")
+                      .append(f.scale)
+                      .append("' ");
+
+                    if (f.type == FieldType.NUMERIC_TEXT) {
+                        sb.append("inputmode='numeric' ");
+                    }
+
+                    sb.append("/>");
+
+                    sb.append("<div class='invalid-feedback' ")
+                      .append("style='display:none;'></div>");
+
+                } else {
+
+                    sb.append(escape(val));
+                }
+
+                sb.append("</td>");
+            }
+        }
+
+        sb.append("</tr>");
+    }
+
+    sb.append("</tbody></table>");
+
+    return sb.toString();
+}
+
 
 	private int getRecordCount() {
 		try {

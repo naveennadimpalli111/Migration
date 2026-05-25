@@ -39,7 +39,7 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/viewer")
 public class FastViewerController {
-	private static final int HORIZONTAL_PAGE_SIZE = 2;
+	private static final int HORIZONTAL_PAGE_SIZE = 5;
 
 	private final ViewerConfig cfg;
 	private final CleanupScheduler cleanupScheduler;
@@ -169,7 +169,7 @@ public class FastViewerController {
 
 	@GetMapping("/current")
 	public String current(@RequestParam(name = "page", required = false, defaultValue = "1") int page, Model model,
-					 HttpSession session) {
+			HttpSession session) {
 		ViewerSession vs = getSession(session);
 		String viewMode = (String) session.getAttribute("viewMode");
 		model.addAttribute("viewMode", viewMode);
@@ -206,11 +206,60 @@ public class FastViewerController {
 			type = recordOverlay.getOrDefault("FM105-REC-TYPE", type);
 		}
 
+		String displaySccf = sccf;
+
+		Map<String, String> overlay = vs.editOverlay.get(rn);
+
+		if (overlay != null) {
+
+			String localPlan = overlay.getOrDefault(
+					"FM105-SER-NUM-LOCAL-PLAN",
+					"");
+
+			String cc = overlay.getOrDefault(
+					"FM105-SER-NUM-JULDT-CC",
+					"");
+
+			String yy = overlay.getOrDefault(
+					"FM105-SER-NUM-JULDT-YY",
+					"");
+
+			String ddd = overlay.getOrDefault(
+					"FM105-SER-NUM-JULDT-DDD",
+					"");
+
+			String sequence = overlay.getOrDefault(
+					"FM105-SER-NUM-SEQUENCE",
+					"");
+
+			String suffix = overlay.getOrDefault(
+					"FM105-SER-NUM-SUFFIX",
+					"");
+
+			String rebuilt = localPlan
+					+ cc
+					+ yy
+					+ ddd
+					+ sequence
+					+ suffix;
+
+			if (!rebuilt.trim().isEmpty()) {
+				displaySccf = rebuilt;
+			}
+		}
+
 		StringBuilder sb = new StringBuilder();
-		sb.append("<h5 id='record-context'>").append("Record #").append(rn).append(" SCCF=").append(sccf)
-				.append(" Type=").append(type.trim()).append("</h5>\n").append(tableHtml).append("<pre>")
-				.append("Record #").append(rn).append(" SCCF=").append(sccf).append(" Type=").append(type.trim())
-				.append("</pre>\n");
+
+		sb.append("<h5 id='record-context'>")
+				.append("Record #")
+				.append(rn)
+				.append(" SCCF=")
+				.append(displaySccf)
+				.append(" Type=")
+				.append(type.trim())
+				.append("</h5>");
+
+		sb.append(tableHtml);
 
 		int horizontalTotal = vs.lastFiltered != null ? vs.lastFiltered.size() : 0;
 		int horizontalTotalPages = Math.max(1, (horizontalTotal + HORIZONTAL_PAGE_SIZE - 1) / HORIZONTAL_PAGE_SIZE);
@@ -229,24 +278,33 @@ public class FastViewerController {
 		model.addAttribute("horizontalTotalPages", horizontalTotalPages);
 		model.addAttribute("horizontalHasPrev", page > 1);
 		model.addAttribute("horizontalHasNext", page < horizontalTotalPages);
-		/*
-		 * model.addAttribute("verticalHtml",renderer.renderVertical(vs.nav.position()))
-		 * ;
-		 */
-		/* model.addAttribute("horizontalHtml",renderer.renderHorizontal()); */
-		model.addAttribute("verticalHtml", renderer.renderVertical(vs.nav.currentRecordNumber()));
+
+		String dynamicHeader = "<h5 id='record-context'>"
+				+ "Record #"
+				+ rn
+				+ " SCCF="
+				+ sccf
+				+ " Type="
+				+ type.trim()
+				+ "</h5>";
+
+		String dynamicVerticalHtml = dynamicHeader
+				+ renderer.renderVertical(
+						vs.nav.currentRecordNumber());
+
+		model.addAttribute(
+				"verticalHtml",
+				dynamicVerticalHtml);
 
 		model.addAttribute("horizontalHtml",
 				renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE));
 		if (vs.selectedRecordType != null) {
 			model.addAttribute("horizontalHtml",
-					renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE));
+					renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset,
+							HORIZONTAL_PAGE_SIZE));
 		}
 
-		/*
-		 * model.addAttribute("horizontalHtml",renderer.renderHorizontal(session,vs.
-		 * selectedRecordType,vs.lastFiltered));
-		 */
+		
 		return "viewer";
 
 	}
@@ -308,7 +366,7 @@ public class FastViewerController {
 
 	@PostMapping("/save")
 
-	public String save(HttpServletRequest request, HttpSession session,Model model) {
+	public String save(HttpServletRequest request, HttpSession session, Model model) {
 		ViewerSession vs = getSession(session);
 		request.getParameterMap().forEach((key, value) -> {
 			if (key.startsWith("field_")) {
@@ -351,31 +409,31 @@ public class FastViewerController {
 		vs.editMode = false;
 		return "redirect:/viewer/current";
 	}
-//Pagination call
+
+	// Pagination call
 	@GetMapping("/loadMore")
 	@ResponseBody
 	public String loadMore(
-	        HttpSession session,
-	        @RequestParam String selectedType,
-	        @RequestParam int offset,
-	        @RequestParam int limit,
-	        @RequestParam String viewType) {
+			HttpSession session,
+			@RequestParam String selectedType,
+			@RequestParam int offset,
+			@RequestParam int limit,
+			@RequestParam String viewType) {
 
-	    ViewerSession vs = getSession(session);
+		ViewerSession vs = getSession(session);
 
-	    SchemaHtmlRenderer renderer =
-	        new SchemaHtmlRenderer(
-	            vs.store,
-	            Charset.defaultCharset(),
-	            vs.transactionType,
-	            vs.editMode,
-	            vs.editOverlay);
+		SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(
+				vs.store,
+				Charset.defaultCharset(),
+				vs.transactionType,
+				vs.editMode,
+				vs.editOverlay);
 
-	    if ("horizontal".equalsIgnoreCase(viewType)) {
-	        return renderer.renderHorizontalPage(session, selectedType, offset, limit);
-	    } else {
-	        return renderer.renderVerticalPage(session, selectedType, offset, limit);
-	    }
+		if ("horizontal".equalsIgnoreCase(viewType)) {
+			return renderer.renderHorizontalPage(session, selectedType, offset, limit);
+		} else {
+			return renderer.renderVerticalPage(session, selectedType, offset, limit);
+		}
 	}
 
 	@PostMapping("/clear")

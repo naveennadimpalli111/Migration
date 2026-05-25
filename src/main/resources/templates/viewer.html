@@ -293,7 +293,7 @@
   <!-- ========== NAVIGATION ROW — TOP ========== -->
   <!-- NAV FIX: hide nav if there are no results -->
  <!--  <div class="nav-row mb-1" th:if="${hasFile} and ${count} > 0"> -->
- <div id="navTop" class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
+ <!-- <div id="navTop" class="nav-row mb-1" th:if="${hasFile} and ${count} > 0">
     <div id="verticalNavTop" class="d-flex align-items-center gap-2">
       <form th:action="@{/viewer/prev}" method="post" data-nav="true">
         <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
@@ -302,13 +302,83 @@
         <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
       </form>
       <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
-    </div>
-      <div id="horizontalNavTop" class="d-flex align-items-center gap-2" style="display:none;">
+    </div> -->
+      <!-- <div id="horizontalNavTop" class="d-flex align-items-center gap-2" style="display:none;"> -->
+        <!-- <div id="horizontalNavTop" class="d-flex align-items-center gap-2">
       <button id="horizontalPrevTop" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
       <button id="horizontalNextTop" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
       <span class="count-text" id="horizontalPageInfoTop"></span>
-    </div>  
-    <div id="horizontalPagerData" data-current-page="${horizontalPage}" data-total-pages="${horizontalTotalPages}" data-has-prev="${horizontalHasPrev}" data-has-next="${horizontalHasNext}" style="display:none;"></div>
+    </div>   -->
+    <!-- <div id="horizontalNavTop"
+     class="d-flex align-items-center gap-2">
+
+        <button id="horizontalPrevTop"
+          class="btn btn-outline-secondary"
+          type="button">
+          ◀ Prev
+        </button>
+
+        <button id="horizontalNextTop"
+          class="btn btn-outline-secondary"
+          type="button">
+          Next ▶
+        </button>
+
+      <span class="count-text"
+        id="horizontalPageInfoTop">
+      </span>
+</div> -->
+
+<div id="navTop" class="nav-row mb-1">
+
+    <!-- VERTICAL NAV -->
+    <div id="verticalNavTop"
+         class="d-flex align-items-center gap-2">
+         <form th:action="@{/viewer/prev}" method="post">
+        <button class="btn btn-outline-secondary"
+                th:disabled="${!hasPrev}">
+            ◀ Prev
+        </button>
+    </form>
+
+    <form th:action="@{/viewer/next}" method="post">
+        <button class="btn btn-outline-secondary"
+                th:disabled="${!hasNext}">
+            Next ▶
+        </button>
+    </form>
+
+    <span class="count-text"
+          th:text="'Record ' + ${position} + ' of ' + ${count}">
+    </span>
+    </div>
+
+    <!-- HORIZONTAL NAV -->
+    <div id="horizontalNavTop"
+         class="d-flex align-items-center gap-2"
+         style="display:none;">
+
+        <button id="horizontalPrevTop"
+                class="btn btn-outline-secondary"
+                type="button">
+            ◀ Prev
+        </button>
+
+        <button id="horizontalNextTop"
+                class="btn btn-outline-secondary"
+                type="button">
+            Next ▶
+        </button>
+
+        <span class="count-text"
+              id="horizontalPageInfoTop">
+        </span>
+    </div>
+
+</div>
+    <!-- <div id="horizontalPagerData" data-current-page="${horizontalPage}" data-total-pages="${horizontalTotalPages}" data-has-prev="${horizontalHasPrev}" data-has-next="${horizontalHasNext}" style="display:none;"></div> -->
+     <!-- FIXED -->
+        <div id="horizontalPagerData" th:attr="data-current-page=${horizontalPage}, data-total-pages=${horizontalTotalPages}, data-has-prev=${horizontalHasPrev}, data-has-next=${horizontalHasNext}" style="display:none;"></div>
   </div>
 
 
@@ -325,17 +395,9 @@
 
   </div>
 
-  <form id="saveForm" th:action="@{/viewer/save}" method="post">
+  <form id="saveForm" th:action="@{/viewer/save}" method="post" enctype="application/x-www-form-urlencoded">
+  <input type="hidden" id="horizontalPage" name="page" th:value="${horizontalPage}">
   <input type="hidden" id="viewMode" name="viewMode" th:value="${viewMode}">
-  <div id="resultsTop" class="mb-2" th:if="${count > 0}">
-    <span class="badge bg-info text-dark me-2" th:if="${viewMode == 'horizontal'}">
-      Showing <span th:text="${count}"></span> records
-    </span>
-    <span class="badge bg-info text-dark" th:if="${viewMode != 'horizontal'}">
-      Record <span th:text="${position}"></span> of <span th:text="${count}"></span>
-    </span>
-  </div>
- 
  <div class="record-container">
 
     <!-- VERTICAL -->
@@ -385,29 +447,55 @@
   
   </form>
   
-
-  <!-- ========== NAVIGATION ROW — BOTTOM (mirrors top) ========== -->
-  <!-- NAV FIX: hide nav if there are no results -->
-  <!-- <div class="nav-row mt-3" th:if="${hasFile} and ${count} > 0"> -->
-  <div id="navBottom" class="nav-row mt-3" th:if="${hasFile} and ${count} > 0">
-    <div id="verticalNavBottom" class="d-flex align-items-center gap-2">
-      <form th:action="@{/viewer/prev}" method="post" data-nav="true">
-        <button class="btn btn-outline-secondary" th:disabled="${!hasPrev}">◀ Prev</button>
-      </form>
-      <form th:action="@{/viewer/next}" method="post" data-nav="true">
-        <button class="btn btn-outline-secondary" th:disabled="${!hasNext}">Next ▶</button>
-      </form>
-      <span class="count-text" th:text="'Record ' + ${position} + ' of ' + ${count}"></span>
-    </div>
-     <!-- <div id="horizontalNavBottom" class="d-flex align-items-center gap-2" style="display:none;">
-      <button id="horizontalPrevBottom" class="btn btn-outline-secondary" type="button" disabled>◀ Prev</button>
-      <button id="horizontalNextBottom" class="btn btn-outline-secondary" type="button" disabled>Next ▶</button>
-      <span class="count-text" id="horizontalPageInfoBottom"></span>
-    </div>  -->
-  </div>
+  <div id="navBottom" class="nav-row mt-3">
 
   
- 
+        <div id="verticalNavBottom"
+     class="d-flex align-items-center gap-2">
+
+    <form th:action="@{/viewer/prev}" method="post">
+        <button class="btn btn-outline-secondary"
+                th:disabled="${!hasPrev}">
+            ◀ Prev
+        </button>
+    </form>
+
+    <form th:action="@{/viewer/next}" method="post">
+        <button class="btn btn-outline-secondary"
+                th:disabled="${!hasNext}">
+            Next ▶
+        </button>
+    </form>
+
+    <span class="count-text"
+          th:text="'Record ' + ${position} + ' of ' + ${count}">
+    </span>
+</div>
+
+    <!-- HORIZONTAL -->
+    <div id="horizontalNavBottom"
+         class="d-flex align-items-center gap-2"
+         style="display:none;">
+
+        <button id="horizontalPrevBottom"
+                class="btn btn-outline-secondary"
+                type="button">
+            ◀ Prev
+        </button>
+
+        <button id="horizontalNextBottom"
+                class="btn btn-outline-secondary"
+                type="button">
+            Next ▶
+        </button>
+
+        <span class="count-text"
+              id="horizontalPageInfoBottom">
+        </span>
+    </div>
+
+</div>
+
 </main>
 <!-- App JS -->
 
@@ -419,51 +507,25 @@ let isHorizontal = false;
 function updateView() {
 
     const vertical =
-        document.getElementById(
-            "verticalView"
-        );
+        document.getElementById("verticalView");
 
     const horizontal =
-        document.getElementById(
-            "horizontalView"
-        );
+        document.getElementById("horizontalView");
 
     const btn =
-        document.getElementById(
-            "toggleViewBtn"
-        );
-
-    // =====================================
-    // NAVIGATION SECTIONS
-    // =====================================
+        document.getElementById("toggleViewBtn");
 
     const verticalNavTop =
-        document.getElementById(
-            "verticalNavTop"
-        );
+        document.getElementById("verticalNavTop");
 
     const verticalNavBottom =
-        document.getElementById(
-            "verticalNavBottom"
-        );
+        document.getElementById("verticalNavBottom");
 
     const horizontalNavTop =
-        document.getElementById(
-            "horizontalNavTop"
-        );
+        document.getElementById("horizontalNavTop");
 
     const horizontalNavBottom =
-        document.getElementById(
-            "horizontalNavBottom"
-        );
-
-    if (!vertical || !horizontal || !btn) {
-        return;
-    }
-
-    // =====================================
-    // HORIZONTAL VIEW
-    // =====================================
+        document.getElementById("horizontalNavBottom");
 
     if (isHorizontal) {
 
@@ -475,40 +537,20 @@ function updateView() {
         btn.innerText =
             "Switch to Vertical View";
 
-        // =====================================
-        // HIDE VERTICAL NAVIGATION
-        // =====================================
+        // NAVIGATION
+        if (verticalNavTop)
+            verticalNavTop.style.display = "none";
 
-        if (verticalNavTop) {
-            verticalNavTop.style.display =
-                "none";
-        }
+        if (verticalNavBottom)
+            verticalNavBottom.style.display = "none";
 
-        if (verticalNavBottom) {
-            verticalNavBottom.style.display =
-                "none";
-        }
+        if (horizontalNavTop)
+            horizontalNavTop.style.display = "flex";
 
-        // =====================================
-        // SHOW HORIZONTAL NAVIGATION
-        // =====================================
+        if (horizontalNavBottom)
+            horizontalNavBottom.style.display = "flex";
 
-        if (horizontalNavTop) {
-            horizontalNavTop.style.display =
-                "flex";
-        }
-
-        if (horizontalNavBottom) {
-            horizontalNavBottom.style.display =
-                "flex";
-        }
-    }
-
-    // =====================================
-    // VERTICAL VIEW
-    // =====================================
-
-    else {
+    } else {
 
         // TABLES
         vertical.style.display = "block";
@@ -518,69 +560,112 @@ function updateView() {
         btn.innerText =
             "Switch to Horizontal View";
 
-        // =====================================
-        // SHOW VERTICAL NAVIGATION
-        // =====================================
+        // NAVIGATION
+        if (verticalNavTop)
+            verticalNavTop.style.display = "flex";
 
-        if (verticalNavTop) {
-            verticalNavTop.style.display =
-                "flex";
-        }
+        if (verticalNavBottom)
+            verticalNavBottom.style.display = "flex";
 
-        if (verticalNavBottom) {
-            verticalNavBottom.style.display =
-                "flex";
-        }
+        if (horizontalNavTop)
+            horizontalNavTop.style.display = "none";
 
-        // =====================================
-        // HIDE HORIZONTAL NAVIGATION
-        // =====================================
-
-        if (horizontalNavTop) {
-            horizontalNavTop.style.display =
-                "none";
-        }
-
-        if (horizontalNavBottom) {
-            horizontalNavBottom.style.display =
-                "none";
-        }
+        if (horizontalNavBottom)
+            horizontalNavBottom.style.display = "none";
     }
 }
+// HORIZONTAL PAGINATION FIX
 
-/*function updateView() {
-	  const vertical = document.getElementById("verticalView");
-	  const horizontal = document.getElementById("horizontalView");
-	  const btn = document.getElementById("toggleViewBtn");
+document.addEventListener("DOMContentLoaded", function () {
 
-	  // ✅ NEW: get navigation elements
-	  const navTop = document.getElementById("navTop");
-	  const navBottom = document.getElementById("navBottom");
+    const pager =
+        document.getElementById("horizontalPagerData");
 
-	  if (!vertical || !horizontal || !btn) return;
+    if (!pager) {
+        return;
+    }
 
-	  if (isHorizontal) {
-	    // ✅ show horizontal
-	    vertical.style.display = "none";
-	    horizontal.style.display = "block";
-	    btn.innerText = "Switch to Vertical View";
+    let currentPage =
+        parseInt(
+            pager.dataset.currentPage || "1"
+        );
 
-	    // ✅ ✅ HIDE navigation
-	    if (navTop) navTop.style.display = "none";
-	    if (navBottom) navBottom.style.display = "none";
+    let totalPages =
+        parseInt(
+            pager.dataset.totalPages || "1"
+        );
 
-	  } else {
-	    // ✅ show vertical
-	    vertical.style.display = "block";
-	    horizontal.style.display = "none";
-	    btn.innerText = "Switch to Horizontal View";
+    const nextBtn =
+        document.getElementById("horizontalNextTop");
 
-	    // ✅ ✅ SHOW navigation
-	    if (navTop) navTop.style.display = "flex";
-	    if (navBottom) navBottom.style.display = "flex";
-	  }
-	}*/
-  
+    const prevBtn =
+        document.getElementById("horizontalPrevTop");
+
+    const pageInfo =
+        document.getElementById("horizontalPageInfoTop");
+
+    function updateUI() {
+
+        if (pageInfo) {
+            pageInfo.innerText =
+                "Page " +
+                currentPage +
+                " of " +
+                totalPages;
+        }
+
+        if (prevBtn) {
+            prevBtn.disabled =
+                currentPage <= 1;
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled =
+                currentPage >= totalPages;
+        }
+    }
+
+    function goToPage(page) {
+
+        if (page < 1 || page > totalPages) {
+            return;
+        }
+
+        window.location.href =
+            "/viewer/current?page=" + page;
+    }
+
+    if (nextBtn) {
+
+        nextBtn.addEventListener(
+            "click",
+            function () {
+
+                if (currentPage < totalPages) {
+                    goToPage(currentPage + 1);
+                }
+
+            }
+        );
+    }
+
+    if (prevBtn) {
+
+        prevBtn.addEventListener(
+            "click",
+            function () {
+
+                if (currentPage > 1) {
+                    goToPage(currentPage - 1);
+                }
+
+            }
+        );
+    }
+
+    updateUI();
+
+});
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -678,66 +763,6 @@ if (clearBtn) {
 }
 
 </script>
-
-<!-- <script>
-/*Handle  search button dynamical switch to table*/
-document.addEventListener("DOMContentLoaded", function () {
-	const searchBtn = document.getElementById("searchBtn");
-/*   const btn = document.getElementById("toggleViewBtn"); */
-  const recordType = document.getElementById("recordTypeCode");
- /*  const error = document.getElementById("recordTypeError"); */
-  const verticalView = document.getElementById("verticalView");
-  const horizontalView = document.getElementById("horizontalView");
-  searchBtn.addEventListener("click",function(){
-	  if (recordType.value && recordType.value.trim() !== "") {
-		  verticalView.style.display = "none";
-	      horizontalView.style.display = "block";
-	  }else {
-		  verticalView.style.display = "block";
-	      horizontalView.style.display = "none";
-	  }
-	  });
-  });
-</script> -->
-<!-- <script>
-let offset=20;
-const limit=20;
-let loading=false;let hasMore=true;
-function loadMoreRecords(){
-	if(loading||!hasMore){
-		return;
-	}
-	loading=true;
-	document.getElementById("loadingMore").style.display="block";
-	const selectedType=document.getElementById("recordTypeCode")?.value||"";
-	fetch(`/viewer/loadMore?selectedType=${selectedType}&offset=${offset}&limit=${limit}`)
-    .then(response=>response.text())
-    .then(html=>{
-    	if(html.trim()===""){
-    		hasMore=false;
-    		loading=false;
-    	document.getElementById("loadingMore").style.display="none";
-    	 return; 
-     } 
-     document.getElementById("verticalTableContainer").insertAdjacentHTML("beforeend", html);("beforeend",html);
-	offset+=limit;
-	loading=false;  
-	document.getElementById("loadingMore").style.display="none";
-})
-	.catch(err=>{
-		console.error(err);
-	loading=false;
-	document.getElementById("loadingMore").style.display="none";
-	});
-	}
-
-document.getElementById("verticalView").addEventListener("scroll",function(){
-	const div=this;
-	if(div.scrollTop+div.clientHeight>=div.scrollHeight-100){
-		loadMoreRecords();
-	}
-});
-</script> -->
 
 <script>
 const limit = 10;
@@ -859,8 +884,6 @@ if(saveBtn && saveForm){
 })
  
 </script>
-
-
 
 </body>
 </html>
