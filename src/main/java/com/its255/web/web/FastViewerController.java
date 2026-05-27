@@ -185,6 +185,11 @@ public class FastViewerController {
 
 		String type = safeInvoke(vs.store, "readType", rn);
 		String sccf = safeInvoke(vs.store, "readSccf", rn);
+		/*
+		 * String sccf = ""; boolean recordHasSccf = hasSccf(vs.transactionType,
+		 * type.trim()); if (recordHasSccf) { sccf = safeInvoke(vs.store, "readSccf",
+		 * rn); }
+		 */
 		String txn = safeInvoke(vs.store, "readTxn", rn);
 		SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType, vs.editMode,
 				vs.editOverlay);
@@ -212,36 +217,19 @@ public class FastViewerController {
 
 		if (overlay != null) {
 
-			String localPlan = overlay.getOrDefault(
-					"FM105-SER-NUM-LOCAL-PLAN",
-					"");
+			String localPlan = overlay.getOrDefault("FM105-SER-NUM-LOCAL-PLAN", "");
 
-			String cc = overlay.getOrDefault(
-					"FM105-SER-NUM-JULDT-CC",
-					"");
+			String cc = overlay.getOrDefault("FM105-SER-NUM-JULDT-CC", "");
 
-			String yy = overlay.getOrDefault(
-					"FM105-SER-NUM-JULDT-YY",
-					"");
+			String yy = overlay.getOrDefault("FM105-SER-NUM-JULDT-YY", "");
 
-			String ddd = overlay.getOrDefault(
-					"FM105-SER-NUM-JULDT-DDD",
-					"");
+			String ddd = overlay.getOrDefault("FM105-SER-NUM-JULDT-DDD", "");
 
-			String sequence = overlay.getOrDefault(
-					"FM105-SER-NUM-SEQUENCE",
-					"");
+			String sequence = overlay.getOrDefault("FM105-SER-NUM-SEQUENCE", "");
 
-			String suffix = overlay.getOrDefault(
-					"FM105-SER-NUM-SUFFIX",
-					"");
+			String suffix = overlay.getOrDefault("FM105-SER-NUM-SUFFIX", "");
 
-			String rebuilt = localPlan
-					+ cc
-					+ yy
-					+ ddd
-					+ sequence
-					+ suffix;
+			String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
 
 			if (!rebuilt.trim().isEmpty()) {
 				displaySccf = rebuilt;
@@ -250,16 +238,25 @@ public class FastViewerController {
 
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("<h5 id='record-context'>")
-				.append("Record #")
-				.append(rn)
-				.append(" SCCF=")
-				.append(displaySccf)
-				.append(" Type=")
-				.append(type.trim())
-				.append("</h5>");
+		sb.append("<h5 id='record-context'>").append("Record #").append(rn).append(" SCCF=").append(displaySccf)
+				/*
+				 * if (recordHasSccf && !sccf.isEmpty()) {
+				 * sb.append(" SCCF=").append(displaySccf);
+				 * }
+				 */
+				.append(" Type=").append(type.trim()).append("</h5>");
 
 		sb.append(tableHtml);
+		/*
+		 * .append("<pre>")
+		 * 
+		 * .append("Record #").append(rn);
+		 * if (recordHasSccf && !sccf.isEmpty()) {
+		 * sb.append(" SCCF=").append(displaySccf);
+		 * }
+		 * sb.append(" Type=").append(type.trim())
+		 * .append("</pre>\n");
+		 */
 
 		int horizontalTotal = vs.lastFiltered != null ? vs.lastFiltered.size() : 0;
 		int horizontalTotalPages = Math.max(1, (horizontalTotal + HORIZONTAL_PAGE_SIZE - 1) / HORIZONTAL_PAGE_SIZE);
@@ -278,33 +275,27 @@ public class FastViewerController {
 		model.addAttribute("horizontalTotalPages", horizontalTotalPages);
 		model.addAttribute("horizontalHasPrev", page > 1);
 		model.addAttribute("horizontalHasNext", page < horizontalTotalPages);
+		model.addAttribute("horizontalTotalCount", horizontalTotal);
 
-		String dynamicHeader = "<h5 id='record-context'>"
-				+ "Record #"
-				+ rn
-				+ " SCCF="
-				+ sccf
-				+ " Type="
+		/*
+		 * String dynamicHeader = "<h5 id='record-context'>" + "Record #" + rn +
+		 * " SCCF=" + sccf + " Type=" + type.trim() + "</h5>";
+		 */
+		String dynamicHeader = "<h5 id='record-context'>" + "Record #" + rn + " SCCF=" + displaySccf + " Type="
 				+ type.trim()
 				+ "</h5>";
 
-		String dynamicVerticalHtml = dynamicHeader
-				+ renderer.renderVertical(
-						vs.nav.currentRecordNumber());
+		String dynamicVerticalHtml = dynamicHeader + renderer.renderVertical(vs.nav.currentRecordNumber());
 
-		model.addAttribute(
-				"verticalHtml",
-				dynamicVerticalHtml);
+		model.addAttribute("verticalHtml", dynamicVerticalHtml);
 
 		model.addAttribute("horizontalHtml",
 				renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE));
 		if (vs.selectedRecordType != null) {
-			model.addAttribute("horizontalHtml",
-					renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset,
-							HORIZONTAL_PAGE_SIZE));
+			model.addAttribute("horizontalHtml", renderer.renderHorizontalPage(session, vs.selectedRecordType,
+					horizontalOffset, HORIZONTAL_PAGE_SIZE));
 		}
 
-		
 		return "viewer";
 
 	}
@@ -364,6 +355,13 @@ public class FastViewerController {
 		return "redirect:/viewer/current";
 	}
 
+	/*
+	 * @GetMapping("/edit") public String
+	 * enableEdit(@RequestParam(name="page",defaultValue="1") int page,HttpSession
+	 * session) { ViewerSession vs = getSession(session); vs.editMode = true; return
+	 * "redirect:/viewer/current?page="+page; }
+	 */
+
 	@PostMapping("/save")
 
 	public String save(HttpServletRequest request, HttpSession session, Model model) {
@@ -408,32 +406,6 @@ public class FastViewerController {
 		ViewerSession vs = getSession(session);
 		vs.editMode = false;
 		return "redirect:/viewer/current";
-	}
-
-	// Pagination call
-	@GetMapping("/loadMore")
-	@ResponseBody
-	public String loadMore(
-			HttpSession session,
-			@RequestParam String selectedType,
-			@RequestParam int offset,
-			@RequestParam int limit,
-			@RequestParam String viewType) {
-
-		ViewerSession vs = getSession(session);
-
-		SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(
-				vs.store,
-				Charset.defaultCharset(),
-				vs.transactionType,
-				vs.editMode,
-				vs.editOverlay);
-
-		if ("horizontal".equalsIgnoreCase(viewType)) {
-			return renderer.renderHorizontalPage(session, selectedType, offset, limit);
-		} else {
-			return renderer.renderVerticalPage(session, selectedType, offset, limit);
-		}
 	}
 
 	@PostMapping("/clear")
@@ -481,4 +453,15 @@ public class FastViewerController {
 		Files.createDirectories(root);
 		return root;
 	}
+	/**
+	 * Determines whether a given record type has SCCF fields for the transaction
+	 * type.
+	 */
+	/*
+	 * private boolean hasSccf(String transactionType, String recordTypeCode) {
+	 * switch (transactionType) { case "PPU": case "PPA": return false; case "CBF":
+	 * return "7A".equals(recordTypeCode) || "7B".equals(recordTypeCode); case "SF":
+	 * case "SFI": return !"9D".equals(recordTypeCode); default: // SFP, DF, RF,
+	 * CBFBD return true; } }
+	 */
 }

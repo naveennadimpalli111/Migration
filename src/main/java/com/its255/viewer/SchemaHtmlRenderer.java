@@ -1,13 +1,9 @@
 package com.its255.viewer;
 
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.stereotype.Component;
 
 import com.its255.constants.FileViewerConstants;
 import com.its255.schema.FieldSpec;
@@ -54,7 +50,7 @@ public class SchemaHtmlRenderer {
 	public String renderVertical(int recordNo) {
 		return render(recordNo);
 	}
-		
+
 	public String renderVerticalPage(HttpSession session, String selectedType, int offset, int limit) {
 
 		ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
@@ -93,9 +89,9 @@ public class SchemaHtmlRenderer {
 				.append("style='min-width:2200px; border-top:3px solid black;'>");
 
 		sb.append("<thead><tr>");
-		sb.append("<th style='min-width:180px;  border-top:3px;'>Record No</th>");
-		sb.append("<th style='min-width:180px;  border-top:3px;'>SCCF ID</th>");
-		sb.append("<th style='min-width:120px;  border-top:3px;'>Type</th>");
+		sb.append("<th style='min-width:180px; border-top:3px;'>Record No</th>");
+		sb.append("<th style='min-width:180px; border-top:3px;'>SCCF ID</th>");
+		sb.append("<th style='min-width:120px; border-top:3px;'>Type</th>");
 		List<FieldSpec> headerLayout = SchemaRegistry.getSchema(transactionType,
 				(selectedType != null && !selectedType.isEmpty()) ? selectedType : "05");
 
@@ -145,15 +141,15 @@ public class SchemaHtmlRenderer {
 						String val = "";
 
 						switch (f.type) {
-						case ALPHA:
-						case NUMERIC_TEXT:
-							val = sliceTrim(rec, start, len);
-							break;
-						case PACKED_DECIMAL:
-							val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
-							break;
-						default:
-							val = "";
+							case ALPHA:
+							case NUMERIC_TEXT:
+								val = sliceTrim(rec, start, len);
+								break;
+							case PACKED_DECIMAL:
+								val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
+								break;
+							default:
+								val = "";
 						}
 						String fieldKey = "field_" + recordNo + "_" + f.name;
 
@@ -162,7 +158,8 @@ public class SchemaHtmlRenderer {
 						if (recordOverlay != null && recordOverlay.containsKey(f.name)) {
 							val = recordOverlay.get(f.name);
 						}
-						//boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type == FieldType.BINARY;
+						// boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type ==
+						// FieldType.BINARY;
 						boolean nonEditableType = f.type == FieldType.BINARY;
 						boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name)
 								&& !nonEditableType;
@@ -173,12 +170,13 @@ public class SchemaHtmlRenderer {
 									.append(" class='form-control form-control-sm editable-field'")
 
 									.append(" name='field_").append(recordNo).append("_").append(f.name) // ✅ no escape
-																											// here
+									// here
 									.append("' ").append(" value='").append(escape(val)).append("' ")
 									.append(" maxlength='").append(f.lengthBytes).append("' ").append("data-ftype='")
 									.append(f.type.name()).append("' ").append("data-flen='").append(f.lengthBytes)
 									.append("' ").append("data-fscale='").append(f.scale).append("' ")
-									.append(f.type == com.its255.schema.FieldType.NUMERIC_TEXT ? " inputmode='numeric'":"")
+									.append(f.type == com.its255.schema.FieldType.NUMERIC_TEXT ? " inputmode='numeric'"
+											: "")
 									.append("/>").append("<div class='invalid-feedback' style='display:none;'></div>");
 
 						} else {
@@ -198,211 +196,147 @@ public class SchemaHtmlRenderer {
 
 		return sb.toString();
 	}
-	public String renderHorizontalPage(
-        HttpSession session,
-        String selectedType,
-        int offset,
-        int limit) {
 
-    ViewerSession vs =
-            (ViewerSession)
-            session.getAttribute("VIEWER_SESSION");
+	public String renderHorizontalPage(HttpSession session, String selectedType, int offset, int limit) {
 
-    List<?> records = vs.lastFiltered;
+		ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
 
-    if (records == null || records.isEmpty()) {
-        return "";
-    }
+		List<?> records = vs.lastFiltered;
 
-    int total = records.size();
+		if (records == null || records.isEmpty()) {
+			return "";
+		}
 
-    if (offset >= total) {
-        return "";
-    }
+		int total = records.size();
 
-    int end = Math.min(offset + limit, total);
+		if (offset >= total) {
+			return "";
+		}
 
-    StringBuilder sb = new StringBuilder();
+		int end = Math.min(offset + limit, total);
 
-    sb.append("<table class='table table-sm table-striped table-bordered table-hover' ")
-      .append("style='min-width:2200px; border-top:3px solid black;'>");
+		StringBuilder sb = new StringBuilder();
 
-    sb.append("<thead><tr>");
+		sb.append("<table class='table table-sm table-striped table-bordered table-hover' ")
+				.append("style='min-width:2200px; border-top:3px solid black;'>");
 
-    sb.append("<th style='min-width:180px;'>Record No</th>");
-    sb.append("<th style='min-width:180px;'>SCCF ID</th>");
-    sb.append("<th style='min-width:120px;'>Type</th>");
+		sb.append("<thead><tr>");
 
-    List<FieldSpec> headerLayout =
-            SchemaRegistry.getSchema(
-                    transactionType,
-                    (selectedType != null
-                     && !selectedType.isEmpty())
-                     ? selectedType
-                     : "05"
-            );
+		sb.append("<th style='min-width:180px;'>Record No</th>");
+		sb.append("<th style='min-width:180px;'>SCCF ID</th>");
+		sb.append("<th style='min-width:120px;'>Type</th>");
 
-    if (headerLayout != null) {
+		List<FieldSpec> headerLayout = SchemaRegistry.getSchema(transactionType,
+				(selectedType != null && !selectedType.isEmpty()) ? selectedType : "05");
 
-        for (FieldSpec f : headerLayout) {
+		if (headerLayout != null) {
 
-            if ("SCCF".equalsIgnoreCase(f.name)
-                    || "REC_TYPE".equalsIgnoreCase(f.name)) {
-                continue;
-            }
+			for (FieldSpec f : headerLayout) {
 
-            sb.append("<th>")
-              .append(escape(f.name))
-              .append("</th>");
-        }
-    }
+				if ("SCCF".equalsIgnoreCase(f.name) || "REC_TYPE".equalsIgnoreCase(f.name)) {
+					continue;
+				}
 
-    sb.append("</tr></thead><tbody>");
+				sb.append("<th>").append(escape(f.name)).append("</th>");
+			}
+		}
 
-    for (int i = offset; i < end; i++) {
+		sb.append("</tr></thead><tbody>");
 
-        int recordNo =
-                Integer.parseInt(
-                        records.get(i).toString()
-                );
+		for (int i = offset; i < end; i++) {
 
-        byte[] rec = readRecordBytes(recordNo);
+			int recordNo = Integer.parseInt(records.get(i).toString());
 
-        String type =
-                readType(recordNo).trim();
+			byte[] rec = readRecordBytes(recordNo);
 
-        RecordType rt =
-                RecordType.from(type);
+			String type = readType(recordNo).trim();
 
-        List<FieldSpec> layout =
-                SchemaRegistry.getSchema(
-                        transactionType,
-                        rt.code
-                );
+			RecordType rt = RecordType.from(type);
 
-       // sb.append("<tr>");
-	   sb.append("<tr data-recordno='").append(recordNo).append("'>");
+			List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
 
-        sb.append("<td>")
-          .append(recordNo)
-          .append("</td>");
+			// sb.append("<tr>");
+			sb.append("<tr data-recordno='").append(recordNo).append("'>");
 
-        sb.append("<td>")
-          .append(escape(sliceTrim(rec, 0, 15)))
-          .append("</td>");
+			sb.append("<td>").append(recordNo).append("</td>");
 
-        sb.append("<td>")
-          .append(escape(type))
-          .append("</td>");
+			sb.append("<td>").append(escape(sliceTrim(rec, 0, 15))).append("</td>");
 
-        if (layout != null) {
+			sb.append("<td>").append(escape(type)).append("</td>");
 
-            for (FieldSpec f : layout) {
+			if (layout != null) {
 
-                if ("SCCF".equalsIgnoreCase(f.name)
-                        || "REC_TYPE".equalsIgnoreCase(f.name)) {
-                    continue;
-                }
+				for (FieldSpec f : layout) {
 
-                int start = f.start1Based - 1;
-                int len = f.lengthBytes;
+					if ("SCCF".equalsIgnoreCase(f.name) || "REC_TYPE".equalsIgnoreCase(f.name)) {
+						continue;
+					}
 
-                String val = switch (f.type) {
+					int start = f.start1Based - 1;
+					int len = f.lengthBytes;
 
-                    case ALPHA,
-                         NUMERIC_TEXT ->
-                            sliceTrim(rec, start, len);
+					String val = switch (f.type) {
 
-                    case PACKED_DECIMAL ->
-                            invokeFixed(
-                                    "decodeComp3ToString",
-                                    rec,
-                                    start,
-                                    len,
-                                    f.scale
-                            );
+						case ALPHA, NUMERIC_TEXT -> sliceTrim(rec, start, len);
 
-                    default -> "";
-                };
+						case PACKED_DECIMAL -> invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
 
-                Map<String, String> recordOverlay =
-                        editOverlay != null
-                        ? editOverlay.get(recordNo)
-                        : null;
+						default -> "";
+					};
 
-                if (recordOverlay != null
-                        && recordOverlay.containsKey(f.name)) {
+					Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNo) : null;
 
-                    val = recordOverlay.get(f.name);
-                }
+					if (recordOverlay != null && recordOverlay.containsKey(f.name)) {
 
-                boolean nonEditableType =
-                        f.type == FieldType.BINARY;
+						val = recordOverlay.get(f.name);
+					}
 
-                boolean editable =
-                        editMode
-                        && !List.of("SCCF", "REC_TYPE").contains(f.name)
-                        && !nonEditableType;
+					boolean nonEditableType = f.type == FieldType.BINARY;
 
-                sb.append("<td>");
+					boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name) && !nonEditableType;
 
-                if (editable) {
+					sb.append("<td>");
 
-                    sb.append("<input type='text' ")
-                      .append("class='form-control form-control-sm editable-field' ")
+					if (editable) {
 
-                      .append("name='field_")
-                      .append(recordNo)
-                      .append("_")
-                      .append(f.name)
-                      .append("' ")
+						sb.append("<input type='text' ").append("class='form-control form-control-sm editable-field' ")
 
-                      .append("value='")
-                      .append(escape(val))
-                      .append("' ")
+								.append("name='field_").append(recordNo).append("_").append(f.name).append("' ")
 
-                      .append("maxlength='")
-                      .append(f.lengthBytes)
-                      .append("' ")
+								.append("value='").append(escape(val)).append("' ")
 
-                      .append("data-ftype='")
-                      .append(f.type.name())
-                      .append("' ")
+								.append("maxlength='").append(f.lengthBytes).append("' ")
 
-                      .append("data-flen='")
-                      .append(f.lengthBytes)
-                      .append("' ")
+								.append("data-ftype='").append(f.type.name()).append("' ")
 
-                      .append("data-fscale='")
-                      .append(f.scale)
-                      .append("' ");
+								.append("data-flen='").append(f.lengthBytes).append("' ")
 
-                    if (f.type == FieldType.NUMERIC_TEXT) {
-                        sb.append("inputmode='numeric' ");
-                    }
+								.append("data-fscale='").append(f.scale).append("' ");
 
-                    sb.append("/>");
+						if (f.type == FieldType.NUMERIC_TEXT) {
+							sb.append("inputmode='numeric' ");
+						}
 
-                    sb.append("<div class='invalid-feedback' ")
-                      .append("style='display:none;'></div>");
+						sb.append("/>");
 
-                } else {
+						sb.append("<div class='invalid-feedback' ").append("style='display:none;'></div>");
 
-                    sb.append(escape(val));
-                }
+					} else {
 
-                sb.append("</td>");
-            }
-        }
+						sb.append(escape(val));
+					}
 
-        sb.append("</tr>");
-    }
+					sb.append("</td>");
+				}
+			}
 
-    sb.append("</tbody></table>");
+			sb.append("</tr>");
+		}
 
-    return sb.toString();
-}
+		sb.append("</tbody></table>");
 
+		return sb.toString();
+	}
 
 	private int getRecordCount() {
 		try {
@@ -423,12 +357,10 @@ public class SchemaHtmlRenderer {
 					.append("name='field_").append(recordNo).append("_").append(escape(name)).append("' ")
 					.append("value='").append(escape(value)).append("' ");
 			if (fieldSpec != null) {
-				sb.append("maxlength='").append(fieldSpec.lengthBytes).append("'")
-				 .append("data-ftype='").append(fieldSpec.type.name()).append("'")
-				  .append("data-flen='").append(fieldSpec.lengthBytes).append("'")
-				  .append("data-fscale='").append(fieldSpec.scale).append("'")
-				  .append(fieldSpec.type==FieldType.NUMERIC_TEXT ?
-				  " inputmode='numeric'":"");
+				sb.append("maxlength='").append(fieldSpec.lengthBytes).append("'").append("data-ftype='")
+						.append(fieldSpec.type.name()).append("'").append("data-flen='").append(fieldSpec.lengthBytes)
+						.append("'").append("data-fscale='").append(fieldSpec.scale).append("'")
+						.append(fieldSpec.type == FieldType.NUMERIC_TEXT ? " inputmode='numeric'" : "");
 
 			}
 			sb.append("/>");
@@ -473,65 +405,44 @@ public class SchemaHtmlRenderer {
 				int len = f.lengthBytes;
 				String val = null;
 				switch (f.type) {
-				case ALPHA:
-					val = sliceTrim(rec, start, len);
-					break;
-				case NUMERIC_TEXT:
-					/*int lastByte = rec[start + f.lengthBytes - 1] & 0xFF;
-					int zone = (lastByte >>> 4) & 0x0F;
-					if (zone != 0xF) {
-						// ZONED DECIMAL
-						val = decodeZonedDecimal(rec, start, f.lengthBytes);
-					} else {*/
+					case ALPHA:
+						val = sliceTrim(rec, start, len);
+						break;
+					case NUMERIC_TEXT:
+						/*
+						 * int lastByte = rec[start + f.lengthBytes - 1] & 0xFF; int zone = (lastByte
+						 * >>> 4) & 0x0F; if (zone != 0xF) { // ZONED DECIMAL val =
+						 * decodeZonedDecimal(rec, start, f.lengthBytes); } else {
+						 */
 						val = sliceTrim(rec, start, len);
 						break;
 
-						/*if (val.chars().count() == 1) {
-							try {
-								val = String.valueOf(parseOverpunchIntSafe(val));
-							} catch (NullPointerException ne) {
-								val = "";
-							}
-						}
-						if (val.contains("}")) {
-							try {
-								val = String.valueOf(parseOverpunchIntSafe(val));
-							} catch (NullPointerException ne) {
-								val = "";
-							}
-						}
-						if (val.contains("{")) {
-							try {
-								val = String.valueOf(parseOverpunchIntSafe(val));
-							} catch (NullPointerException ne) {
-								val = "";
-							}
-						}
-						if (val.chars().count() == 4 && !val.startsWith("X")) {// need to review this
-							try {
-								val = String.valueOf(parseOverpunchIntSafe(val));
-							} catch (NullPointerException ne) {
-								val = "";
-							}
-						}
-					}
-
-					break;*/
-				case PACKED_DECIMAL:
-					val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
-					/*if (val.contains("}")) {
-						try {
-							val = String.valueOf(parseOverpunchIntSafe(val));
-						} catch (NullPointerException ne) {
-							val = "";
-						}
-					}*/
-					break;
-				case BINARY:
-					val = invokeFixed("decodeBinary", rec, start, len, f.scale);
-					break;
-				default:
-					val = "";
+					/*
+					 * if (val.chars().count() == 1) { try { val =
+					 * String.valueOf(parseOverpunchIntSafe(val)); } catch (NullPointerException ne)
+					 * { val = ""; } } if (val.contains("}")) { try { val =
+					 * String.valueOf(parseOverpunchIntSafe(val)); } catch (NullPointerException ne)
+					 * { val = ""; } } if (val.contains("{")) { try { val =
+					 * String.valueOf(parseOverpunchIntSafe(val)); } catch (NullPointerException ne)
+					 * { val = ""; } } if (val.chars().count() == 4 && !val.startsWith("X")) {//
+					 * need to review this try { val = String.valueOf(parseOverpunchIntSafe(val)); }
+					 * catch (NullPointerException ne) { val = ""; } } }
+					 *
+					 * break;
+					 */
+					case PACKED_DECIMAL:
+						val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
+						/*
+						 * if (val.contains("}")) { try { val =
+						 * String.valueOf(parseOverpunchIntSafe(val)); } catch (NullPointerException ne)
+						 * { val = ""; } }
+						 */
+						break;
+					case BINARY:
+						val = invokeFixed("decodeBinary", rec, start, len, f.scale);
+						break;
+					default:
+						val = "";
 				}
 
 				Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNumber1Based) : null;
@@ -598,8 +509,8 @@ public class SchemaHtmlRenderer {
 	private static String escape(String s) {
 		if (s == null)
 			return "";
-		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-				.replace("\"", "&quot;").replace("\"", "&#39;");
+		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("\"",
+				"&#39;");
 	}
 
 	private boolean isEditableField(String fieldName) {
@@ -625,7 +536,7 @@ public class SchemaHtmlRenderer {
 		} else if ((d = NEG.get(last)) != null) {
 			neg = true;
 		} else {
-//    		throw new IllegalArgumentException("Invalid overpunch char: " + last);
+			// throw new IllegalArgumentException("Invalid overpunch char: " + last);
 			System.err.println("Invalid overpunch char: " + last);
 		}
 		int value = Integer.parseInt(body + d);

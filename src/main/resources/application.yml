@@ -47,7 +47,7 @@ viewer:
     bufferSize: 1048576
   chunk:
     enabled: true
-    windowSizeMB: 512
+    windowSizeMB: 1024
   cleanup:
     # Delay before starting cleanup after user clicks "Clear Cache"
     initial-delay-minutes: 10

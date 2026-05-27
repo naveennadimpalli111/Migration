@@ -467,7 +467,7 @@ function toggleViewBasedOnRecordType() {
         rtSelect.value = storedRT;
       }
 
-      // …and reapply shortly after population if it didn't take yet  // PERSIST FIX
+      // …and reapply shortly after population if it didn't take yet // PERSIST FIX
       if (rtSelect && storedRT && rtSelect.value !== storedRT) {
         requestAnimationFrame(() => {
           rtSelect.value = storedRT;
@@ -496,7 +496,7 @@ function toggleViewBasedOnRecordType() {
       }
     } catch (e) {}
 
-    // Also reapply RT on pageshow in case of bfcache timing  // PERSIST FIX
+    // Also reapply RT on pageshow in case of bfcache timing // PERSIST FIX
     window.addEventListener("pageshow", () => {
       const storedRT = sessionStorage.getItem(KEY("recordTypeCode")) || "";
       if (rtSelect && storedRT && rtSelect.value !== storedRT) {
@@ -711,8 +711,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // Scroll after the page is shown (normal loads + bfcache)
 window.addEventListener("pageshow", maybeScrollToResults);
 /* =========================================================
-   CLEAN EDITABLE FIELD VALIDATION
-   ========================================================= */
+CLEAN EDITABLE FIELD VALIDATION
+========================================================= */
 
 document.addEventListener("DOMContentLoaded", function () {
   const form =
@@ -1061,12 +1061,12 @@ function validateField(el) {
 }
 
 /* =========================================================
-   Editable Field Validation
-   ========================================================= */
+Editable Field Validation
+========================================================= */
 
 /* ==========================================
-   LIVE INPUT VALIDATION
-   ========================================== */
+LIVE INPUT VALIDATION
+========================================== */
 
 (function initEditableFieldValidation() {
   function getType(input) {
