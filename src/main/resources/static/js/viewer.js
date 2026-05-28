@@ -134,7 +134,7 @@ function initTxnRecordTypeFilter() {
 
   // Mapping (per your spec)
   const TXN_MAP = {
-    "SF-Institutional": new Set([
+    SF: new Set([
       "05",
       "10",
       "15",
@@ -162,8 +162,6 @@ function initTxnRecordTypeFilter() {
       "80",
       "90",
       "9D",
-    ]),
-    "SF-Professional": new Set([
       "A5",
       "B0",
       "B5",
@@ -221,56 +219,66 @@ function initTxnRecordTypeFilter() {
   };
 
   const RECORD_TYPES_BY_TRANSACTION = {
-    SFI: [
-      ["05", "05 — FM105"],
-      ["10", "10 — FM110"],
-      ["15", "15 — FM115"],
-      ["20", "20 — FM120"],
-      ["30", "30 — FM130"],
-      ["31", "31 — FM131"],
-      ["32", "32 — FM132"],
-      ["33", "33 — FM133"],
-      ["40", "40 — FM140"],
-      ["41", "41 — FM141"],
-      ["42", "42 — FM142"],
-      ["43", "43 — FM143"],
-      ["44", "44 — FM144"],
-      ["45", "45 — FM145"],
-      ["46", "46 — FM146"],
-      ["47", "47 — FM147"],
-      ["50", "50 — FM150"],
-      ["60", "60 — FM160"],
-      ["65", "65 — FM165"],
-      ["66", "66 — FM166"],
-      ["71", "71 — FM171"],
-      ["72", "72 — FM172"],
-      ["73", "73 — FM173"],
-      ["74", "74 — FM174"],
-      ["80", "80 — FM180"],
-      ["90", "90 — FM190"],
-      ["9D", "9D — FM9D"],
-    ],
-
-    SFP: [
-      ["A5", "A5 — FM1A5"],
-      ["B0", "B0 — FM1B0"],
-      ["B5", "B5 — FM1B5"],
-      ["C0", "C0 — FM1C0"],
-      ["D0", "D0 — FM1D0"],
-      ["D1", "D1 — FM1D1"],
-      ["D2", "D2 — FM1D2"],
-      ["D3", "D3 — FM1D3"],
-      ["E0", "E0 — FM1E0"],
-      ["E1", "E1 — FM1E1"],
-      ["E2", "E2 — FM1E2"],
-      ["E6", "E6 — FM1E6"],
-      ["F0", "F0 — FM1F0"],
-      ["F1", "F1 — FM1F1"],
-      ["F5", "F5 — FM1F5"],
-      ["F6", "F6 — FM1F6"],
-      ["G0", "G0 — FM1G0"],
-      ["X0", "X0 — FM1X0"],
-    ],
+    SF: {
+      grouped: true,
+      groups: [
+        {
+          label: "Institutional (05–9D)",
+          types: [
+            ["05", "05 — FM105"],
+            ["10", "10 — FM110"],
+            ["15", "15 — FM115"],
+            ["20", "20 — FM120"],
+            ["30", "30 — FM130"],
+            ["31", "31 — FM131"],
+            ["32", "32 — FM132"],
+            ["33", "33 — FM133"],
+            ["40", "40 — FM140"],
+            ["41", "41 — FM141"],
+            ["42", "42 — FM142"],
+            ["43", "43 — FM143"],
+            ["44", "44 — FM144"],
+            ["45", "45 — FM145"],
+            ["46", "46 — FM146"],
+            ["47", "47 — FM147"],
+            ["50", "50 — FM150"],
+            ["60", "60 — FM160"],
+            ["65", "65 — FM165"],
+            ["66", "66 — FM166"],
+            ["71", "71 — FM171"],
+            ["72", "72 — FM172"],
+            ["73", "73 — FM173"],
+            ["74", "74 — FM174"],
+            ["80", "80 — FM180"],
+            ["90", "90 — FM190"],
+            ["9D", "9D — FM9D"],
+          ],
+        },
+        {
+          label: "Professional (A5–X0)",
+          types: [
+            ["A5", "A5 — FM1A5"],
+            ["B0", "B0 — FM1B0"],
+            ["B5", "B5 — FM1B5"],
+            ["C0", "C0 — FM1C0"],
+            ["D0", "D0 — FM1D0"],
+            ["D1", "D1 — FM1D1"],
+            ["D2", "D2 — FM1D2"],
+            ["D3", "D3 — FM1D3"],
+            ["E0", "E0 — FM1E0"],
+            ["E1", "E1 — FM1E1"],
+            ["E2", "E2 — FM1E2"],
+            ["E6", "E6 — FM1E6"],
+            ["F0", "F0 — FM1F0"],
+            ["F1", "F1 — FM1F1"],
+            ["F5", "F5 — FM1F5"],
+            ["F6", "F6 — FM1F6"],
+            ["G0", "G0 — FM1G0"],
+            ["X0", "X0 — FM1X0"],
+          ],
+        },
+      ],
+    },
 
     DF: [
       ["1A", "1A — FM21A"],
@@ -361,16 +369,36 @@ function initTxnRecordTypeFilter() {
       return;
     }
 
-    const list = RECORD_TYPES_BY_TRANSACTION[txn] || [];
-
-    for (const pair of list) {
-      const el = document.createElement("option");
-      el.value = pair[0];
-      el.textContent = pair[1];
-      recordType.appendChild(el);
+    const entry = RECORD_TYPES_BY_TRANSACTION[txn];
+    if (!entry) {
+      setRecordTypeDisabled(true);
+      return;
     }
 
-    setRecordTypeDisabled(list.length === 0);
+    // Handle grouped structure (e.g., "SF" with optgroups)
+    if (entry.grouped && entry.groups) {
+      for (const group of entry.groups) {
+        const optgroup = document.createElement("optgroup");
+        optgroup.label = group.label;
+        for (const pair of group.types) {
+          const el = document.createElement("option");
+          el.value = pair[0];
+          el.textContent = pair[1];
+          optgroup.appendChild(el);
+        }
+        recordType.appendChild(optgroup);
+      }
+      setRecordTypeDisabled(false);
+    } else {
+      // Flat array (DF, CBF, RF, etc.)
+      for (const pair of entry) {
+        const el = document.createElement("option");
+        el.value = pair[0];
+        el.textContent = pair[1];
+        recordType.appendChild(el);
+      }
+      setRecordTypeDisabled(entry.length === 0);
+    }
   }
 
   // Initial + events
@@ -396,21 +424,6 @@ function clearSearchStorage() {
     sessionStorage.removeItem(KEY("txnType"));
     sessionStorage.removeItem(KEY("recordTypeCode"));
   } catch (_) {}
-}
-
-//
-/*if record type is not select show vertical view hide Horizontal view*/
-function toggleViewBasedOnRecordType() {
-  const recordType = document.getElementById("recordTypeCode").value;
-  const verticalView = document.getElementById("verticalView");
-  const horizontalView = document.getElementById("horizontalView");
-  if (recordType && recordType.trim() !== "") {
-    verticalView.style.display = "none";
-    horizontalView.style.display = "block";
-  } else {
-    verticalView.style.display = "block";
-    horizontalView.style.display = "none";
-  }
 }
 
 // ---- SessionStorage: persist & restore search fields; restart-aware; Clear buttons ----
@@ -710,9 +723,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Scroll after the page is shown (normal loads + bfcache)
 window.addEventListener("pageshow", maybeScrollToResults);
-/* =========================================================
-CLEAN EDITABLE FIELD VALIDATION
-========================================================= */
+
+/*CLEAN EDITABLE FIELD VALIDATION*/
 
 document.addEventListener("DOMContentLoaded", function () {
   const form =
@@ -751,64 +763,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function validateField(el) {
-    if (!el) {
-      return true;
-    }
-
-    const type = (el.dataset.ftype || "").toUpperCase();
-
-    const value = el.value || "";
-
-    // =========================
-    // BINARY
-    // =========================
-
-    if (type === "BINARY") {
-      el.readOnly = true;
-
-      clearInvalid(el);
-
-      return true;
-    }
-
-    if (ftype === "NUMERIC_TEXT") {
-      if (val && !/^[a-zA-Z0-9]+$/.test(val)) {
-        setInvalid(el, "Only alphanumeric characters allowed");
-
-        return false;
-      }
-    }
-
-    // PACKED_DECIMAL
-    else if (type === "PACKED_DECIMAL") {
-      if (!/^[0-9]*\.?[0-9]*$/.test(value)) {
-        setInvalid(el, "Invalid decimal value");
-
-        return false;
-      }
-
-      const dots = (value.match(/\./g) || []).length;
-
-      if (dots > 1) {
-        setInvalid(el, "Only one decimal allowed");
-
-        return false;
-      }
-    }
-    // ALPHA
-    else {
-      if (!/^[a-zA-Z0-9\s]*$/.test(value)) {
-        setInvalid(el, "Only alphanumeric values allowed");
-
-        return false;
-      }
-    }
-
-    clearInvalid(el);
-
-    return true;
-  }
   // Horizontal Pagination Fix
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -897,8 +851,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const type = (el.dataset.ftype || "").toUpperCase();
 
     let value = el.value || "";
-    if (ftype === "NUMERIC_TEXT") {
-      value = value.replace(/[^a-zA-Z0-9]/g, "");
+    if (type === "NUMERIC_TEXT") {
+      value = value.replace(/[^0-9]/g, "");
     }
 
     // PACKED_DECIMAL
@@ -940,10 +894,33 @@ document.addEventListener("DOMContentLoaded", function () {
   // SAVE VALIDATION
 
   if (form) {
+    const verticalView = document.getElementById("verticalView");
+    const horizontalView = document.getElementById("horizontalView");
+
+    function isInHiddenView(el) {
+      if (verticalView && verticalView.contains(el)) {
+        return window.getComputedStyle(verticalView).display === "none";
+      }
+      if (horizontalView && horizontalView.contains(el)) {
+        return window.getComputedStyle(horizontalView).display === "none";
+      }
+      return false;
+    }
+
     form.addEventListener("submit", function (event) {
       let valid = true;
+      const hiddenFields = [];
+      const fields = form.querySelectorAll(".editable-field");
 
-      document.querySelectorAll(".editable-field").forEach(function (el) {
+      fields.forEach(function (el) {
+        if (isInHiddenView(el)) {
+          el.disabled = true; // hidden views must not submit duplicate values
+          hiddenFields.push(el);
+          console.debug("Disabled hidden field for save:", el.name, el.value);
+          return;
+        }
+
+        console.debug("Submitting visible field:", el.name, el.value);
         if (!validateField(el)) {
           valid = false;
         }
@@ -951,6 +928,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (!valid) {
         event.preventDefault();
+
+        disabledFields.forEach(function (el) {
+          el.disabled = false;
+        });
 
         alert("Please fix validation errors before saving.");
 
@@ -992,49 +973,15 @@ function validateField(el) {
 
   const val = el.value || "";
 
-  //FORM SAVE VALIDATION
-
-  if (form) {
-    form.addEventListener("submit", function (event) {
-      let valid = true;
-
-      const fields = document.querySelectorAll(".editable-field");
-
-      fields.forEach(function (field) {
-        if (!validateField(field)) {
-          valid = false;
-        }
-      });
-
-      if (!valid) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        alert("Please fix validation errors before saving.");
-
-        const firstInvalid = document.querySelector(".is-invalid");
-
-        if (firstInvalid) {
-          firstInvalid.focus();
-        }
-
-        return false;
-      }
-
-      return true;
-    });
-  }
-
   // Length validation
   if (flen > 0 && val.length > flen) {
     setInvalid(el, `Max length ${flen} characters`);
 
     return false;
   }
-  if (type === "NUMERIC_TEXT") {
+  if (ftype === "NUMERIC_TEXT") {
     if (val && !/^[a-zA-Z0-9]*$/.test(val)) {
       setInvalid(el, "Only alphanumeric values allowed");
-
       return false;
     }
   }
@@ -1060,91 +1007,31 @@ function validateField(el) {
   return true;
 }
 
-/* =========================================================
-Editable Field Validation
-========================================================= */
+document.addEventListener("input", function (event) {
+  const el = event.target;
 
-/* ==========================================
-LIVE INPUT VALIDATION
-========================================== */
+  if (!el.classList.contains("editable-field")) return;
 
-(function initEditableFieldValidation() {
-  function getType(input) {
-    if (!input) {
-      return "ALPHA";
+  const type = (el.dataset.ftype || "").toUpperCase();
+  let value = el.value || "";
+
+  if (type === "NUMERIC_TEXT") {
+    value = value.replace(/[^0-9]/g, "");
+  } else if (type === "PACKED_DECIMAL") {
+    value = value.replace(/[^0-9.]/g, "");
+
+    const firstDot = value.indexOf(".");
+    if (firstDot !== -1) {
+      value =
+        value.substring(0, firstDot + 1) +
+        value.substring(firstDot + 1).replace(/\./g, "");
     }
-
-    const fieldType = (input.dataset.ftype || "").toUpperCase();
-
-    if (fieldType === "NUMERIC_TEXT") {
-      return "INTEGER";
-    }
-
-    if (fieldType === "PACKED_DECIMAL") {
-      return "DECIMAL";
-    }
-
-    if (fieldType === "BINARY") {
-      return "BINARY";
-    }
-
-    return "ALPHA";
+  } else {
+    value = value.replace(/[^a-zA-Z0-9\s]/g, "");
   }
 
-  function sanitize(value, type) {
-    if (!value) {
-      return "";
-    }
-
-    switch (type) {
-      case "INTEGER":
-        //return value.replace(/[^0-9]/g, '');
-        return value.replace(/[^a-zA-Z0-9]/g, "");
-
-      case "DECIMAL": {
-        let cleaned = value.replace(/[^0-9.]/g, "");
-
-        const firstDot = cleaned.indexOf(".");
-
-        if (firstDot >= 0) {
-          cleaned =
-            cleaned.substring(0, firstDot + 1) +
-            cleaned.substring(firstDot + 1).replace(/\./g, "");
-        }
-
-        return cleaned;
-      }
-
-      case "ALPHA":
-        return value.replace(/[^a-zA-Z0-9\s-]/g, "");
-
-      default:
-        return value;
-    }
-  }
-
-  document.addEventListener("input", function (event) {
-    const input = event.target;
-
-    if (!input || !input.classList.contains("editable-field")) {
-      return;
-    }
-
-    const type = getType(input);
-
-    if (type === "BINARY") {
-      return;
-    }
-
-    const cleaned = sanitize(input.value, type);
-
-    if (input.value !== cleaned) {
-      input.value = cleaned;
-    }
-
-    validateField(input);
-  });
-})();
+  el.value = value;
+});
 function updateSaveState() {
   const inputs = Array.from(document.querySelectorAll(".editable-field"));
   const anyInvalid = inputs.some(

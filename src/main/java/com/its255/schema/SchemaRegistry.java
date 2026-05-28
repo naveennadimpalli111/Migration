@@ -90,7 +90,7 @@ import java.util.Map;
 public final class SchemaRegistry {
 
     private static final Map<String, EnumMap<RecordType, List<FieldSpec>>> registry = new HashMap<>();
-    
+
     private static final Map<String, Integer> recordLengths = new HashMap<>();
 
     static {
@@ -100,13 +100,11 @@ public final class SchemaRegistry {
     public static List<FieldSpec> getSchema(String transactionType, String recordTypeCode) {
         RecordType recordType = RecordType.from(recordTypeCode);
 
-        Map<RecordType, List<FieldSpec>> byTxn =
-            registry.get(transactionType);
+        Map<RecordType, List<FieldSpec>> byTxn = registry.get(transactionType);
 
         if (byTxn == null) {
             throw new IllegalArgumentException(
-                "Unknown transaction type: " + transactionType
-            );
+                    "Unknown transaction type: " + transactionType);
         }
 
         List<FieldSpec> schema = byTxn.get(recordType);
@@ -116,8 +114,7 @@ public final class SchemaRegistry {
 
     private static void registerAll() {
         registerReconciliation();
-        registerSFInstitutional();
-        registerSFProfessional();
+        registerSF();
         registerDisposition();
         registerCapitatedBilling();
         registerVBPCBFBD();
@@ -126,22 +123,20 @@ public final class SchemaRegistry {
     }
 
     private static void registerCapitatedBilling() {
-    	EnumMap<RecordType, List<FieldSpec>> m =
-                new EnumMap<>(RecordType.class);
-    	m.put(RecordType.RT_5A, CapitatedBillingSchemas.FM35A);
-	    m.put(RecordType.RT_6A, CapitatedBillingSchemas.FM36A);
-	    m.put(RecordType.RT_6B, CapitatedBillingSchemas.FM36B);
-	    m.put(RecordType.RT_7A, CapitatedBillingSchemas.FM37A);
-	    m.put(RecordType.RT_7B, CapitatedBillingSchemas.FM37B);
-	    m.put(RecordType.RT_9A, CapitatedBillingSchemas.FM39A);
-	    registry.put("CBF", m);
-	    recordLengths.put("CBF", 255);
-		
-	}
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
+        m.put(RecordType.RT_5A, CapitatedBillingSchemas.FM35A);
+        m.put(RecordType.RT_6A, CapitatedBillingSchemas.FM36A);
+        m.put(RecordType.RT_6B, CapitatedBillingSchemas.FM36B);
+        m.put(RecordType.RT_7A, CapitatedBillingSchemas.FM37A);
+        m.put(RecordType.RT_7B, CapitatedBillingSchemas.FM37B);
+        m.put(RecordType.RT_9A, CapitatedBillingSchemas.FM39A);
+        registry.put("CBF", m);
+        recordLengths.put("CBF", 255);
 
-	private static void registerReconciliation() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
+    }
+
+    private static void registerReconciliation() {
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
 
         m.put(RecordType.RT_1A, ReconciliationSchemas.FM31A);
         m.put(RecordType.RT_2A, ReconciliationSchemas.FM32A);
@@ -150,10 +145,10 @@ public final class SchemaRegistry {
         recordLengths.put("RF", 255);
     }
 
-    private static void registerSFInstitutional() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
+    private static void registerSF() {
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
 
+        // Institutional record types (05–9D)
         m.put(RecordType.RT_05, FM105);
         m.put(RecordType.RT_10, FM110);
         m.put(RecordType.RT_15, FM115);
@@ -182,14 +177,7 @@ public final class SchemaRegistry {
         m.put(RecordType.RT_90, FM190);
         m.put(RecordType.RT_9D, FM9D);
 
-        registry.put("SFI", m);
-        recordLengths.put("SFI", 255);
-    }
-    
-    private static void registerSFProfessional() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
-
+        // Professional record types (A5–X0)
         m.put(RecordType.RT_A5, FM1A5);
         m.put(RecordType.RT_B0, FM1B0);
         m.put(RecordType.RT_B5, FM1B5);
@@ -209,13 +197,17 @@ public final class SchemaRegistry {
         m.put(RecordType.RT_G0, FM1G0);
         m.put(RecordType.RT_X0, FM1X0);
 
+        // Register under "SF" (primary) + backward-compatible aliases
+        registry.put("SF", m);
+        registry.put("SFI", m);
         registry.put("SFP", m);
+        recordLengths.put("SF", 255);
+        recordLengths.put("SFI", 255);
         recordLengths.put("SFP", 255);
     }
-    
+
     private static void registerDisposition() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
 
         m.put(RecordType.RT_1A, FM21A);
         m.put(RecordType.RT_2A, FM22A);
@@ -238,20 +230,18 @@ public final class SchemaRegistry {
         registry.put("DF", m);
         recordLengths.put("DF", 255);
     }
-    
+
     private static void registerVBPCBFBD() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
 
         m.put(RecordType.RT_CBFBD, CBFBD);
         registry.put("CBFBD", m);
 
-        recordLengths.put("CBFBD", 804); 
+        recordLengths.put("CBFBD", 804);
     }
-    
+
     private static void registerPlanProfileUpdate() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
 
         m.put(RecordType.RT_1A, FM51A);
         m.put(RecordType.RT_2A, FM52A);
@@ -267,10 +257,9 @@ public final class SchemaRegistry {
         registry.put("PPU", m);
         recordLengths.put("PPU", 255);
     }
-    
+
     private static void registerPlanProfileAcknowledgment() {
-        EnumMap<RecordType, List<FieldSpec>> m =
-            new EnumMap<>(RecordType.class);
+        EnumMap<RecordType, List<FieldSpec>> m = new EnumMap<>(RecordType.class);
 
         m.put(RecordType.RT_1A, FM61A);
         m.put(RecordType.RT_2A, FM62A);
@@ -278,11 +267,9 @@ public final class SchemaRegistry {
         registry.put("PPA", m);
         recordLengths.put("PPA", 255);
     }
-    
-    
+
     public static Map<RecordType, List<FieldSpec>> all() {
-        EnumMap<RecordType, List<FieldSpec>> allSchemas =
-                new EnumMap<>(RecordType.class);
+        EnumMap<RecordType, List<FieldSpec>> allSchemas = new EnumMap<>(RecordType.class);
 
         for (EnumMap<RecordType, List<FieldSpec>> perTxn : registry.values()) {
             for (Map.Entry<RecordType, List<FieldSpec>> entry : perTxn.entrySet()) {
@@ -292,7 +279,7 @@ public final class SchemaRegistry {
 
         return allSchemas;
     }
-    
+
     public static int getRecordLength(String transactionType) {
         Integer len = recordLengths.getOrDefault(transactionType, 255);
         return len;

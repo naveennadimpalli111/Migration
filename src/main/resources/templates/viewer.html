@@ -1,3 +1,4 @@
+Description
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
@@ -42,9 +43,7 @@
             Transaction Type </label> <select id="txnType" name="transactionType" class="form-select"
             aria-labelledby="txnTypeLabel" aria-describedby="txnTypeHelp">
             <option value="">Choose…</option>
-            <option value="SFI">SF‑Institutional</option>
-            <option value="SFP">SF‑Professional</option>
-            <!-- <option value="SF">SF</option> -->
+            <option value="SF">SF</option>
             <option value="DF">DF</option>
             <option value="CBF">CBF</option>
             <option value="RF">RF</option>
@@ -226,12 +225,25 @@
         <button id="btnSearch" class="btn btn-success" th:disabled="${!hasFile}">Search</button>
 
 
-        <!-- Export -->
-        <button id="btnExport" type="submit" class="btn btn-outline-secondary" formaction="/viewer/export"
-          formmethod="get" th:disabled="${!hasFile}" aria-describedby="exportHelp">Export (ZIP per type)</button>
+        <!-- Export (hidden temporarily)
+<button id="btnExport" type="submit"
+class="btn btn-outline-secondary" formaction="/viewer/export"
+formmethod="get" th:disabled="${!hasFile}"
+aria-describedby="exportHelp">Export (ZIP per type)</button>
 
-        <span id="exportHelp" class="visually-hidden"> Exports the
-          filtered records as ZIP containing CSV files per record type. </span>
+<span id="exportHelp" class="visually-hidden"> Exports the
+filtered records as ZIP containing CSV files per record type. </span>
+-->
+
+        <!-- <!-- Download Edited File (hidden temporarily) -->
+        <a id="btnDownload" class="btn btn-outline-primary" th:href="@{/viewer/download}"
+          th:classappend="${!hasFile or !hasEdits} ? 'disabled'"
+          th:attr="aria-disabled=${!hasFile or !hasEdits} ? 'true'" aria-describedby="downloadHelp">Download Edited
+          File</a>
+        <span id="downloadHelp" class="visually-hidden">
+          Downloads the file with all edits applied, encoded back to EBCDIC/COMP-3 format.
+        </span>
+
 
         <!-- Clear cached file (submits the external clearForm; only when a file is cached) -->
         <button id="btnClear" class="btn btn-outline-danger" form="clearForm" th:if="${hasFile}">Clear cached
@@ -377,6 +389,10 @@
 
     /*switch btn by default vertical view*/
     let isHorizontal = false;
+    function updateViewMode(mode) {
+      document.getElementById("viewMode").value = mode;
+      sessionStorage.setItem("viewMode", mode);
+    }
     function updateView() {
 
       const vertical = document.getElementById("verticalView");
@@ -390,15 +406,15 @@
       const horizontalNavBottom = document.getElementById("horizontalNavBottom");
 
       if (isHorizontal) {
-
-        // ✅ SHOW HORIZONTAL TABLE
+        updateViewMode("horizontal");
+        //SHOW HORIZONTAL TABLE
         hide(vertical);
         show(horizontal, "block");
 
-        // ✅ BUTTON TEXT
+        //BUTTON TEXT
         btn.innerText = "Switch to Vertical View";
 
-        // ✅ SHOW ONLY HORIZONTAL NAV
+        //SHOW ONLY HORIZONTAL NAV
         hide(verticalNavTop);
         hide(verticalNavBottom);
 
@@ -407,14 +423,17 @@
 
       } else {
 
-        // ✅ SHOW VERTICAL TABLE
+
+        updateViewMode("vertical");
+
+        //SHOW VERTICAL TABLE
         show(vertical, "block");
         hide(horizontal);
 
-        // ✅ BUTTON TEXT
+        //BUTTON TEXT
         btn.innerText = "Switch to Horizontal View";
 
-        // ✅ SHOW ONLY VERTICAL NAV
+        //SHOW ONLY VERTICAL NAV
         show(verticalNavTop);
         show(verticalNavBottom);
 
@@ -424,9 +443,18 @@
     }
     // HORIZONTAL PAGINATION FIX
 
-    // HORIZONTAL PAGINATION FIX
 
     document.addEventListener("DOMContentLoaded", function () {
+
+      const savedMode = sessionStorage.getItem("viewMode");
+
+      if (savedMode === "horizontal") {
+        isHorizontal = true;
+      } else {
+        isHorizontal = false;
+      }
+
+      updateView();
 
       const pager =
         document.getElementById("horizontalPagerData");
@@ -594,11 +622,11 @@
           }
         });
       }
-      // ✅ Default view = Vertical
+      //Default view = Vertical
       const hasFile = document.body.getAttribute("data-has-file") === "true";
 
       if (!hasFile) {
-        // ✅ Backend restarted OR no file → RESET
+        //Backend restarted OR no file → RESET
         sessionStorage.removeItem("viewMode");
         isHorizontal = false;
       } else {
@@ -607,17 +635,17 @@
       }
 
       updateView();
-      // ✅ FIX: attach click INSIDE DOMContentLoaded
+      //FIX: attach click INSIDE DOMContentLoaded
       if (btn) {
         btn.addEventListener("click", function () {
           if (!recordTypeDropdown || !recordTypeDropdown.value) {
 
-            // ✅ show error message
+            //show error message
             if (errorEl) {
               errorEl.classList.remove("d-none");
             }
 
-            // ✅ highlight dropdown
+            //highlight dropdown
             recordTypeDropdown.classList.add("is-invalid");
 
             return;
@@ -639,7 +667,7 @@
       }
 
 
-      // ✅ Search behavior
+      //Search behavior
       if (searchBtn) {
         searchBtn.addEventListener("click", function () {
           if (recordTypeDropdown && recordTypeDropdown.value) {
@@ -688,7 +716,7 @@
     if (clearBtn) {
       clearBtn.addEventListener("click", function () {
 
-        // ✅ RESET to vertical
+        //RESET to vertical
         sessionStorage.setItem("viewMode", "vertical");
       });
     }
@@ -707,7 +735,7 @@
     let verticalHasMore = true;
     let horizontalHasMore = true;
 
-    // ✅ LOAD FUNCTION
+    //LOAD FUNCTION
     function loadMoreRecords(viewType) {
 
       const isVertical = viewType === "vertical";
@@ -778,13 +806,13 @@
     }
 
 
-    // ✅ ✅ SCROLL LISTENERS (OUTSIDE FUNCTION — VERY IMPORTANT)
+    //SCROLL LISTENERS (OUTSIDE FUNCTION — VERY IMPORTANT)
     document.addEventListener("DOMContentLoaded", function () {
 
       const verticalDiv = document.getElementById("verticalView");
       const horizontalDiv = document.getElementById("horizontalView");
 
-      // ✅ Vertical scroll
+      //Vertical scroll
       if (verticalDiv) {
         verticalDiv.addEventListener("scroll", function () {
           if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
@@ -793,7 +821,7 @@
         });
       }
 
-      // ✅ Horizontal scroll
+      //Horizontal scroll
       if (horizontalDiv) {
         horizontalDiv.addEventListener("scroll", function () {
 

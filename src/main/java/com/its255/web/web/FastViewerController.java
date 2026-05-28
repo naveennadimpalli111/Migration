@@ -1,11 +1,15 @@
 package com.its255.web.web;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.its255.schema.FieldSpec;
+import com.its255.schema.FieldType;
 import com.its255.schema.SchemaRegistry;
 import com.its255.util.LoggingUtil;
 import com.its255.viewer.ChunkedMMapRecordStore;
@@ -32,6 +38,7 @@ import com.its255.viewer.ViewerConfig;
 import com.its255.viewer.ViewerSession;
 import com.its255.web.cleanup.CleanupScheduler;
 import com.its255.web.service.CsvExportService;
+import com.its255.web.service.EditedFileDownloadService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -43,10 +50,12 @@ public class FastViewerController {
 
 	private final ViewerConfig cfg;
 	private final CleanupScheduler cleanupScheduler;
+	private final EditedFileDownloadService editedFileDownloadService;
 
 	public FastViewerController(ViewerConfig cfg, CleanupScheduler cleanupScheduler) {
 		this.cfg = cfg;
 		this.cleanupScheduler = cleanupScheduler;
+		this.editedFileDownloadService = new EditedFileDownloadService();
 	}
 
 	private Charset cs() {
@@ -67,6 +76,7 @@ public class FastViewerController {
 		// NEW: show uploaded filename
 		model.addAttribute("filename", vs.originalFilename);
 		model.addAttribute("html", "");
+		model.addAttribute("hasEdits", !vs.editOverlay.isEmpty());
 
 		return "viewer";
 	}
@@ -170,8 +180,11 @@ public class FastViewerController {
 	@GetMapping("/current")
 	public String current(@RequestParam(name = "page", required = false, defaultValue = "1") int page, Model model,
 			HttpSession session) {
+
 		ViewerSession vs = getSession(session);
+
 		String viewMode = (String) session.getAttribute("viewMode");
+		session.setAttribute("viewMode", viewMode);
 		model.addAttribute("viewMode", viewMode);
 
 		model.addAttribute("editMode", Boolean.TRUE.equals(vs.editMode));
@@ -183,121 +196,109 @@ public class FastViewerController {
 
 		int rn = vs.nav.currentRecordNumber();
 
+		// Base values
 		String type = safeInvoke(vs.store, "readType", rn);
-		String sccf = safeInvoke(vs.store, "readSccf", rn);
-		/*
-		 * String sccf = ""; boolean recordHasSccf = hasSccf(vs.transactionType,
-		 * type.trim()); if (recordHasSccf) { sccf = safeInvoke(vs.store, "readSccf",
-		 * rn); }
-		 */
-		String txn = safeInvoke(vs.store, "readTxn", rn);
-		SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType, vs.editMode,
-				vs.editOverlay);
-		String tableHtml = renderer.render(rn);
 
-		Map<String, String> recordOverlay = vs.editOverlay.get(rn);
-		if (recordOverlay != null) {
-			sccf = recordOverlay.getOrDefault("SCCF", sccf);
-			String localPlan = recordOverlay.get("FM105-SER-NUM-LOCAL-PLAN");
-			String cc = recordOverlay.get("FM105-SER-NUM-JULDT-CC");
-			String yy = recordOverlay.get("FM105-SER-NUM-JULDT-YY");
-			String ddd = recordOverlay.get("FM105-SER-NUM-JULDT-DDD");
-			String sequence = recordOverlay.get("FM105-SER-NUM-SEQUENCE");
-			String suffix = recordOverlay.get("FM105-SER-NUM-SUFFIX");
-			if (localPlan != null && cc != null && ddd != null && sequence != null && suffix != null) {
-				sccf = localPlan + cc + yy + ddd + sequence + suffix;
-			}
-			type = recordOverlay.getOrDefault("REC_TYPE", type);
-			type = recordOverlay.getOrDefault("FM105-REC-TYPE", type);
+		boolean recordHasSccf = hasSccf(vs.transactionType, type.trim());
+
+		String sccf = "";
+		if (recordHasSccf) {
+			sccf = safeInvoke(vs.store, "readSccf", rn);
 		}
 
-		String displaySccf = sccf;
+		String txn = safeInvoke(vs.store, "readTxn", rn);
 
+		// Renderer
+		SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType, vs.editMode,
+				vs.editOverlay);
+
+		String tableHtml = renderer.render(rn);
+
+		// PAGINATION (IMPORTANT)
+		int horizontalTotal = vs.lastFiltered != null ? vs.lastFiltered.size() : 0;
+
+		int horizontalTotalPages = Math.max(1, (horizontalTotal + HORIZONTAL_PAGE_SIZE - 1) / HORIZONTAL_PAGE_SIZE);
+
+		page = Math.max(1, Math.min(page, horizontalTotalPages));
+
+		int horizontalOffset = (page - 1) * HORIZONTAL_PAGE_SIZE;
+
+		// SINGLE CLEAN OVERLAY LOGIC
 		Map<String, String> overlay = vs.editOverlay.get(rn);
 
 		if (overlay != null) {
 
-			String localPlan = overlay.getOrDefault("FM105-SER-NUM-LOCAL-PLAN", "");
+			// TYPE override
+			type = overlay.getOrDefault("REC_TYPE", type);
+			type = overlay.getOrDefault("FM105-REC-TYPE", type);
 
-			String cc = overlay.getOrDefault("FM105-SER-NUM-JULDT-CC", "");
+			// SCCF logic
+			if (recordHasSccf) {
 
-			String yy = overlay.getOrDefault("FM105-SER-NUM-JULDT-YY", "");
+				// direct value
+				sccf = overlay.getOrDefault("SCCF", sccf);
 
-			String ddd = overlay.getOrDefault("FM105-SER-NUM-JULDT-DDD", "");
+				// prefix-based rebuild (your logic)
+				String prefix = "FM1" + type.trim() + "-SER-NUM-";
 
-			String sequence = overlay.getOrDefault("FM105-SER-NUM-SEQUENCE", "");
+				String localPlan = overlay.getOrDefault(prefix + "LOCAL-PLAN", "");
+				String cc = overlay.getOrDefault(prefix + "JULDT-CC", "");
+				String yy = overlay.getOrDefault(prefix + "JULDT-YY", "");
+				String ddd = overlay.getOrDefault(prefix + "JULDT-DDD", "");
+				String sequence = overlay.getOrDefault(prefix + "SEQUENCE", "");
+				String suffix = overlay.getOrDefault(prefix + "SUFFIX", "");
 
-			String suffix = overlay.getOrDefault("FM105-SER-NUM-SUFFIX", "");
+				String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
 
-			String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
-
-			if (!rebuilt.trim().isEmpty()) {
-				displaySccf = rebuilt;
+				if (!rebuilt.trim().isEmpty()) {
+					sccf = rebuilt;
+				}
 			}
 		}
 
-		StringBuilder sb = new StringBuilder();
+		String displaySccf = sccf;
 
-		sb.append("<h5 id='record-context'>").append("Record #").append(rn).append(" SCCF=").append(displaySccf)
-				/*
-				 * if (recordHasSccf && !sccf.isEmpty()) {
-				 * sb.append(" SCCF=").append(displaySccf);
-				 * }
-				 */
-				.append(" Type=").append(type.trim()).append("</h5>");
+		// SAFE HEADER (FIXED)
+		StringBuilder headerBuilder = new StringBuilder();
 
-		sb.append(tableHtml);
-		/*
-		 * .append("<pre>")
-		 * 
-		 * .append("Record #").append(rn);
-		 * if (recordHasSccf && !sccf.isEmpty()) {
-		 * sb.append(" SCCF=").append(displaySccf);
-		 * }
-		 * sb.append(" Type=").append(type.trim())
-		 * .append("</pre>\n");
-		 */
+		headerBuilder.append("<h5 id='record-context'>").append("Record #").append(rn);
 
-		int horizontalTotal = vs.lastFiltered != null ? vs.lastFiltered.size() : 0;
-		int horizontalTotalPages = Math.max(1, (horizontalTotal + HORIZONTAL_PAGE_SIZE - 1) / HORIZONTAL_PAGE_SIZE);
-		page = Math.max(1, Math.min(page, horizontalTotalPages));
-		int horizontalOffset = (page - 1) * HORIZONTAL_PAGE_SIZE;
+		if (recordHasSccf && displaySccf != null && !displaySccf.isBlank()) {
+			headerBuilder.append(" SCCF=").append(displaySccf);
+		}
 
+		headerBuilder.append(" Type=").append(type.trim()).append("</h5>");
+
+		String dynamicHeader = headerBuilder.toString();
+
+		// Vertical HTML
+		String dynamicVerticalHtml = dynamicHeader + renderer.renderVertical(rn);
+
+		// Model attributes (unchanged)
 		model.addAttribute("hasFile", true);
-		model.addAttribute("filename", vs.originalFilename); // NEW
+		model.addAttribute("filename", vs.originalFilename);
 		model.addAttribute("count", vs.nav.size());
 		model.addAttribute("position", vs.nav.position());
 		model.addAttribute("hasPrev", vs.nav.hasPrev());
 		model.addAttribute("hasNext", vs.nav.hasNext());
-		model.addAttribute("html", sb.toString());
+
+		model.addAttribute("html", dynamicHeader + tableHtml);
+
 		model.addAttribute("editMode", vs.editMode);
+		model.addAttribute("hasEdits", !vs.editOverlay.isEmpty());
+
+		model.addAttribute("verticalHtml", dynamicVerticalHtml);
+
+		model.addAttribute("horizontalHtml",
+				renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE));
+
 		model.addAttribute("horizontalPage", page);
 		model.addAttribute("horizontalTotalPages", horizontalTotalPages);
 		model.addAttribute("horizontalHasPrev", page > 1);
 		model.addAttribute("horizontalHasNext", page < horizontalTotalPages);
 		model.addAttribute("horizontalTotalCount", horizontalTotal);
 
-		/*
-		 * String dynamicHeader = "<h5 id='record-context'>" + "Record #" + rn +
-		 * " SCCF=" + sccf + " Type=" + type.trim() + "</h5>";
-		 */
-		String dynamicHeader = "<h5 id='record-context'>" + "Record #" + rn + " SCCF=" + displaySccf + " Type="
-				+ type.trim()
-				+ "</h5>";
-
-		String dynamicVerticalHtml = dynamicHeader + renderer.renderVertical(vs.nav.currentRecordNumber());
-
-		model.addAttribute("verticalHtml", dynamicVerticalHtml);
-
-		model.addAttribute("horizontalHtml",
-				renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE));
-		if (vs.selectedRecordType != null) {
-			model.addAttribute("horizontalHtml", renderer.renderHorizontalPage(session, vs.selectedRecordType,
-					horizontalOffset, HORIZONTAL_PAGE_SIZE));
-		}
-
 		return "viewer";
-
 	}
 
 	@PostMapping("/prev")
@@ -355,49 +356,110 @@ public class FastViewerController {
 		return "redirect:/viewer/current";
 	}
 
-	/*
-	 * @GetMapping("/edit") public String
-	 * enableEdit(@RequestParam(name="page",defaultValue="1") int page,HttpSession
-	 * session) { ViewerSession vs = getSession(session); vs.editMode = true; return
-	 * "redirect:/viewer/current?page="+page; }
-	 */
-
 	@PostMapping("/save")
 
 	public String save(HttpServletRequest request, HttpSession session, Model model) {
 		ViewerSession vs = getSession(session);
+		String viewMode = request.getParameter("viewMode");
 		request.getParameterMap().forEach((key, value) -> {
-			if (key.startsWith("field_")) {
-				String[] parts = key.split("_", 3);
-				int recordNo = Integer.parseInt(parts[1]);
-				String fieldName = parts[2];
-				String newValue = value[0];
+			if (!key.startsWith("field_")) {
+				return;
+			}
+			int firstUnderscore = key.indexOf('_');
+			int secondUnderscore = key.indexOf('_', firstUnderscore + 1);
+			if (firstUnderscore < 0 || secondUnderscore < 0 || secondUnderscore + 1 >= key.length()) {
+				return;
+			}
+			try {
+				int recordNo = Integer.parseInt(key.substring(firstUnderscore + 1, secondUnderscore));
+				String encodedFieldName = key.substring(secondUnderscore + 1);
+				String fieldName = URLDecoder.decode(encodedFieldName, StandardCharsets.UTF_8);
+				String newValue = "";
+				if (value != null && value.length > 0) {
+					if ("horizontal".equalsIgnoreCase(viewMode)) {
+						for (int i = value.length - 1; i >= 0; i--) {
+							if (value[i] != null && !value[i].isEmpty()) {
+								newValue = value[i];
+								break;
+							}
+						}
+					} else {
+						for (int i = 0; i < value.length; i++) {
+							if (value[i] != null && !value[i].isEmpty()) {
+								newValue = value[i];
+								break;
+							}
+						}
+					}
+					if (newValue.isEmpty()) {
+						newValue = value[0];
+					}
+				}
 				Map<String, String> recordEdits = vs.editOverlay.computeIfAbsent(recordNo, k -> new HashMap<>());
 				recordEdits.put(fieldName, newValue);
-				System.out.println("OVERLAY SAVED:record=" + recordNo + ",field=" + fieldName + ",value=" + newValue);
+				System.out.println("OVERLAY SAVED: viewMode=" + viewMode + ", record=" + recordNo + ", field=" + fieldName + ", value=" + newValue + " values=" + Arrays.toString(value));
+			} catch (NumberFormatException ex) {
+				// ignore malformed field parameters
 			}
 		});
 		vs.editMode = false;
 		try {
-			StringBuilder content = new StringBuilder();
-			vs.editOverlay.forEach((recordNo, fields) -> {
-				content.append("Record").append(recordNo).append("\n");
-				fields.forEach((field, value) -> {
-					content.append(field).append("=").append(value).append("\n");
-				});
-				content.append("\n");
-			});
-			Path outputPath = Paths.get("C:/edited-files/edited-records.txt");
+
+			Path outputPath = Paths.get("C:/edited-files/edited-file.dat");
 			Files.createDirectories(outputPath.getParent());
-			Files.write(outputPath, content.toString().getBytes(StandardCharsets.UTF_8));
-			System.out.println("LOCAL FILE SAVED:" + outputPath);
+
+			byte[] fileBytes = Files.readAllBytes(vs.filePath);
+
+			int recordLength = SchemaRegistry.getRecordLength(vs.transactionType);
+
+			Charset ebcdic = Charset.forName(cfg.getCharset()); // your config charset
+
+			for (Map.Entry<Integer, Map<String, String>> entry : vs.editOverlay.entrySet()) {
+
+				int recordNo = entry.getKey();
+				Map<String, String> fields = entry.getValue();
+
+				int recordOffset = (recordNo - 1) * recordLength;
+
+				String type = new String(fileBytes, recordOffset, 2, ebcdic).trim();
+				List<FieldSpec> layout = SchemaRegistry.getSchema(vs.transactionType, type);
+
+				if (layout == null)
+					continue;
+
+				for (FieldSpec f : layout) {
+
+					if (!fields.containsKey(f.name))
+						continue;
+
+					String newValue = fields.get(f.name);
+					int start = recordOffset + (f.start1Based - 1);
+					int len = f.lengthBytes;
+					byte[] ebcdicBytes = newValue.getBytes(ebcdic);
+					byte[] finalBytes = new byte[len];
+					Arrays.fill(finalBytes, (byte) 0x40); // EBCDIC space
+
+					System.arraycopy(ebcdicBytes, 0, finalBytes, 0, Math.min(len, ebcdicBytes.length));
+
+					System.arraycopy(finalBytes, 0, fileBytes, start, len);
+				}
+			}
+
+			Files.write(outputPath, fileBytes);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		String viewMode = request.getParameter("viewMode");
-		session.setAttribute("viewMode", viewMode);
-		return "redirect:/viewer/current";
+		String redirectViewMode = request.getParameter("viewMode");
+		if (redirectViewMode != null) {
+			session.setAttribute("viewMode", redirectViewMode);
+		}
+		int page = 1;
+		try {
+			page = Integer.parseInt(request.getParameter("page"));
+		} catch (Exception ignore) {
+		}
+		return "redirect:/viewer/current?page=" + page;
 		/* return current(model,session); */
 	}
 
@@ -448,20 +510,69 @@ public class FastViewerController {
 		}
 	}
 
+	@GetMapping("/download")
+	public void downloadEditedFile(jakarta.servlet.http.HttpServletResponse resp, HttpSession session)
+			throws Exception {
+		ViewerSession vs = getSession(session);
+
+		if (!vs.hasFile() || vs.editOverlay.isEmpty()) {
+			resp.sendError(400, "No file loaded or no edits to download.");
+			return;
+		}
+
+		String originalName = (vs.originalFilename != null && !vs.originalFilename.isBlank()) ? vs.originalFilename
+				: "edited-file.dat";
+		String filename = buildTimestampedFilename(originalName);
+
+		long fileSize = editedFileDownloadService.getEditedFileSize(vs.filePath);
+
+		resp.setContentType("application/octet-stream");
+		resp.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+		resp.setContentLengthLong(fileSize);
+
+		editedFileDownloadService.streamEditedFile(vs.filePath, vs.editOverlay, vs.transactionType,
+				resp.getOutputStream());
+	}
+
+	private String buildTimestampedFilename(String originalName) {
+		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+		String baseName = originalName;
+		String extension = "";
+		int dotIdx = originalName.lastIndexOf('.');
+		if (dotIdx > 0) {
+			baseName = originalName.substring(0, dotIdx);
+			extension = originalName.substring(dotIdx);
+		}
+		if (baseName.matches(".*_20\\d{6}_[012]\\d[0-5]\\d[0-5]\\d$")) {
+			baseName = baseName.substring(0, baseName.length() - 16);
+		} else if (baseName.matches(".*_\\d{8}_\\d{6}$")) {
+			baseName = baseName.substring(0, baseName.length() - 16);
+		}
+		return baseName + "_" + timestamp + extension;
+	}
+
 	private Path getAppTempRoot() throws IOException {
 		Path root = Paths.get(System.getProperty("java.io.tmpdir"), "its255Files");
 		Files.createDirectories(root);
 		return root;
 	}
+
 	/**
 	 * Determines whether a given record type has SCCF fields for the transaction
 	 * type.
 	 */
-	/*
-	 * private boolean hasSccf(String transactionType, String recordTypeCode) {
-	 * switch (transactionType) { case "PPU": case "PPA": return false; case "CBF":
-	 * return "7A".equals(recordTypeCode) || "7B".equals(recordTypeCode); case "SF":
-	 * case "SFI": return !"9D".equals(recordTypeCode); default: // SFP, DF, RF,
-	 * CBFBD return true; } }
-	 */
+	private boolean hasSccf(String transactionType, String recordTypeCode) {
+		switch (transactionType) {
+			case "PPU":
+			case "PPA":
+				return false;
+			case "CBF":
+				return "7A".equals(recordTypeCode) || "7B".equals(recordTypeCode);
+			case "SF":
+			case "SFI":
+				return !"9D".equals(recordTypeCode);
+			default: // SFP, DF, RF, CBFBD
+				return true;
+		}
+	}
 }
