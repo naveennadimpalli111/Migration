@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +47,7 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/viewer")
 public class FastViewerController {
-	private static final int HORIZONTAL_PAGE_SIZE = 5;
+	private static final int HORIZONTAL_PAGE_SIZE = 250;
 
 	private final ViewerConfig cfg;
 	private final CleanupScheduler cleanupScheduler;
@@ -167,6 +168,10 @@ public class FastViewerController {
 				Optional.ofNullable(recNo));
 
 		List<Integer> filtered = vs.filter.apply(q);
+		if (vs.deletedRecords != null && !vs.deletedRecords.isEmpty()) {
+			filtered = new ArrayList<>(filtered);
+			filtered.removeIf(vs.deletedRecords::contains);
+		}
 		vs.selectedRecordType = type;
 		int startRn = q.recordNumber().orElse(-1);
 
@@ -188,6 +193,7 @@ public class FastViewerController {
 		model.addAttribute("viewMode", viewMode);
 
 		model.addAttribute("editMode", Boolean.TRUE.equals(vs.editMode));
+		model.addAttribute("selectedEditRecord", vs.selectedEditRecord);
 
 		if (!vs.hasFile() || vs.nav == null || vs.nav.size() == 0) {
 			model.addAttribute("html", "<div class='alert alert-info'>No results. Upload a file and search.</div>");
@@ -198,6 +204,7 @@ public class FastViewerController {
 
 		// Base values
 		String type = safeInvoke(vs.store, "readType", rn);
+		String displayType = type;
 
 		boolean recordHasSccf = hasSccf(vs.transactionType, type.trim());
 
@@ -227,36 +234,20 @@ public class FastViewerController {
 		Map<String, String> overlay = vs.editOverlay.get(rn);
 
 		if (overlay != null) {
+			// TYPE display override (for UI only, doesn't affect SCCF prefix)
+			displayType = resolveOverlayRecordType(type, overlay);
 
-			// TYPE override
-			type = overlay.getOrDefault("REC_TYPE", type);
-			type = overlay.getOrDefault("FM105-REC-TYPE", type);
-
-			// SCCF logic
+			// SCCF logic (MUST use ORIGINAL form type for prefix, not overlay-overridden type)
 			if (recordHasSccf) {
-
-				// direct value
-				sccf = overlay.getOrDefault("SCCF", sccf);
-
-				// prefix-based rebuild (your logic)
-				String prefix = "FM1" + type.trim() + "-SER-NUM-";
-
-				String localPlan = overlay.getOrDefault(prefix + "LOCAL-PLAN", "");
-				String cc = overlay.getOrDefault(prefix + "JULDT-CC", "");
-				String yy = overlay.getOrDefault(prefix + "JULDT-YY", "");
-				String ddd = overlay.getOrDefault(prefix + "JULDT-DDD", "");
-				String sequence = overlay.getOrDefault(prefix + "SEQUENCE", "");
-				String suffix = overlay.getOrDefault(prefix + "SUFFIX", "");
-
-				String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
-
-				if (!rebuilt.trim().isEmpty()) {
-					sccf = rebuilt;
-				}
+				sccf = resolveOverlaySccf(sccf, type, overlay);
 			}
 		}
 
 		String displaySccf = sccf;
+		// Treat any '{' characters in SCCF as '0'
+		if (displaySccf != null) {
+			displaySccf = displaySccf.replace("{", "0");
+		}
 
 		// SAFE HEADER (FIXED)
 		StringBuilder headerBuilder = new StringBuilder();
@@ -267,7 +258,7 @@ public class FastViewerController {
 			headerBuilder.append(" SCCF=").append(displaySccf);
 		}
 
-		headerBuilder.append(" Type=").append(type.trim()).append("</h5>");
+		headerBuilder.append(" Type=").append(displayType.trim()).append("</h5>");
 
 		String dynamicHeader = headerBuilder.toString();
 
@@ -290,9 +281,10 @@ public class FastViewerController {
 		model.addAttribute("verticalHtml", dynamicVerticalHtml);
 
 		model.addAttribute("horizontalHtml",
-				renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE));
+				renderer.renderHorizontalPage(session, vs.selectedRecordType, horizontalOffset, HORIZONTAL_PAGE_SIZE, page));
 
 		model.addAttribute("horizontalPage", page);
+		model.addAttribute("currentRecordNo", rn);
 		model.addAttribute("horizontalTotalPages", horizontalTotalPages);
 		model.addAttribute("horizontalHasPrev", page > 1);
 		model.addAttribute("horizontalHasNext", page < horizontalTotalPages);
@@ -316,6 +308,82 @@ public class FastViewerController {
 		if (vs.nav != null && vs.nav.hasNext())
 			vs.nav.next();
 		return "redirect:/viewer/current";
+	}
+
+	private String resolveOverlayRecordType(String currentType, Map<String, String> overlay) {
+		if (overlay == null || overlay.isEmpty()) {
+			return currentType;
+		}
+
+		String override = overlay.get("REC_TYPE");
+		if (override != null && !override.isBlank()) {
+			return override;
+		}
+
+		for (String key : overlay.keySet()) {
+			String upper = key.toUpperCase();
+			if (upper.endsWith("REC-TYPE") || upper.endsWith("REC-TYPE")) {
+				String value = overlay.get(key);
+				if (value != null && !value.isBlank()) {
+					return value;
+				}
+			}
+		}
+
+		return currentType;
+	}
+
+	private String resolveOverlaySccf(String currentSccf, String type, Map<String, String> overlay) {
+		if (overlay == null || overlay.isEmpty()) {
+			return currentSccf;
+		}
+
+		String direct = overlay.get("SCCF");
+		if (direct != null && !direct.isBlank()) {
+			return direct;
+		}
+
+		for (String key : overlay.keySet()) {
+			if (key != null && key.toUpperCase().contains("SCCF")) {
+				String value = overlay.get(key);
+				if (value != null && !value.isBlank()) {
+					return value;
+				}
+			}
+		}
+
+		String prefix = null;
+		for (String key : overlay.keySet()) {
+			if (key == null) continue;
+			String upper = key.toUpperCase();
+			int idx = upper.indexOf("-SER-NUM-");
+			if (idx >= 0) {
+				prefix = key.substring(0, idx + 9);
+				break;
+			}
+		}
+
+		if (prefix != null) {
+			String localPlan = normalizeOverlayValue(overlay.getOrDefault(prefix + "LOCAL-PLAN", ""));
+			String cc = normalizeOverlayValue(overlay.getOrDefault(prefix + "JULDT-CC", ""));
+			String yy = normalizeOverlayValue(overlay.getOrDefault(prefix + "JULDT-YY", ""));
+			String ddd = normalizeOverlayValue(overlay.getOrDefault(prefix + "JULDT-DDD", ""));
+			String sequence = normalizeOverlayValue(overlay.getOrDefault(prefix + "SEQUENCE", ""));
+			String suffix = normalizeOverlayValue(overlay.getOrDefault(prefix + "SUFFIX", ""));
+
+			String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
+			if (!rebuilt.trim().isEmpty()) {
+				return rebuilt;
+			}
+		}
+
+		return currentSccf;
+	}
+
+	private static String normalizeOverlayValue(String s) {
+		if (s == null) return "";
+		if (s.equals("{")) return "0";
+		return s;
 	}
 
 	@GetMapping("/export")
@@ -350,10 +418,21 @@ public class FastViewerController {
 	}
 
 	@GetMapping("/edit")
-	public String enableEdit(HttpSession session) {
+	public String enableEdit(
+			@RequestParam(name = "recordNo", required = false) Integer recordNo,
+			@RequestParam(name = "page", required = false, defaultValue = "1") int page,
+			@RequestParam(name = "viewMode", required = false) String viewMode,
+			HttpSession session) {
 		ViewerSession vs = getSession(session);
 		vs.editMode = true;
-		return "redirect:/viewer/current";
+		if (viewMode != null && !viewMode.isBlank()) {
+			session.setAttribute("viewMode", viewMode);
+		}
+		if (recordNo != null && vs.nav != null) {
+			vs.selectedEditRecord = recordNo;
+			vs.nav.setCurrent(recordNo);
+		}
+		return "redirect:/viewer/current?page=" + page;
 	}
 
 	@PostMapping("/save")
@@ -361,6 +440,9 @@ public class FastViewerController {
 	public String save(HttpServletRequest request, HttpSession session, Model model) {
 		ViewerSession vs = getSession(session);
 		String viewMode = request.getParameter("viewMode");
+	if (viewMode != null && !viewMode.isBlank()) {
+		session.setAttribute("viewMode", viewMode);
+	}
 		request.getParameterMap().forEach((key, value) -> {
 			if (!key.startsWith("field_")) {
 				return;
@@ -376,26 +458,14 @@ public class FastViewerController {
 				String fieldName = URLDecoder.decode(encodedFieldName, StandardCharsets.UTF_8);
 				String newValue = "";
 				if (value != null && value.length > 0) {
-					if ("horizontal".equalsIgnoreCase(viewMode)) {
-						for (int i = value.length - 1; i >= 0; i--) {
-							if (value[i] != null && !value[i].isEmpty()) {
-								newValue = value[i];
-								break;
-							}
-						}
-					} else {
-						for (int i = 0; i < value.length; i++) {
-							if (value[i] != null && !value[i].isEmpty()) {
-								newValue = value[i];
-								break;
-							}
-						}
-					}
-					if (newValue.isEmpty()) {
-						newValue = value[0];
-					}
+					newValue = selectFormFieldValue(vs, recordNo, fieldName, viewMode, value);
 				}
 				Map<String, String> recordEdits = vs.editOverlay.computeIfAbsent(recordNo, k -> new HashMap<>());
+				// Normalize placeholder '{' to '0' before saving into overlay
+				if (newValue != null && newValue.equals("{")) {
+					newValue = "0";
+				}
+				newValue = preserveOriginalFieldLength(vs, recordNo, fieldName, newValue);
 				recordEdits.put(fieldName, newValue);
 				System.out.println("OVERLAY SAVED: viewMode=" + viewMode + ", record=" + recordNo + ", field=" + fieldName + ", value=" + newValue + " values=" + Arrays.toString(value));
 			} catch (NumberFormatException ex) {
@@ -403,6 +473,7 @@ public class FastViewerController {
 			}
 		});
 		vs.editMode = false;
+		vs.selectedEditRecord = null;
 		try {
 
 			Path outputPath = Paths.get("C:/edited-files/edited-file.dat");
@@ -421,9 +492,42 @@ public class FastViewerController {
 
 				int recordOffset = (recordNo - 1) * recordLength;
 
-				String type = new String(fileBytes, recordOffset, 2, ebcdic).trim();
+				String type = safeInvoke(vs.store, "readType", recordNo).trim();
 				List<FieldSpec> layout = SchemaRegistry.getSchema(vs.transactionType, type);
 
+				// Rebuild and persist SCCF (first 15 bytes) from overlay parts if any
+				try {
+					String originalSccf = new String(fileBytes, recordOffset, Math.min(15, fileBytes.length - recordOffset), ebcdic);
+					String rebuiltSccf = resolveOverlaySccf(originalSccf, type, fields);
+					if (rebuiltSccf == null) rebuiltSccf = "";
+					if (rebuiltSccf.equals("{")) rebuiltSccf = "0";
+					int start = recordOffset + 0; // first 15 bytes (COBOL pos 1..15)
+					int len = 15;
+					byte[] ebcdicBytes = rebuiltSccf.getBytes(ebcdic);
+					byte[] finalBytes = new byte[len];
+					Arrays.fill(finalBytes, (byte) 0x40);
+					System.arraycopy(ebcdicBytes, 0, finalBytes, 0, Math.min(len, ebcdicBytes.length));
+					System.arraycopy(finalBytes, 0, fileBytes, start, len);
+				} catch (Exception ignore) {
+				}
+
+				// Persist REC_TYPE (COBOL pos 22..23) using overlay resolver
+				try {
+					String originalType = new String(fileBytes, recordOffset + 21, Math.min(2, Math.max(0, fileBytes.length - (recordOffset + 21))), ebcdic).trim();
+					String resolvedType = resolveOverlayRecordType(originalType, fields);
+					if (resolvedType == null) resolvedType = "";
+					if (resolvedType.equals("{")) resolvedType = "0";
+					int start = recordOffset + 21; // COBOL pos 22..23 -> zero-based offset 21, length 2
+					int len = 2;
+					byte[] ebcdicBytes = resolvedType.getBytes(ebcdic);
+					byte[] finalBytes = new byte[len];
+					Arrays.fill(finalBytes, (byte) 0x40);
+					System.arraycopy(ebcdicBytes, 0, finalBytes, 0, Math.min(len, ebcdicBytes.length));
+					System.arraycopy(finalBytes, 0, fileBytes, start, len);
+				} catch (Exception ignore) {
+				}
+
+				// If there's no schema for this type, nothing more to write
 				if (layout == null)
 					continue;
 
@@ -433,6 +537,10 @@ public class FastViewerController {
 						continue;
 
 					String newValue = fields.get(f.name);
+					// Normalize placeholder '{' to '0' before writing to file
+					if (newValue != null && newValue.equals("{")) {
+						newValue = "0";
+					}
 					int start = recordOffset + (f.start1Based - 1);
 					int len = f.lengthBytes;
 					byte[] ebcdicBytes = newValue.getBytes(ebcdic);
@@ -464,12 +572,110 @@ public class FastViewerController {
 	}
 
 	@GetMapping("/view")
-	public String disableEdit(HttpSession session) {
+	public String disableEdit(HttpSession session,
+			@RequestParam(name = "page", required = false, defaultValue = "1") int page) {
 		ViewerSession vs = getSession(session);
 		vs.editMode = false;
-		return "redirect:/viewer/current";
+		vs.selectedEditRecord = null;
+		return "redirect:/viewer/current?page=" + page;
+	}
+	@PostMapping("/delete")
+	@ResponseBody
+	public Map<String, Object> deleteRecord(@RequestParam("recordNo") int recordNo,
+			@RequestParam(name = "viewMode", required = false) String viewMode,
+			HttpSession session) throws IOException {
+		ViewerSession vs = getSession(session);
+		if (vs.deletedRecords == null) {
+			vs.deletedRecords = new java.util.HashSet<>();
+		}
+		vs.deletedRecords.add(recordNo);
+		if (vs.lastFiltered != null) {
+			vs.lastFiltered = new ArrayList<>(vs.lastFiltered);
+			vs.lastFiltered.removeIf(r -> r == recordNo);
+		}
+		int nextRecord = updateNavigatorAfterDelete(vs, recordNo);
+		vs.selectedEditRecord = null;
+
+		Map<String, Object> result = new HashMap<>();
+		result.put("deletedRecord", recordNo);
+		result.put("remainingCount", vs.lastFiltered != null ? vs.lastFiltered.size() : 0);
+		result.put("position", vs.nav != null ? vs.nav.position() : 0);
+		result.put("count", vs.nav != null ? vs.nav.size() : 0);
+		result.put("hasPrev", vs.nav != null && vs.nav.hasPrev());
+		result.put("hasNext", vs.nav != null && vs.nav.hasNext());
+		result.put("currentRecordNo", nextRecord);
+
+		if ("vertical".equals(viewMode)) {
+			String html;
+			if (nextRecord > 0) {
+				SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType,
+					vs.editMode, vs.editOverlay);
+				String type = safeInvoke(vs.store, "readType", nextRecord);
+				String displayType = type;
+				boolean recordHasSccf = hasSccf(vs.transactionType, type.trim());
+				String sccf = "";
+				if (recordHasSccf) {
+					sccf = safeInvoke(vs.store, "readSccf", nextRecord);
+				}
+				Map<String, String> overlay = vs.editOverlay.get(nextRecord);
+				if (overlay != null) {
+					displayType = resolveOverlayRecordType(type, overlay);
+					if (recordHasSccf) {
+						sccf = resolveOverlaySccf(sccf, type, overlay);
+					}
+				}
+				String displaySccf = sccf;
+				if (displaySccf != null) {
+					displaySccf = displaySccf.replace("{", "0");
+				}
+				StringBuilder headerBuilder = new StringBuilder();
+				headerBuilder.append("<h5 id='record-context'>").append("Record #").append(nextRecord);
+				if (recordHasSccf && displaySccf != null && !displaySccf.isBlank()) {
+					headerBuilder.append(" SCCF=").append(displaySccf);
+				}
+				headerBuilder.append(" Type=").append(displayType.trim()).append("</h5>");
+				html = headerBuilder.toString() + renderer.renderVertical(nextRecord);
+			} else {
+				html = "<div class='text-center text-muted p-5'><p>No Records Found</p></div>";
+			}
+			result.put("verticalHtml", html);
+		}
+
+		return result;
 	}
 
+	private int updateNavigatorAfterDelete(ViewerSession vs, int deletedRecordNo) {
+		if (vs.lastFiltered == null) {
+			vs.nav = new RecordNavigator(List.of(), -1);
+			return -1;
+		}
+
+		List<Integer> newFiltered = new ArrayList<>(vs.lastFiltered);
+		int currentIndex = 0;
+		if (vs.nav != null) {
+			currentIndex = Math.max(0, vs.nav.position() - 1);
+		}
+		int removedIndex = newFiltered.indexOf(deletedRecordNo);
+		if (removedIndex >= 0) {
+			newFiltered.remove(removedIndex);
+			if (currentIndex > removedIndex) {
+				currentIndex--;
+			}
+		}
+		if (currentIndex < 0) {
+			currentIndex = 0;
+		}
+		if (newFiltered.isEmpty()) {
+			vs.nav = new RecordNavigator(List.of(), -1);
+			return -1;
+		}
+		if (currentIndex >= newFiltered.size()) {
+			currentIndex = newFiltered.size() - 1;
+		}
+		int nextRecord = newFiltered.get(currentIndex);
+		vs.nav = new RecordNavigator(newFiltered, nextRecord);
+		return nextRecord;
+	}
 	@PostMapping("/clear")
 	public String clear(HttpSession session) throws IOException {
 		ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
@@ -500,6 +706,85 @@ public class FastViewerController {
 		}
 
 		return "redirect:/viewer";
+	}
+
+	private String preserveOriginalFieldLength(ViewerSession vs, int recordNo, String fieldName, String newValue) {
+		if (newValue == null || newValue.isBlank() || fieldName == null || fieldName.isBlank() || vs == null)
+			return newValue;
+
+		String recordType = safeInvoke(vs.store, "readType", recordNo).trim();
+		List<FieldSpec> layout = SchemaRegistry.getSchema(vs.transactionType, recordType);
+		if (layout == null || layout.isEmpty()) {
+			return newValue;
+		}
+
+		for (FieldSpec f : layout) {
+			if (!f.name.equalsIgnoreCase(fieldName)) {
+				continue;
+			}
+
+			if (newValue.matches("\\d+")) {
+				if (f.type == FieldType.NUMERIC_TEXT || f.type == FieldType.ALPHA) {
+					int length = f.lengthBytes;
+					if (newValue.length() < length) {
+						return "0".repeat(length - newValue.length()) + newValue;
+					}
+				}
+			}
+			break;
+		}
+
+		return newValue;
+	}
+
+	private String selectFormFieldValue(ViewerSession vs, int recordNo, String fieldName, String viewMode,
+			String[] values) {
+		if (values == null || values.length == 0) {
+			return "";
+		}
+
+		String longest = "";
+		int fieldLength = getFieldLengthFromSchema(vs, recordNo, fieldName);
+
+		for (String candidate : values) {
+			if (candidate == null || candidate.isEmpty()) {
+				continue;
+			}
+
+			if (fieldLength > 0 && candidate.length() == fieldLength) {
+				return candidate;
+			}
+
+			if (candidate.length() > longest.length()) {
+				longest = candidate;
+			}
+		}
+
+		if (!longest.isEmpty()) {
+			return longest;
+		}
+
+		return values[0] != null ? values[0] : "";
+	}
+
+	private int getFieldLengthFromSchema(ViewerSession vs, int recordNo, String fieldName) {
+		if (vs == null || fieldName == null || fieldName.isBlank()) {
+			return -1;
+		}
+
+		String recordType = safeInvoke(vs.store, "readType", recordNo).trim();
+		List<FieldSpec> layout = SchemaRegistry.getSchema(vs.transactionType, recordType);
+		if (layout == null || layout.isEmpty()) {
+			return -1;
+		}
+
+		for (FieldSpec f : layout) {
+			if (f.name.equalsIgnoreCase(fieldName)) {
+				return f.lengthBytes;
+			}
+		}
+
+		return -1;
 	}
 
 	private long getRecordCount(Object store) {

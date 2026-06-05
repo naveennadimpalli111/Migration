@@ -74,6 +74,68 @@ String type = readTypeFromRecord(record, transactionType);
 RecordType rt = RecordType.from(type.trim());
 List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
 
+// First: handle SCCF reconstruction and REC_TYPE overrides so they are present
+// before per-field writes (per-field writes may overwrite components).
+try {
+// Rebuild SCCF: prefer direct SCCF key (case-insensitive), else keys containing SCCF,
+// else assemble from prefix components (FM1<type>-SER-NUM-...)
+String sccf = null;
+for (String k : edits.keySet()) {
+if (k != null && k.equalsIgnoreCase("SCCF")) { sccf = edits.get(k); break; }
+}
+if (sccf == null) {
+for (String k : edits.keySet()) {
+if (k != null && k.toUpperCase().contains("SCCF")) { sccf = edits.get(k); break; }
+}
+}
+if (sccf == null) {
+String prefix = "FM1" + type.trim() + "-SER-NUM-";
+String localPlan = edits.getOrDefault(prefix + "LOCAL-PLAN", "");
+String cc = edits.getOrDefault(prefix + "JULDT-CC", "");
+String yy = edits.getOrDefault(prefix + "JULDT-YY", "");
+String ddd = edits.getOrDefault(prefix + "JULDT-DDD", "");
+String sequence = edits.getOrDefault(prefix + "SEQUENCE", "");
+String suffix = edits.getOrDefault(prefix + "SUFFIX", "");
+StringBuilder sb = new StringBuilder();
+if (localPlan != null) sb.append(localPlan);
+if (cc != null) sb.append(cc);
+if (yy != null) sb.append(yy);
+if (ddd != null) sb.append(ddd);
+if (sequence != null) sb.append(sequence);
+if (suffix != null) sb.append(suffix);
+if (sb.length() > 0) sccf = sb.toString();
+}
+if (sccf != null) {
+if (sccf.equals("{")) sccf = "0";
+byte[] enc = (sccf == null) ? new byte[15] : encodeAlpha(sccf, 15);
+System.arraycopy(enc, 0, record, 0, Math.min(enc.length, 15));
+}
+} catch (Exception ignore) {
+}
+
+try {
+// REC_TYPE override: look for REC_TYPE or keys ending with REC-TYPE/REC_TYPE
+String recKey = null;
+for (String k : edits.keySet()) {
+if (k == null) continue;
+String up = k.toUpperCase();
+if (up.equals("REC_TYPE") || up.equals("REC-TYPE") || up.endsWith("REC-TYPE") || up.endsWith("REC_TYPE")) { recKey = k; break; }
+}
+if (recKey != null) {
+String recVal = edits.get(recKey);
+if (recVal == null) recVal = "";
+if (recVal.equals("{")) recVal = "0";
+int typeOffset;
+switch (transactionType) {
+case "PPU": case "PPA": typeOffset = 2; break;
+default: typeOffset = 21; break;
+}
+byte[] enc = encodeAlpha(recVal, 2);
+if (typeOffset + 2 <= record.length) System.arraycopy(enc, 0, record, typeOffset, 2);
+}
+} catch (Exception ignore) {
+}
+
 if (layout == null || layout.isEmpty()) return;
 
 Map<String, FieldSpec> fieldMap = new LinkedHashMap<>();
