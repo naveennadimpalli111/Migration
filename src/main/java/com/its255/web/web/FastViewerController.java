@@ -1,12 +1,14 @@
 package com.its255.web.web;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -77,7 +80,7 @@ public class FastViewerController {
 		// NEW: show uploaded filename
 		model.addAttribute("filename", vs.originalFilename);
 		model.addAttribute("html", "");
-		model.addAttribute("hasEdits", !vs.editOverlay.isEmpty());
+		model.addAttribute("hasEdits", hasPendingChanges(vs));
 
 		return "viewer";
 	}
@@ -104,6 +107,10 @@ public class FastViewerController {
 		}
 		ViewerSession vs = getSession(session);
 		vs.transactionType = transactionType;
+		vs.selectedRecordType = null;
+		vs.editOverlay.clear();
+		vs.deletedRecords.clear();
+		vs.hasCommittedChanges = false;
 
 		// clean old store if present
 		if (vs.store instanceof AutoCloseable ac) {
@@ -276,7 +283,7 @@ public class FastViewerController {
 		model.addAttribute("html", dynamicHeader + tableHtml);
 
 		model.addAttribute("editMode", vs.editMode);
-		model.addAttribute("hasEdits", !vs.editOverlay.isEmpty());
+		model.addAttribute("hasEdits", hasPendingChanges(vs));
 
 		model.addAttribute("verticalHtml", dynamicVerticalHtml);
 
@@ -409,6 +416,10 @@ public class FastViewerController {
 		return vs;
 	}
 
+	private boolean hasPendingChanges(ViewerSession vs) {
+		return vs != null && (vs.hasCommittedChanges || !vs.editOverlay.isEmpty() || !vs.deletedRecords.isEmpty());
+	}
+
 	private String safeInvoke(Object store, String method, int rn) {
 		try {
 			return String.valueOf(store.getClass().getMethod(method, int.class).invoke(store, rn));
@@ -476,84 +487,9 @@ public class FastViewerController {
 		vs.selectedEditRecord = null;
 		try {
 
-			Path outputPath = Paths.get("C:/edited-files/edited-file.dat");
-			Files.createDirectories(outputPath.getParent());
-
-			byte[] fileBytes = Files.readAllBytes(vs.filePath);
-
-			int recordLength = SchemaRegistry.getRecordLength(vs.transactionType);
-
-			Charset ebcdic = Charset.forName(cfg.getCharset()); // your config charset
-
-			for (Map.Entry<Integer, Map<String, String>> entry : vs.editOverlay.entrySet()) {
-
-				int recordNo = entry.getKey();
-				Map<String, String> fields = entry.getValue();
-
-				int recordOffset = (recordNo - 1) * recordLength;
-
-				String type = safeInvoke(vs.store, "readType", recordNo).trim();
-				List<FieldSpec> layout = SchemaRegistry.getSchema(vs.transactionType, type);
-
-				// Rebuild and persist SCCF (first 15 bytes) from overlay parts if any
-				try {
-					String originalSccf = new String(fileBytes, recordOffset, Math.min(15, fileBytes.length - recordOffset), ebcdic);
-					String rebuiltSccf = resolveOverlaySccf(originalSccf, type, fields);
-					if (rebuiltSccf == null) rebuiltSccf = "";
-					if (rebuiltSccf.equals("{")) rebuiltSccf = "0";
-					int start = recordOffset + 0; // first 15 bytes (COBOL pos 1..15)
-					int len = 15;
-					byte[] ebcdicBytes = rebuiltSccf.getBytes(ebcdic);
-					byte[] finalBytes = new byte[len];
-					Arrays.fill(finalBytes, (byte) 0x40);
-					System.arraycopy(ebcdicBytes, 0, finalBytes, 0, Math.min(len, ebcdicBytes.length));
-					System.arraycopy(finalBytes, 0, fileBytes, start, len);
-				} catch (Exception ignore) {
-				}
-
-				// Persist REC_TYPE (COBOL pos 22..23) using overlay resolver
-				try {
-					String originalType = new String(fileBytes, recordOffset + 21, Math.min(2, Math.max(0, fileBytes.length - (recordOffset + 21))), ebcdic).trim();
-					String resolvedType = resolveOverlayRecordType(originalType, fields);
-					if (resolvedType == null) resolvedType = "";
-					if (resolvedType.equals("{")) resolvedType = "0";
-					int start = recordOffset + 21; // COBOL pos 22..23 -> zero-based offset 21, length 2
-					int len = 2;
-					byte[] ebcdicBytes = resolvedType.getBytes(ebcdic);
-					byte[] finalBytes = new byte[len];
-					Arrays.fill(finalBytes, (byte) 0x40);
-					System.arraycopy(ebcdicBytes, 0, finalBytes, 0, Math.min(len, ebcdicBytes.length));
-					System.arraycopy(finalBytes, 0, fileBytes, start, len);
-				} catch (Exception ignore) {
-				}
-
-				// If there's no schema for this type, nothing more to write
-				if (layout == null)
-					continue;
-
-				for (FieldSpec f : layout) {
-
-					if (!fields.containsKey(f.name))
-						continue;
-
-					String newValue = fields.get(f.name);
-					// Normalize placeholder '{' to '0' before writing to file
-					if (newValue != null && newValue.equals("{")) {
-						newValue = "0";
-					}
-					int start = recordOffset + (f.start1Based - 1);
-					int len = f.lengthBytes;
-					byte[] ebcdicBytes = newValue.getBytes(ebcdic);
-					byte[] finalBytes = new byte[len];
-					Arrays.fill(finalBytes, (byte) 0x40); // EBCDIC space
-
-					System.arraycopy(ebcdicBytes, 0, finalBytes, 0, Math.min(len, ebcdicBytes.length));
-
-					System.arraycopy(finalBytes, 0, fileBytes, start, len);
-				}
-			}
-
-			Files.write(outputPath, fileBytes);
+			Path outputPath = buildEditedFileSnapshot(vs);
+			writeLegacyEditedFileCopy(outputPath);
+			commitUpdatedFile(vs, outputPath);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -569,6 +505,97 @@ public class FastViewerController {
 		}
 		return "redirect:/viewer/current?page=" + page;
 		/* return current(model,session); */
+	}
+
+	private Path buildEditedFileSnapshot(ViewerSession vs) throws IOException {
+		Path outputPath = vs.sessionDir != null
+				? Files.createTempFile(vs.sessionDir, "updated_", ".dat")
+				: Files.createTempFile(getAppTempRoot(), "updated_", ".dat");
+
+		try (OutputStream out = Files.newOutputStream(outputPath)) {
+			editedFileDownloadService.streamEditedFile(vs.filePath, vs.editOverlay, vs.deletedRecords,
+				vs.transactionType, out);
+		}
+		return outputPath;
+	}
+
+	private void writeLegacyEditedFileCopy(Path updatedFile) throws IOException {
+		Path legacyOutputPath = Paths.get("C:/edited-files/edited-file.dat");
+		Files.createDirectories(legacyOutputPath.getParent());
+		Files.copy(updatedFile, legacyOutputPath, StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	private void commitUpdatedFile(ViewerSession vs, Path updatedFile) throws Exception {
+		if (vs == null || updatedFile == null || vs.transactionType == null || vs.transactionType.isBlank()) {
+			return;
+		}
+
+		Set<Integer> deletedRecords = vs.deletedRecords != null ? Set.copyOf(vs.deletedRecords) : Set.of();
+		int currentRecord = vs.nav != null ? vs.nav.currentRecordNumber() : -1;
+		List<Integer> filteredBeforeCommit = vs.lastFiltered != null ? new ArrayList<>(vs.lastFiltered) : List.of();
+
+		if (vs.store instanceof AutoCloseable ac) {
+			try {
+				ac.close();
+			} catch (Exception ignore) {
+			}
+		}
+
+		long windowBytes = Math.max(1, cfg.getWindowSizeMB()) * 1024L * 1024L;
+		int recordLength = SchemaRegistry.getRecordLength(vs.transactionType);
+		vs.filePath = updatedFile;
+		vs.store = new ChunkedMMapRecordStore(updatedFile, cs(), recordLength, windowBytes, vs.transactionType);
+
+		int workers = Math.min(cfg.getIndexWorkers(), (int) getRecordCount(vs.store));
+		vs.pidx = new ParallelPrefixIndexBuilder(vs.store, cfg.getPrefixIndexLength(),
+				workers, cfg.getProgressStep(), p -> vs.progress = p).build();
+		vs.filter = new FastRecordFilter(vs.store, vs.pidx);
+
+		List<Integer> filteredAfterCommit = renumberAfterDeletes(filteredBeforeCommit, deletedRecords);
+		vs.lastFiltered = filteredAfterCommit;
+
+		int newCurrentRecord = renumberAfterDeletes(currentRecord, deletedRecords);
+		if (newCurrentRecord <= 0 && !filteredAfterCommit.isEmpty()) {
+			newCurrentRecord = filteredAfterCommit.get(0);
+		}
+		vs.nav = new RecordNavigator(filteredAfterCommit, newCurrentRecord);
+
+		vs.editOverlay.clear();
+		vs.deletedRecords.clear();
+		vs.hasCommittedChanges = true;
+		vs.progress = 1.0;
+	}
+
+	private List<Integer> renumberAfterDeletes(List<Integer> recordNumbers, Set<Integer> deletedRecords) {
+		if (recordNumbers == null || recordNumbers.isEmpty()) {
+			return List.of();
+		}
+		List<Integer> renumbered = new ArrayList<>(recordNumbers.size());
+		for (Integer recordNo : recordNumbers) {
+			int newRecordNo = renumberAfterDeletes(recordNo != null ? recordNo : -1, deletedRecords);
+			if (newRecordNo > 0) {
+				renumbered.add(newRecordNo);
+			}
+		}
+		return renumbered;
+	}
+
+	private int renumberAfterDeletes(int recordNo, Set<Integer> deletedRecords) {
+		if (recordNo <= 0) {
+			return -1;
+		}
+		if (deletedRecords != null && deletedRecords.contains(recordNo)) {
+			return -1;
+		}
+		int deletedBefore = 0;
+		if (deletedRecords != null) {
+			for (Integer deletedRecord : deletedRecords) {
+				if (deletedRecord != null && deletedRecord > 0 && deletedRecord < recordNo) {
+					deletedBefore++;
+				}
+			}
+		}
+		return recordNo - deletedBefore;
 	}
 
 	@GetMapping("/view")
@@ -589,12 +616,10 @@ public class FastViewerController {
 			vs.deletedRecords = new java.util.HashSet<>();
 		}
 		vs.deletedRecords.add(recordNo);
-		if (vs.lastFiltered != null) {
-			vs.lastFiltered = new ArrayList<>(vs.lastFiltered);
-			vs.lastFiltered.removeIf(r -> r == recordNo);
-		}
+		vs.editOverlay.remove(recordNo);
 		int nextRecord = updateNavigatorAfterDelete(vs, recordNo);
 		vs.selectedEditRecord = null;
+		refreshLegacyEditedFileCopy(vs);
 
 		Map<String, Object> result = new HashMap<>();
 		result.put("deletedRecord", recordNo);
@@ -644,8 +669,21 @@ public class FastViewerController {
 		return result;
 	}
 
+	private void refreshLegacyEditedFileCopy(ViewerSession vs) {
+		if (vs == null || !vs.hasFile() || vs.transactionType == null || vs.transactionType.isBlank()) {
+			return;
+		}
+		try {
+			Path snapshot = buildEditedFileSnapshot(vs);
+			writeLegacyEditedFileCopy(snapshot);
+		} catch (IOException ex) {
+			LoggingUtil.error(ex);
+		}
+	}
+
 	private int updateNavigatorAfterDelete(ViewerSession vs, int deletedRecordNo) {
 		if (vs.lastFiltered == null) {
+			vs.lastFiltered = List.of();
 			vs.nav = new RecordNavigator(List.of(), -1);
 			return -1;
 		}
@@ -662,6 +700,7 @@ public class FastViewerController {
 				currentIndex--;
 			}
 		}
+		vs.lastFiltered = newFiltered;
 		if (currentIndex < 0) {
 			currentIndex = 0;
 		}
@@ -800,8 +839,8 @@ public class FastViewerController {
 			throws Exception {
 		ViewerSession vs = getSession(session);
 
-		if (!vs.hasFile() || vs.editOverlay.isEmpty()) {
-			resp.sendError(400, "No file loaded or no edits to download.");
+		if (!vs.hasFile() || !hasPendingChanges(vs)) {
+			resp.sendError(400, "No file loaded or no edits/deletions to download.");
 			return;
 		}
 
@@ -809,14 +848,15 @@ public class FastViewerController {
 				: "edited-file.dat";
 		String filename = buildTimestampedFilename(originalName);
 
-		long fileSize = editedFileDownloadService.getEditedFileSize(vs.filePath);
+		boolean hasPendingChanges = !vs.editOverlay.isEmpty() || !vs.deletedRecords.isEmpty();
+		Path downloadPath = hasPendingChanges ? buildEditedFileSnapshot(vs) : vs.filePath;
+		writeLegacyEditedFileCopy(downloadPath);
 
 		resp.setContentType("application/octet-stream");
 		resp.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-		resp.setContentLengthLong(fileSize);
+		resp.setContentLengthLong(Files.size(downloadPath));
 
-		editedFileDownloadService.streamEditedFile(vs.filePath, vs.editOverlay, vs.transactionType,
-				resp.getOutputStream());
+		Files.copy(downloadPath, resp.getOutputStream());
 	}
 
 	private String buildTimestampedFilename(String originalName) {

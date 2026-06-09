@@ -887,6 +887,18 @@ filtered records as ZIP containing CSV files per record type. </span>
       }
     })
 
+    function setDownloadEnabled(enabled) {
+      const btn = document.getElementById("btnDownload");
+      if (!btn) return;
+      if (enabled) {
+        btn.classList.remove("disabled");
+        btn.removeAttribute("aria-disabled");
+      } else {
+        btn.classList.add("disabled");
+        btn.setAttribute("aria-disabled", "true");
+      }
+    }
+
     function deleteRecord(recordNo, viewMode) {
       if (!confirm("Are you sure you want to delete this record?")) {
         return;
@@ -912,42 +924,9 @@ filtered records as ZIP containing CSV files per record type. </span>
           return response.json();
         })
         .then(data => {
-          sessionStorage.setItem("viewMode", viewMode || "vertical");
-          const viewModeInput = document.getElementById("viewMode");
-          if (viewModeInput) {
-            viewModeInput.value = viewMode || "vertical";
-          }
-
-          if (viewMode === "horizontal") {
-            const row = document.querySelector("tr[data-recordno='" + recordNo + "']");
-            if (row) {
-              row.remove();
-            }
-            const tbody = document.getElementById("horizontalTbody");
-            if (tbody && tbody.children.length === 0) {
-              const horizontalView = document.getElementById("horizontalView");
-              if (horizontalView) {
-                horizontalView.innerHTML = "<div class='text-center text-muted p-5'><p>No Records Found</p></div>";
-              }
-            }
-          } else {
-            const verticalContainer = document.getElementById("verticalTableContainer");
-            if (verticalContainer) {
-              verticalContainer.innerHTML = data.verticalHtml || "<div class='text-center text-muted p-5'><p>No Records Found</p></div>";
-            }
-            const currentRecordNoInput = document.getElementById("currentRecordNo");
-            if (currentRecordNoInput) {
-              currentRecordNoInput.value = data.currentRecordNo || "";
-            }
-            const positionSpans = document.querySelectorAll("#verticalNavTop .count-text, #verticalNavBottom .count-text");
-            positionSpans.forEach(span => {
-              span.textContent = "Record " + data.position + " of " + data.count;
-            });
-            const prevButtons = document.querySelectorAll("#verticalNavTop button:first-of-type, #verticalNavBottom button:first-of-type");
-            const nextButtons = document.querySelectorAll("#verticalNavTop button:last-of-type, #verticalNavBottom button:last-of-type");
-            prevButtons.forEach(btn => btn.disabled = !data.hasPrev);
-            nextButtons.forEach(btn => btn.disabled = !data.hasNext);
-          }
+          setDownloadEnabled(true);
+          const currentPage = document.getElementById("horizontalPage")?.value || "1";
+          window.location.href = "/viewer/current?page=" + encodeURIComponent(currentPage);
         })
         .catch(err => console.error("Error deleting record:", err));
     }

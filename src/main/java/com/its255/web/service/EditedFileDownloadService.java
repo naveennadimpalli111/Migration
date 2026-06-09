@@ -40,32 +40,62 @@ public void streamEditedFile(Path originalFile,
 Map<Integer, Map<String, String>> editOverlay,
 String transactionType,
 OutputStream out) throws IOException {
-
-int recordLength = SchemaRegistry.getRecordLength(transactionType);
-long fileSize = Files.size(originalFile);
-int totalRecords = (int) (fileSize / recordLength);
-
-byte[] recordBuffer = new byte[recordLength];
-BufferedOutputStream bufferedOut = new BufferedOutputStream(out, 8192);
-
-try (RandomAccessFile raf = new RandomAccessFile(originalFile.toFile(), "r")) {
-for (int recNum = 1; recNum <= totalRecords; recNum++) {
-raf.readFully(recordBuffer);
-
-Map<String, String> edits = editOverlay.get(recNum);
-if (edits != null && !edits.isEmpty()) {
-applyEditsToRecord(recordBuffer, edits, transactionType, recordLength);
+    streamEditedFile(originalFile, editOverlay, null, transactionType, out);
 }
 
-bufferedOut.write(recordBuffer, 0, recordLength);
-}
+public void streamEditedFile(Path originalFile,
+Map<Integer, Map<String, String>> editOverlay,
+java.util.Set<Integer> deletedRecords,
+String transactionType,
+OutputStream out) throws IOException {
+
+    int recordLength = SchemaRegistry.getRecordLength(transactionType);
+    long fileSize = Files.size(originalFile);
+    int totalRecords = (int) (fileSize / recordLength);
+
+    byte[] recordBuffer = new byte[recordLength];
+    BufferedOutputStream bufferedOut = new BufferedOutputStream(out, 8192);
+
+    try (RandomAccessFile raf = new RandomAccessFile(originalFile.toFile(), "r")) {
+        for (int recNum = 1; recNum <= totalRecords; recNum++) {
+            raf.readFully(recordBuffer);
+
+            if (deletedRecords != null && deletedRecords.contains(recNum)) {
+                continue;
+            }
+
+            Map<String, String> edits = (editOverlay == null) ? null : editOverlay.get(recNum);
+            if (edits != null && !edits.isEmpty()) {
+                applyEditsToRecord(recordBuffer, edits, transactionType, recordLength);
+            }
+
+            bufferedOut.write(recordBuffer, 0, recordLength);
+        }
+    }
+
+    bufferedOut.flush();
 }
 
-bufferedOut.flush();
+public long getEditedFileSize(Path originalFile, java.util.Set<Integer> deletedRecords,
+String transactionType) throws IOException {
+    int recordLength = SchemaRegistry.getRecordLength(transactionType);
+    long fileSize = Files.size(originalFile);
+    int totalRecords = (int) (fileSize / recordLength);
+
+    int deleteCount = 0;
+    if (deletedRecords != null) {
+        for (Integer deletedRecord : deletedRecords) {
+            if (deletedRecord != null && deletedRecord >= 1 && deletedRecord <= totalRecords) {
+                deleteCount++;
+            }
+        }
+    }
+    long trimmedSize = fileSize - ((long) deleteCount * recordLength);
+    return Math.max(trimmedSize, 0L);
 }
 
 public long getEditedFileSize(Path originalFile) throws IOException {
-return Files.size(originalFile);
+    return Files.size(originalFile);
 }
 
 private void applyEditsToRecord(byte[] record, Map<String, String> edits,

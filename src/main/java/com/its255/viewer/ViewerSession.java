@@ -28,6 +28,7 @@ public class ViewerSession implements AutoCloseable {
     public Path sessionDir; // per-session temp directory
     public  boolean editMode=false;  // whether we're in edit mode (vs. view-only)
     public Integer selectedEditRecord; // currently edited horizontal record
+    public boolean hasCommittedChanges = false; // saved changes are baked into filePath and can be downloaded
 
     public boolean hasFile() {
         return filePath != null && store != null;
