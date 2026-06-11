@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.FieldType;
 import com.its255.schema.RecordType;
+import com.its255.util.FieldValueNormalizer;
 
 /**
  * Fixed-length 255-byte parser supporting ALPHA, NUMERIC_TEXT, PACKED_DECIMAL (COMP-3) and BINARY (COMP/COMP-4).
@@ -526,6 +527,10 @@ public final class Fixed255Parser {
                 case ALPHA -> out.put(f.name, sliceTrim(rec, start, f.lengthBytes));
                 case NUMERIC_TEXT -> {
                     s = sliceTrim(rec, start, f.lengthBytes);
+                    if (FieldValueNormalizer.isBraceZeroField(f)) {
+                        out.put(f.name, FieldValueNormalizer.normalize(f, s));
+                        break;
+                    }
                     len = s.length();
                     if (len == 1) {
                         x = parseOverpunchIntSafe(s);
@@ -573,6 +578,10 @@ public final class Fixed255Parser {
                 case ALPHA -> v = sliceTrim(rec, start, f.lengthBytes);
                 case NUMERIC_TEXT -> {
                     s = sliceTrim(rec, start, f.lengthBytes);
+                    if (FieldValueNormalizer.isBraceZeroField(f)) {
+                        v = FieldValueNormalizer.normalize(f, s);
+                        break;
+                    }
                     len = s.length();
                     if (len == 1) {
                         Integer x = parseOverpunchIntSafe(s);

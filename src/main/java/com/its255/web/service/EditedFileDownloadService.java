@@ -16,6 +16,7 @@ import java.util.Map;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.SchemaRegistry;
+import com.its255.util.FieldValueNormalizer;
 
 /**
 * Service that produces a downloadable edited file by streaming records
@@ -68,6 +69,7 @@ OutputStream out) throws IOException {
             if (edits != null && !edits.isEmpty()) {
                 applyEditsToRecord(recordBuffer, edits, transactionType, recordLength);
             }
+            normalizeBraceZeroFields(recordBuffer, transactionType);
 
             bufferedOut.write(recordBuffer, 0, recordLength);
         }
@@ -175,8 +177,26 @@ for (Map.Entry<String, String> edit : edits.entrySet()) {
 FieldSpec f = fieldMap.get(edit.getKey());
 if (f == null) continue;
 
-byte[] encoded = encodeField(edit.getValue(), f);
+byte[] encoded = encodeField(FieldValueNormalizer.normalize(f, edit.getValue()), f);
 System.arraycopy(encoded, 0, record, f.start1Based - 1, f.lengthBytes);
+}
+}
+
+private void normalizeBraceZeroFields(byte[] record, String transactionType) {
+String type = readTypeFromRecord(record, transactionType);
+RecordType rt = RecordType.from(type.trim());
+List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
+if (layout == null || layout.isEmpty()) return;
+
+for (FieldSpec f : layout) {
+if (!FieldValueNormalizer.isBraceZeroField(f)) continue;
+int start = f.start1Based - 1;
+if (start < 0 || start + f.lengthBytes > record.length) continue;
+String value = new String(record, start, f.lengthBytes, CP037);
+String normalized = FieldValueNormalizer.normalize(f, value);
+if (normalized.equals(value)) continue;
+byte[] encoded = encodeAlpha(normalized, f.lengthBytes);
+System.arraycopy(encoded, 0, record, start, f.lengthBytes);
 }
 }
 
@@ -195,7 +215,7 @@ return new String(record, typeOffset, typeLen, CP037).trim();
 private byte[] encodeField(String value, FieldSpec f) {
 switch (f.type) {
 case ALPHA: return encodeAlpha(value, f.lengthBytes);
-case NUMERIC_TEXT: return encodeNumericText(value, f.lengthBytes);
+case NUMERIC_TEXT: return encodeNumericText(value, f.lengthBytes, preserveExactNumericText(f));
 case PACKED_DECIMAL: return encodeComp3(value, f.lengthBytes, f.scale);
 case BINARY: return encodeBinary(value, f.lengthBytes);
 default:
@@ -214,24 +234,24 @@ System.arraycopy(encoded, 0, out, 0, Math.min(encoded.length, lengthBytes));
 return out;
 }
 
-private byte[] encodeNumericText(String value, int lengthBytes) {
+private byte[] encodeNumericText(String value, int lengthBytes, boolean preserveExact) {
 String v = (value == null) ? "" : value.trim();
-boolean negative = v.startsWith("-");
-if (negative) v = v.substring(1);
 v = v.replaceAll("[^0-9]", "");
+if (preserveExact) {
+byte[] out = new byte[lengthBytes];
+Arrays.fill(out, EBCDIC_SPACE);
+byte[] encoded = v.getBytes(CP037);
+System.arraycopy(encoded, 0, out, 0, Math.min(encoded.length, lengthBytes));
+return out;
+}
 while (v.length() < lengthBytes) v = "0" + v;
 if (v.length() > lengthBytes) v = v.substring(v.length() - lengthBytes);
+return v.getBytes(CP037);
+}
 
-byte[] out = new byte[lengthBytes];
-for (int i = 0; i < lengthBytes; i++) {
-int digit = v.charAt(i) - '0';
-if (i == lengthBytes - 1) {
-out[i] = (byte) (((negative ? 0x0D : 0x0C) << 4) | digit);
-} else {
-out[i] = (byte) (0xF0 | digit);
-}
-}
-return out;
+private boolean preserveExactNumericText(FieldSpec f) {
+return f != null && f.type == com.its255.schema.FieldType.NUMERIC_TEXT
+&& f.name != null && f.name.matches("FM3(5A|6A|6B|7A|7B|9A)-SEQ-NUM");
 }
 
 private byte[] encodeComp3(String value, int lengthBytes, int scale) {

@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.FieldType;
 import com.its255.schema.SchemaRegistry;
+import com.its255.util.FieldValueNormalizer;
 import com.its255.util.LoggingUtil;
 import com.its255.viewer.ChunkedMMapRecordStore;
 import com.its255.viewer.FastRecordFilter;
@@ -476,6 +477,7 @@ public class FastViewerController {
 				if (newValue != null && newValue.equals("{")) {
 					newValue = "0";
 				}
+				newValue = FieldValueNormalizer.normalize(fieldName, newValue);
 				newValue = preserveOriginalFieldLength(vs, recordNo, fieldName, newValue);
 				recordEdits.put(fieldName, newValue);
 				System.out.println("OVERLAY SAVED: viewMode=" + viewMode + ", record=" + recordNo + ", field=" + fieldName + ", value=" + newValue + " values=" + Arrays.toString(value));
@@ -763,6 +765,9 @@ public class FastViewerController {
 			}
 
 			if (newValue.matches("\\d+")) {
+				if (isPreserveExactNumericTextField(f)) {
+					return newValue;
+				}
 				if (f.type == FieldType.NUMERIC_TEXT || f.type == FieldType.ALPHA) {
 					int length = f.lengthBytes;
 					if (newValue.length() < length) {
@@ -776,14 +781,24 @@ public class FastViewerController {
 		return newValue;
 	}
 
+	private boolean isPreserveExactNumericTextField(FieldSpec f) {
+		return f != null && f.type == FieldType.NUMERIC_TEXT
+				&& f.name != null && f.name.matches("FM3(5A|6A|6B|7A|7B|9A)-SEQ-NUM");
+	}
+
 	private String selectFormFieldValue(ViewerSession vs, int recordNo, String fieldName, String viewMode,
 			String[] values) {
 		if (values == null || values.length == 0) {
 			return "";
 		}
 
+		FieldSpec fieldSpec = getFieldSpecFromSchema(vs, recordNo, fieldName);
+		if (fieldSpec != null && fieldSpec.type == FieldType.BINARY) {
+			return selectBinaryFormFieldValue(viewMode, values);
+		}
+
 		String longest = "";
-		int fieldLength = getFieldLengthFromSchema(vs, recordNo, fieldName);
+		int fieldLength = fieldSpec != null ? fieldSpec.lengthBytes : -1;
 
 		for (String candidate : values) {
 			if (candidate == null || candidate.isEmpty()) {
@@ -806,24 +821,42 @@ public class FastViewerController {
 		return values[0] != null ? values[0] : "";
 	}
 
-	private int getFieldLengthFromSchema(ViewerSession vs, int recordNo, String fieldName) {
+	private String selectBinaryFormFieldValue(String viewMode, String[] values) {
+		if ("horizontal".equalsIgnoreCase(viewMode)) {
+			for (int i = values.length - 1; i >= 0; i--) {
+				if (values[i] != null && !values[i].isBlank()) {
+					return values[i].trim();
+				}
+			}
+		}
+
+		for (String candidate : values) {
+			if (candidate != null && !candidate.isBlank()) {
+				return candidate.trim();
+			}
+		}
+
+		return values[0] != null ? values[0].trim() : "";
+	}
+
+	private FieldSpec getFieldSpecFromSchema(ViewerSession vs, int recordNo, String fieldName) {
 		if (vs == null || fieldName == null || fieldName.isBlank()) {
-			return -1;
+			return null;
 		}
 
 		String recordType = safeInvoke(vs.store, "readType", recordNo).trim();
 		List<FieldSpec> layout = SchemaRegistry.getSchema(vs.transactionType, recordType);
 		if (layout == null || layout.isEmpty()) {
-			return -1;
+			return null;
 		}
 
 		for (FieldSpec f : layout) {
 			if (f.name.equalsIgnoreCase(fieldName)) {
-				return f.lengthBytes;
+				return f;
 			}
 		}
 
-		return -1;
+		return null;
 	}
 
 	private long getRecordCount(Object store) {
