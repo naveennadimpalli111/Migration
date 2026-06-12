@@ -5,6 +5,7 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.its255.constants.FileViewerConstants;
@@ -617,8 +618,8 @@ public class SchemaHtmlRenderer {
 	}
 
 	private static boolean isEditableBinaryField(FieldSpec fieldSpec) {
-		return fieldSpec != null && ("FM1A5-SEQ-NUM".equalsIgnoreCase(fieldSpec.name)
-				|| "FM1F0-SEQ-NUM".equalsIgnoreCase(fieldSpec.name));
+		return fieldSpec != null && fieldSpec.name != null
+				&& fieldSpec.name.toUpperCase(Locale.ROOT).endsWith("-SEQ-NUM");
 	}
 
 	private static int maxInputLength(FieldSpec fieldSpec) {

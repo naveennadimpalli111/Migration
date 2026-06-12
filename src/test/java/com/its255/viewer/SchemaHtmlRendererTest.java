@@ -50,11 +50,32 @@ class SchemaHtmlRendererTest {
         assertTrue(html.contains("data-binary-editable=\"true\""));
     }
 
+    @Test
+    void renderVerticalMakesAnyBinarySeqNumEditableInEditMode() {
+        byte[] record = filledRecord(SchemaRegistry.getRecordLength("DF"), (byte) 0x40);
+        putCp037(record, 21, "21");
+
+        SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(new TestRecordStore(record, "1A"), CP037, "DF", true,
+                Map.of());
+
+        String html = renderer.renderVertical(1);
+
+        assertTrue(html.contains("FM21A-SEQ-NUM</th><td><input type=\"text\""));
+        assertTrue(html.contains("name=\"field_1_FM21A-SEQ-NUM\""));
+        assertTrue(html.contains("data-binary-editable=\"true\""));
+    }
+
     public static class TestRecordStore {
         private final byte[] record;
+        private final String recordType;
 
         TestRecordStore(byte[] record) {
+            this(record, "F0");
+        }
+
+        TestRecordStore(byte[] record, String recordType) {
             this.record = record;
+            this.recordType = recordType;
         }
 
         public byte[] readRecordBytes(int recordNo) {
@@ -62,7 +83,7 @@ class SchemaHtmlRendererTest {
         }
 
         public String readType(int recordNo) {
-            return "F0";
+            return recordType;
         }
     }
 
