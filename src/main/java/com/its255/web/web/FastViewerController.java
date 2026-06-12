@@ -221,7 +221,7 @@ public class FastViewerController {
 			sccf = safeInvoke(vs.store, "readSccf", rn);
 		}
 
-		String txn = safeInvoke(vs.store, "readTxn", rn);
+		//String txn = safeInvoke(vs.store, "readTxn", rn);
 
 		// Renderer
 		SchemaHtmlRenderer renderer = new SchemaHtmlRenderer(vs.store, cs(), vs.transactionType, vs.editMode,

@@ -14,7 +14,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.its255.schema.FieldSpec;
-import com.its255.schema.FieldType;
 import com.its255.schema.RecordType;
 import com.its255.util.FieldValueNormalizer;
 

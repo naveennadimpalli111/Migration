@@ -1,8 +1,6 @@
 package com.its255.schema;
 
 import static com.its255.schema.FieldType.ALPHA;
-import static com.its255.schema.FieldType.BINARY;
-import static com.its255.schema.FieldType.NUMERIC_TEXT;
 import static com.its255.schema.FieldType.PACKED_DECIMAL;
 
 import java.util.List;

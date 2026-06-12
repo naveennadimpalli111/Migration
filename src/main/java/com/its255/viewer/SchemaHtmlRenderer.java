@@ -617,7 +617,8 @@ public class SchemaHtmlRenderer {
 	}
 
 	private static boolean isEditableBinaryField(FieldSpec fieldSpec) {
-		return fieldSpec != null && "FM1A5-SEQ-NUM".equalsIgnoreCase(fieldSpec.name);
+		return fieldSpec != null && ("FM1A5-SEQ-NUM".equalsIgnoreCase(fieldSpec.name)
+				|| "FM1F0-SEQ-NUM".equalsIgnoreCase(fieldSpec.name));
 	}
 
 	private static int maxInputLength(FieldSpec fieldSpec) {
