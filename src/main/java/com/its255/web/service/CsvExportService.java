@@ -4,6 +4,7 @@ package com.its255.web.service;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.SchemaRegistry;
+import com.its255.util.FieldValueNormalizer;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -79,6 +80,10 @@ public class CsvExportService {
                         switch (f.type) {
                             case ALPHA: val = sliceTrim(rec, start, len); break;
                             case NUMERIC_TEXT: 
+                                if (FieldValueNormalizer.isBraceZeroField(f)) {
+                                    val = FieldValueNormalizer.normalize(f, sliceTrim(rec, start, len));
+                                    break;
+                                }
                             	int lastByte = rec[start + f.lengthBytes - 1] & 0xFF;
                                 int zone = (lastByte >>> 4) & 0x0F;
                                 if (zone != 0xF) {
@@ -130,6 +135,7 @@ public class CsvExportService {
                             case BINARY: val = invokeParser("decodeBinary", rec, start, len, f.scale); break;
                             default: val = "";
                         }
+                        val = FieldValueNormalizer.normalize(f, val);
                         row[i] = val;
                     }
                     updRow = append(updRow, row);

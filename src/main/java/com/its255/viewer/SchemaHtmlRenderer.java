@@ -5,6 +5,7 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.its255.constants.FileViewerConstants;
@@ -12,6 +13,7 @@ import com.its255.schema.FieldSpec;
 import com.its255.schema.FieldType;
 import com.its255.schema.RecordType;
 import com.its255.schema.SchemaRegistry;
+import com.its255.util.FieldValueNormalizer;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -117,7 +119,10 @@ public class SchemaHtmlRenderer {
 				int recordNo = Integer.parseInt(obj.toString());
 
 				byte[] rec = readRecordBytes(recordNo);
-				String type = readType(recordNo).trim();
+				String type = readType(recordNo).trim(); // Original form type - ALWAYS use for SCCF prefix
+
+				Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNo) : null;
+				String displayType = type; // For display (may be overridden)
 
 				RecordType rt = RecordType.from(type);
 				List<FieldSpec> rowLayout = SchemaRegistry.getSchema(transactionType, rt.code);
@@ -126,9 +131,15 @@ public class SchemaHtmlRenderer {
 				sb.append("<td>").append(recordNo).append("</td>");
 
 				String sccf = sliceTrim(rec, 0, 15); // adjust if needed
+
+				if (recordOverlay != null) {
+					sccf = resolveOverlaySccf(sccf, type, recordOverlay);
+					displayType = resolveOverlayRecordType(displayType, recordOverlay);
+				}
+
 				sb.append("<td>").append(escape(sccf)).append("</td>");
 
-				sb.append("<td>").append(escape(type)).append("</td>");
+				sb.append("<td>").append(escape(displayType)).append("</td>");
 
 				if (rowLayout != null) {
 					for (FieldSpec f : rowLayout) {
@@ -150,36 +161,25 @@ public class SchemaHtmlRenderer {
 							case PACKED_DECIMAL:
 								val = invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
 								break;
+							case BINARY:
+								val = invokeFixed("decodeBinary", rec, start, len, f.scale);
+								break;
 							default:
 								val = "";
 						}
-						String fieldKey = "field_" + recordNo + "_" + f.name;
-
-						Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNo) : null;
 
 						if (recordOverlay != null && recordOverlay.containsKey(f.name)) {
 							val = recordOverlay.get(f.name);
 						}
-						// boolean nonEditableType = f.type == FieldType.PACKED_DECIMAL || f.type ==
-						// FieldType.BINARY;
-						boolean nonEditableType = f.type == FieldType.BINARY;
-						boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name)
-								&& !nonEditableType;
-						sb.append("<td>");
+						val = FieldValueNormalizer.normalize(f, val);
+						// Normalize special placeholder '{' to '0' for display
+						val = normalizeValue(val);
+						boolean editable = editMode && isEditableField(f);
 
+						sb.append("<td>");
 						if (editable) {
-						String encodedFieldName = URLEncoder.encode(f.name, StandardCharsets.UTF_8).replace("+", "%20");
-						sb.append("<input type=\"text\"")
-							.append(" class=\"form-control form-control-sm editable-field\" ")
-							.append("name=\"field_").append(recordNo).append("_").append(encodedFieldName).append("\" ")
-							.append("value=\"").append(escapeAttribute(val)).append("\" ")
-							.append("maxlength=\"").append(f.lengthBytes).append("\" ")
-							.append("data-ftype=\"").append(escapeAttribute(f.type.name())).append("\" ")
-							.append("data-flen=\"").append(f.lengthBytes).append("\" ")
-							.append("data-fscale=\"").append(f.scale).append("\" ")
-							.append(f.type == com.its255.schema.FieldType.NUMERIC_TEXT ? "inputmode=\"numeric\" " : "")
-							.append("/>")
-							.append("<div class='invalid-feedback' style='display:none;'></div>");
+							appendEditableInput(sb, recordNo, f, val);
+							sb.append("<div class='invalid-feedback' style='display:none;'></div>");
 						} else {
 							sb.append(escape(val));
 						}
@@ -198,7 +198,7 @@ public class SchemaHtmlRenderer {
 		return sb.toString();
 	}
 
-	public String renderHorizontalPage(HttpSession session, String selectedType, int offset, int limit) {
+	public String renderHorizontalPage(HttpSession session, String selectedType, int offset, int limit, int page) {
 
 		ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
 
@@ -224,6 +224,7 @@ public class SchemaHtmlRenderer {
 		sb.append("<thead class='sticky-head'><tr>");
 
 		sb.append("<th style='min-width:180px;'>Record No</th>");
+		sb.append("<th style='min-width:160px;'>Actions</th>");
 		sb.append("<th style='min-width:180px;'>SCCF ID</th>");
 		sb.append("<th style='min-width:120px;'>Type</th>");
 
@@ -250,49 +251,55 @@ public class SchemaHtmlRenderer {
 
 			byte[] rec = readRecordBytes(recordNo);
 
-			String type = readType(recordNo).trim();
+			String type = readType(recordNo).trim(); // Original form type (05, 10, 15, etc.) - ALWAYS use this for SCCF prefix
+
+			Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNo) : null;
+			String displayType = type; // Type to display (may be overridden by REC_TYPE, *-REC-TYPE, or *-CLM-TYPE)
 
 			RecordType rt = RecordType.from(type);
 
 			List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
+
+			boolean isEditingRecord = editMode && vs.selectedEditRecord != null && vs.selectedEditRecord == recordNo;
 
 			// sb.append("<tr>");
 			sb.append("<tr data-recordno='").append(recordNo).append("'>");
 
 			sb.append("<td>").append(recordNo).append("</td>");
 
-			// sb.append("<td>").append(escape(sliceTrim(rec, 0, 15))).append("</td>");
+			// Actions column with Edit/Delete or Save/Cancel for the active edit row
+			sb.append("<td>");
+			if (isEditingRecord) {
+				sb.append("<button type='submit' form='saveForm' class='btn btn-sm btn-primary me-1'>");
+				sb.append("<i class='bi bi-save'></i> Save");
+				sb.append("</button>");
+				sb.append("<button type='button' class='btn btn-sm btn-secondary' onclick=\"window.location.href='/viewer/view?page=").append(page).append("'\">");
+				sb.append("<i class='bi bi-x-circle'></i> Cancel");
+				sb.append("</button>");
+			} else {
+				sb.append("<button type='button' class='btn btn-sm btn-outline-primary me-1' onclick='editHorizontalRecord(").append(recordNo).append(")'>");
+				sb.append("<i class='bi bi-pencil'></i> Edit");
+				sb.append("</button>");
+				sb.append("<button type='button' class='btn btn-sm btn-outline-danger' onclick='deleteHorizontalRecord(").append(recordNo).append(")'>");
+				sb.append("<i class='bi bi-trash'></i> Delete");
+				sb.append("</button>");
+			}
+			sb.append("</td>");
+
 			String sccf = sliceTrim(rec, 0, 15);
 
-			Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNo) : null;
-
 			if (recordOverlay != null) {
-				String prefix = "FM1" + type.trim() + "-SER-NUM-";
-
-				String localPlan = recordOverlay.getOrDefault(prefix + "LOCAL-PLAN", "");
-				String cc = recordOverlay.getOrDefault(prefix + "JULDT-CC", "");
-				String yy = recordOverlay.getOrDefault(prefix + "JULDT-YY", "");
-				String ddd = recordOverlay.getOrDefault(prefix + "JULDT-DDD", "");
-				String sequence = recordOverlay.getOrDefault(prefix + "SEQUENCE", "");
-				String suffix = recordOverlay.getOrDefault(prefix + "SUFFIX", "");
-
-				String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
-
-				if (!rebuilt.trim().isEmpty()) {
-					sccf = rebuilt;
-				}
-
-				sccf = recordOverlay.getOrDefault("SCCF", sccf);
+				sccf = resolveOverlaySccf(sccf, type, recordOverlay);
+				displayType = resolveOverlayRecordType(displayType, recordOverlay);
 			}
 
+			// Normalize special placeholder '{' to '0' for display
+			sccf = normalizeValue(sccf);
 			sb.append("<td>").append(escape(sccf)).append("</td>");
 
-			sb.append("<td>").append(escape(type)).append("</td>");
-
+			sb.append("<td>").append(escape(displayType)).append("</td>");
 			if (layout != null) {
-
 				for (FieldSpec f : layout) {
-
 					if ("SCCF".equalsIgnoreCase(f.name) || "REC_TYPE".equalsIgnoreCase(f.name)) {
 						continue;
 					}
@@ -306,36 +313,25 @@ public class SchemaHtmlRenderer {
 
 						case PACKED_DECIMAL -> invokeFixed("decodeComp3ToString", rec, start, len, f.scale);
 
+						case BINARY -> invokeFixed("decodeBinary", rec, start, len, f.scale);
+
 						default -> "";
 					};
 
 					if (recordOverlay != null && recordOverlay.containsKey(f.name)) {
-
 						val = recordOverlay.get(f.name);
 					}
 
-					boolean nonEditableType = f.type == FieldType.BINARY;
+					val = FieldValueNormalizer.normalize(f, val);
+					// Normalize special placeholder '{' to '0' for display
+					val = normalizeValue(val);
 
-					boolean editable = editMode && !List.of("SCCF", "REC_TYPE").contains(f.name) && !nonEditableType;
+					boolean editable = isEditingRecord && isEditableField(f);
 
 					sb.append("<td>");
-
 					if (editable) {
-						String encodedFieldName = URLEncoder.encode(f.name, StandardCharsets.UTF_8).replace("+", "%20");
-						sb.append("<input type=\"text\" ").append("class=\"form-control form-control-sm editable-field\" ")
-							.append("name=\"field_").append(recordNo).append("_").append(encodedFieldName).append("\" ")
-							.append("value=\"").append(escapeAttribute(val)).append("\" ")
-							.append("maxlength=\"").append(f.lengthBytes).append("\" ")
-							.append("data-ftype=\"").append(escapeAttribute(f.type.name())).append("\" ")
-							.append("data-flen=\"").append(f.lengthBytes).append("\" ")
-							.append("data-fscale=\"").append(f.scale).append("\" ");
-
-						if (f.type == FieldType.NUMERIC_TEXT) {
-							sb.append("inputmode=\"numeric\" ");
-						}
-
-						sb.append("/>");
-						sb.append("<div class='invalid-feedback' ").append("style='display:none;'></div>");
+						appendEditableInput(sb, recordNo, f, val);
+						sb.append("<div class='invalid-feedback' style='display:none;'></div>");
 					} else {
 						sb.append(escape(val));
 					}
@@ -361,25 +357,15 @@ public class SchemaHtmlRenderer {
 	}
 
 	private String row(String name, String value, int recordNo, FieldSpec fieldSpec) {
-		boolean editable = editMode && isEditableField(name);
+		// Normalize before display: treat '{' as '0'
+		value = normalizeValue(value);
+		boolean editable = editMode && isEditableField(fieldSpec);
 		StringBuilder sb = new StringBuilder();
 		sb.append("<tr>");
 		sb.append("<th scope='row' style='white-space:nowrap'>").append(escape(name)).append("</th>");
 		sb.append("<td>");
 		if (editable) {
-			String encodedFieldName = URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20");
-			sb.append("<input type='text' ")
-				.append("class='form-control form-control-sm editable-field' ")
-				.append("name='field_").append(recordNo).append("_").append(encodedFieldName).append("' ")
-				.append("value='").append(escape(value)).append("' ");
-			if (fieldSpec != null) {
-				sb.append("maxlength='").append(fieldSpec.lengthBytes).append("' ")
-					.append("data-ftype='").append(fieldSpec.type.name()).append("' ")
-					.append("data-flen='").append(fieldSpec.lengthBytes).append("' ")
-					.append("data-fscale='").append(fieldSpec.scale).append("' ")
-					.append(fieldSpec.type == FieldType.NUMERIC_TEXT ? "inputmode='numeric'" : "");
-			}
-			sb.append("/>");
+			appendEditableInput(sb, recordNo, fieldSpec, value);
 			sb.append("<div class='invalid-feedback' style='display:none;'></div>");
 		} else {
 			sb.append("<pre style='margin:0'>").append(escape(value)).append("</pre>");
@@ -409,7 +395,7 @@ public class SchemaHtmlRenderer {
 			String byteLenValue = String.valueOf(rec.length);
 			Map<String, String> recordOverlay = editOverlay != null ? editOverlay.get(recordNumber1Based) : null;
 			if (recordOverlay != null) {
-				recTypeValue = recordOverlay.getOrDefault("REC_TYPE", recTypeValue);
+				recTypeValue = resolveOverlayRecordType(recTypeValue, recordOverlay);
 				byteLenValue = recordOverlay.getOrDefault("BYTE_LEN", byteLenValue);
 			}
 			sb.append(row("REC_TYPE", recTypeValue, recordNumber1Based, null));
@@ -442,6 +428,9 @@ public class SchemaHtmlRenderer {
 
 					val = recordOverlay.get(f.name);
 				}
+				val = FieldValueNormalizer.normalize(f, val);
+				// Normalize before rendering (treat '{' as '0')
+				val = normalizeValue(val);
 				sb.append(row(f.name, val, recordNumber1Based, f));
 			}
 		}
@@ -518,6 +507,85 @@ public class SchemaHtmlRenderer {
 				.replace("\"", "&quot;");
 	}
 
+	/**
+	 * Normalize values before display: treat single '{' as '0'.
+	 */
+	private static String normalizeValue(String s) {
+		if (s == null) return "";
+		if (s.equals("{")) return "0";
+		return s;
+	}
+
+	private String resolveOverlayRecordType(String currentType, Map<String, String> overlay) {
+		if (overlay == null || overlay.isEmpty()) {
+			return currentType;
+		}
+
+		String override = overlay.get("REC_TYPE");
+		if (override != null && !override.isBlank()) {
+			return override;
+		}
+
+		for (String key : overlay.keySet()) {
+			String upper = key.toUpperCase();
+			if (upper.endsWith("REC_TYPE") || upper.endsWith("REC_TYPE")) {
+				String value = overlay.get(key);
+				if (value != null && !value.isBlank()) {
+					return value;
+				}
+			}
+		}
+
+		return currentType;
+	}
+
+	private String resolveOverlaySccf(String currentSccf, String type, Map<String, String> overlay) {
+		if (overlay == null || overlay.isEmpty()) {
+			return currentSccf;
+		}
+
+		String direct = overlay.get("SCCF");
+		if (direct != null && !direct.isBlank()) {
+			return direct;
+		}
+
+		for (String key : overlay.keySet()) {
+			if (key != null && key.toUpperCase().contains("SCCF")) {
+				String value = overlay.get(key);
+				if (value != null && !value.isBlank()) {
+					return value;
+				}
+			}
+		}
+
+		String prefix = null;
+		for (String key : overlay.keySet()) {
+			if (key == null) continue;
+			String upper = key.toUpperCase();
+			int idx = upper.indexOf("-SER-NUM-");
+			if (idx >= 0) {
+				prefix = key.substring(0, idx + 9);
+				break;
+			}
+		}
+
+		if (prefix != null) {
+			String localPlan = normalizeValue(overlay.getOrDefault(prefix + "LOCAL-PLAN", ""));
+			String cc = normalizeValue(overlay.getOrDefault(prefix + "JULDT-CC", ""));
+			String yy = normalizeValue(overlay.getOrDefault(prefix + "JULDT-YY", ""));
+			String ddd = normalizeValue(overlay.getOrDefault(prefix + "JULDT-DDD", ""));
+			String sequence = normalizeValue(overlay.getOrDefault(prefix + "SEQUENCE", ""));
+			String suffix = normalizeValue(overlay.getOrDefault(prefix + "SUFFIX", ""));
+
+			String rebuilt = localPlan + cc + yy + ddd + sequence + suffix;
+			if (!rebuilt.trim().isEmpty()) {
+				return rebuilt;
+			}
+		}
+
+		return currentSccf;
+	}
+
 	private static Integer parseOverpunchInt(String s) {
 		if (s == null || s.isEmpty())
 			return null;
@@ -542,8 +610,54 @@ public class SchemaHtmlRenderer {
 		return neg ? -value : value;
 	}
 
-	private static boolean isEditableField(String name) {
-		return name != null && !List.of("SCCF", "REC_TYPE").contains(name);
+	private static boolean isEditableField(FieldSpec fieldSpec) {
+		if (fieldSpec == null) {
+			return false;
+		}
+		return fieldSpec.type != FieldType.BINARY || isEditableBinaryField(fieldSpec);
+	}
+
+	private static boolean isEditableBinaryField(FieldSpec fieldSpec) {
+		return fieldSpec != null && fieldSpec.name != null
+				&& fieldSpec.name.toUpperCase(Locale.ROOT).endsWith("-SEQ-NUM");
+	}
+
+	private static int maxInputLength(FieldSpec fieldSpec) {
+		if (fieldSpec != null && fieldSpec.type == FieldType.BINARY) {
+			return String.valueOf(maxSignedBinaryValue(fieldSpec.lengthBytes)).length();
+		}
+		return fieldSpec != null ? fieldSpec.lengthBytes : 0;
+	}
+
+	private static long maxSignedBinaryValue(int lengthBytes) {
+		if (lengthBytes <= 0) {
+			return 0L;
+		}
+		if (lengthBytes >= Long.BYTES) {
+			return Long.MAX_VALUE;
+		}
+		return (1L << (lengthBytes * 8 - 1)) - 1L;
+	}
+
+	private static void appendEditableInput(StringBuilder sb, int recordNo, FieldSpec fieldSpec, String value) {
+		String encodedFieldName = URLEncoder.encode(fieldSpec.name, StandardCharsets.UTF_8).replace("+", "%20");
+		int maxLength = maxInputLength(fieldSpec);
+		sb.append("<input type=\"text\"")
+			.append(" class=\"form-control form-control-sm editable-field\" ")
+			.append("name=\"field_").append(recordNo).append("_").append(encodedFieldName).append("\" ")
+			.append("value=\"").append(escapeAttribute(value)).append("\" ")
+			.append("maxlength=\"").append(maxLength).append("\" ")
+			.append("data-ftype=\"").append(escapeAttribute(fieldSpec.type.name())).append("\" ")
+			.append("data-flen=\"").append(maxLength).append("\" ")
+			.append("data-fscale=\"").append(fieldSpec.scale).append("\" ");
+		if (fieldSpec.type == FieldType.BINARY) {
+			sb.append("data-binary-editable=\"true\" ")
+				.append("data-binary-max=\"").append(maxSignedBinaryValue(fieldSpec.lengthBytes)).append("\" ")
+				.append("inputmode=\"numeric\" ");
+		} else if (fieldSpec.type == FieldType.NUMERIC_TEXT) {
+			sb.append("inputmode=\"numeric\" ");
+		}
+		sb.append("/>");
 	}
 
 	/** Safer overpunch decoder that returns null for invalid inputs. */

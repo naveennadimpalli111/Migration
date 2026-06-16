@@ -2,8 +2,10 @@ package com.its255.viewer;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.its255.util.LoggingUtil;
 
@@ -24,13 +26,17 @@ public class ViewerSession implements AutoCloseable {
     public String transactionType;         // selected transaction type for Horizontal rendering
     public String selectedRecordType;      // selected record type for horizontal rendering
     public Path sessionDir; // per-session temp directory
+    public String s3Key; // S3 object key when S3 storage is enabled
+    public boolean s3Enabled; // whether this session is backed by S3
     public  boolean editMode=false;  // whether we're in edit mode (vs. view-only)
-    
+    public Integer selectedEditRecord; // currently edited horizontal record
+    public boolean hasCommittedChanges = false; // saved changes are baked into filePath and can be downloaded
 
     public boolean hasFile() {
         return filePath != null && store != null;
     }
-    public Map<Integer,Map<String,String>>editOverlay=new HashMap<>();
+    public Map<Integer,Map<String,String>> editOverlay = new HashMap<>();
+    public Set<Integer> deletedRecords = new HashSet<>();
     @Override
     public void close() {
         if (store instanceof AutoCloseable ac) {

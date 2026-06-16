@@ -851,7 +851,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const type = (el.dataset.ftype || "").toUpperCase();
 
     let value = el.value || "";
-    if (type === "NUMERIC_TEXT") {
+    if (type === "BINARY" && el.dataset.binaryEditable === "true") {
+      value = value.replace(/[^0-9]/g, "");
+    } else if (type === "NUMERIC_TEXT") {
       value = value.replace(/[^0-9]/g, "");
     }
 
@@ -884,7 +886,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const type = (el.dataset.ftype || "").toUpperCase();
 
-    if (type === "BINARY") {
+    if (type === "BINARY" && el.dataset.binaryEditable !== "true") {
       el.readOnly = true;
 
       el.classList.add("non-editable");
@@ -985,6 +987,21 @@ function validateField(el) {
       return false;
     }
   }
+  else if (ftype === "BINARY") {
+    if (el.getAttribute("data-binary-editable") !== "true") {
+      clearInvalid(el);
+      return true;
+    }
+    if (val && !/^[0-9]+$/.test(val)) {
+      setInvalid(el, "Only numeric values allowed");
+      return false;
+    }
+    const max = parseInt(el.getAttribute("data-binary-max") || "0", 10) || 0;
+    if (max > 0 && val && parseInt(val, 10) > max) {
+      setInvalid(el, `Max value ${max}`);
+      return false;
+    }
+  }
   // PACKED_DECIMAL
   else if (ftype === "PACKED_DECIMAL") {
     if (val && !/^[0-9]+(\.[0-9]+)?$/.test(val)) {
@@ -1015,7 +1032,9 @@ document.addEventListener("input", function (event) {
   const type = (el.dataset.ftype || "").toUpperCase();
   let value = el.value || "";
 
-  if (type === "NUMERIC_TEXT") {
+  if (type === "BINARY" && el.dataset.binaryEditable === "true") {
+    value = value.replace(/[^0-9]/g, "");
+  } else if (type === "NUMERIC_TEXT") {
     value = value.replace(/[^0-9]/g, "");
   } else if (type === "PACKED_DECIMAL") {
     value = value.replace(/[^0-9.]/g, "");

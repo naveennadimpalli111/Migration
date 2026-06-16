@@ -20,4 +20,13 @@ public class RecordNavigator {
     public void next() { if (hasNext()) idx++; }
     public int position() { return (records.isEmpty()?0:idx+1); }
     public int currentRecordNumber() { return records.isEmpty()? -1 : records.get(idx); }
+    public void setCurrent(int recordNumber) {
+        if (records == null || records.isEmpty()) {
+            return;
+        }
+        int index = records.indexOf(recordNumber);
+        if (index >= 0) {
+            idx = index;
+        }
+    }
 }

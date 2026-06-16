@@ -16,6 +16,7 @@ import java.util.Map;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
 import com.its255.schema.SchemaRegistry;
+import com.its255.util.FieldValueNormalizer;
 
 /**
 * Service that produces a downloadable edited file by streaming records
@@ -40,32 +41,63 @@ public void streamEditedFile(Path originalFile,
 Map<Integer, Map<String, String>> editOverlay,
 String transactionType,
 OutputStream out) throws IOException {
-
-int recordLength = SchemaRegistry.getRecordLength(transactionType);
-long fileSize = Files.size(originalFile);
-int totalRecords = (int) (fileSize / recordLength);
-
-byte[] recordBuffer = new byte[recordLength];
-BufferedOutputStream bufferedOut = new BufferedOutputStream(out, 8192);
-
-try (RandomAccessFile raf = new RandomAccessFile(originalFile.toFile(), "r")) {
-for (int recNum = 1; recNum <= totalRecords; recNum++) {
-raf.readFully(recordBuffer);
-
-Map<String, String> edits = editOverlay.get(recNum);
-if (edits != null && !edits.isEmpty()) {
-applyEditsToRecord(recordBuffer, edits, transactionType, recordLength);
+    streamEditedFile(originalFile, editOverlay, null, transactionType, out);
 }
 
-bufferedOut.write(recordBuffer, 0, recordLength);
-}
+public void streamEditedFile(Path originalFile,
+Map<Integer, Map<String, String>> editOverlay,
+java.util.Set<Integer> deletedRecords,
+String transactionType,
+OutputStream out) throws IOException {
+
+    int recordLength = SchemaRegistry.getRecordLength(transactionType);
+    long fileSize = Files.size(originalFile);
+    int totalRecords = (int) (fileSize / recordLength);
+
+    byte[] recordBuffer = new byte[recordLength];
+    BufferedOutputStream bufferedOut = new BufferedOutputStream(out, 8192);
+
+    try (RandomAccessFile raf = new RandomAccessFile(originalFile.toFile(), "r")) {
+        for (int recNum = 1; recNum <= totalRecords; recNum++) {
+            raf.readFully(recordBuffer);
+
+            if (deletedRecords != null && deletedRecords.contains(recNum)) {
+                continue;
+            }
+
+            Map<String, String> edits = (editOverlay == null) ? null : editOverlay.get(recNum);
+            if (edits != null && !edits.isEmpty()) {
+                applyEditsToRecord(recordBuffer, edits, transactionType, recordLength);
+            }
+            normalizeBraceZeroFields(recordBuffer, transactionType);
+
+            bufferedOut.write(recordBuffer, 0, recordLength);
+        }
+    }
+
+    bufferedOut.flush();
 }
 
-bufferedOut.flush();
+public long getEditedFileSize(Path originalFile, java.util.Set<Integer> deletedRecords,
+String transactionType) throws IOException {
+    int recordLength = SchemaRegistry.getRecordLength(transactionType);
+    long fileSize = Files.size(originalFile);
+    int totalRecords = (int) (fileSize / recordLength);
+
+    int deleteCount = 0;
+    if (deletedRecords != null) {
+        for (Integer deletedRecord : deletedRecords) {
+            if (deletedRecord != null && deletedRecord >= 1 && deletedRecord <= totalRecords) {
+                deleteCount++;
+            }
+        }
+    }
+    long trimmedSize = fileSize - ((long) deleteCount * recordLength);
+    return Math.max(trimmedSize, 0L);
 }
 
 public long getEditedFileSize(Path originalFile) throws IOException {
-return Files.size(originalFile);
+    return Files.size(originalFile);
 }
 
 private void applyEditsToRecord(byte[] record, Map<String, String> edits,
@@ -73,6 +105,68 @@ String transactionType, int recordLength) {
 String type = readTypeFromRecord(record, transactionType);
 RecordType rt = RecordType.from(type.trim());
 List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
+
+// First: handle SCCF reconstruction and REC_TYPE overrides so they are present
+// before per-field writes (per-field writes may overwrite components).
+try {
+// Rebuild SCCF: prefer direct SCCF key (case-insensitive), else keys containing SCCF,
+// else assemble from prefix components (FM1<type>-SER-NUM-...)
+String sccf = null;
+for (String k : edits.keySet()) {
+if (k != null && k.equalsIgnoreCase("SCCF")) { sccf = edits.get(k); break; }
+}
+if (sccf == null) {
+for (String k : edits.keySet()) {
+if (k != null && k.toUpperCase().contains("SCCF")) { sccf = edits.get(k); break; }
+}
+}
+if (sccf == null) {
+String prefix = "FM1" + type.trim() + "-SER-NUM-";
+String localPlan = edits.getOrDefault(prefix + "LOCAL-PLAN", "");
+String cc = edits.getOrDefault(prefix + "JULDT-CC", "");
+String yy = edits.getOrDefault(prefix + "JULDT-YY", "");
+String ddd = edits.getOrDefault(prefix + "JULDT-DDD", "");
+String sequence = edits.getOrDefault(prefix + "SEQUENCE", "");
+String suffix = edits.getOrDefault(prefix + "SUFFIX", "");
+StringBuilder sb = new StringBuilder();
+if (localPlan != null) sb.append(localPlan);
+if (cc != null) sb.append(cc);
+if (yy != null) sb.append(yy);
+if (ddd != null) sb.append(ddd);
+if (sequence != null) sb.append(sequence);
+if (suffix != null) sb.append(suffix);
+if (sb.length() > 0) sccf = sb.toString();
+}
+if (sccf != null) {
+if (sccf.equals("{")) sccf = "0";
+byte[] enc = (sccf == null) ? new byte[15] : encodeAlpha(sccf, 15);
+System.arraycopy(enc, 0, record, 0, Math.min(enc.length, 15));
+}
+} catch (Exception ignore) {
+}
+
+try {
+// REC_TYPE override: look for REC_TYPE or keys ending with REC-TYPE/REC_TYPE
+String recKey = null;
+for (String k : edits.keySet()) {
+if (k == null) continue;
+String up = k.toUpperCase();
+if (up.equals("REC_TYPE") || up.equals("REC-TYPE") || up.endsWith("REC-TYPE") || up.endsWith("REC_TYPE")) { recKey = k; break; }
+}
+if (recKey != null) {
+String recVal = edits.get(recKey);
+if (recVal == null) recVal = "";
+if (recVal.equals("{")) recVal = "0";
+int typeOffset;
+switch (transactionType) {
+case "PPU": case "PPA": typeOffset = 2; break;
+default: typeOffset = 21; break;
+}
+byte[] enc = encodeAlpha(recVal, 2);
+if (typeOffset + 2 <= record.length) System.arraycopy(enc, 0, record, typeOffset, 2);
+}
+} catch (Exception ignore) {
+}
 
 if (layout == null || layout.isEmpty()) return;
 
@@ -83,8 +177,26 @@ for (Map.Entry<String, String> edit : edits.entrySet()) {
 FieldSpec f = fieldMap.get(edit.getKey());
 if (f == null) continue;
 
-byte[] encoded = encodeField(edit.getValue(), f);
+byte[] encoded = encodeField(FieldValueNormalizer.normalize(f, edit.getValue()), f);
 System.arraycopy(encoded, 0, record, f.start1Based - 1, f.lengthBytes);
+}
+}
+
+private void normalizeBraceZeroFields(byte[] record, String transactionType) {
+String type = readTypeFromRecord(record, transactionType);
+RecordType rt = RecordType.from(type.trim());
+List<FieldSpec> layout = SchemaRegistry.getSchema(transactionType, rt.code);
+if (layout == null || layout.isEmpty()) return;
+
+for (FieldSpec f : layout) {
+if (!FieldValueNormalizer.isBraceZeroField(f)) continue;
+int start = f.start1Based - 1;
+if (start < 0 || start + f.lengthBytes > record.length) continue;
+String value = new String(record, start, f.lengthBytes, CP037);
+String normalized = FieldValueNormalizer.normalize(f, value);
+if (normalized.equals(value)) continue;
+byte[] encoded = encodeAlpha(normalized, f.lengthBytes);
+System.arraycopy(encoded, 0, record, start, f.lengthBytes);
 }
 }
 
@@ -103,7 +215,7 @@ return new String(record, typeOffset, typeLen, CP037).trim();
 private byte[] encodeField(String value, FieldSpec f) {
 switch (f.type) {
 case ALPHA: return encodeAlpha(value, f.lengthBytes);
-case NUMERIC_TEXT: return encodeNumericText(value, f.lengthBytes);
+case NUMERIC_TEXT: return encodeNumericText(value, f.lengthBytes, preserveExactNumericText(f));
 case PACKED_DECIMAL: return encodeComp3(value, f.lengthBytes, f.scale);
 case BINARY: return encodeBinary(value, f.lengthBytes);
 default:
@@ -122,24 +234,24 @@ System.arraycopy(encoded, 0, out, 0, Math.min(encoded.length, lengthBytes));
 return out;
 }
 
-private byte[] encodeNumericText(String value, int lengthBytes) {
+private byte[] encodeNumericText(String value, int lengthBytes, boolean preserveExact) {
 String v = (value == null) ? "" : value.trim();
-boolean negative = v.startsWith("-");
-if (negative) v = v.substring(1);
 v = v.replaceAll("[^0-9]", "");
+if (preserveExact) {
+byte[] out = new byte[lengthBytes];
+Arrays.fill(out, EBCDIC_SPACE);
+byte[] encoded = v.getBytes(CP037);
+System.arraycopy(encoded, 0, out, 0, Math.min(encoded.length, lengthBytes));
+return out;
+}
 while (v.length() < lengthBytes) v = "0" + v;
 if (v.length() > lengthBytes) v = v.substring(v.length() - lengthBytes);
+return v.getBytes(CP037);
+}
 
-byte[] out = new byte[lengthBytes];
-for (int i = 0; i < lengthBytes; i++) {
-int digit = v.charAt(i) - '0';
-if (i == lengthBytes - 1) {
-out[i] = (byte) (((negative ? 0x0D : 0x0C) << 4) | digit);
-} else {
-out[i] = (byte) (0xF0 | digit);
-}
-}
-return out;
+private boolean preserveExactNumericText(FieldSpec f) {
+return f != null && f.type == com.its255.schema.FieldType.NUMERIC_TEXT
+&& f.name != null && f.name.matches("FM3(5A|6A|6B|7A|7B|9A)-SEQ-NUM");
 }
 
 private byte[] encodeComp3(String value, int lengthBytes, int scale) {

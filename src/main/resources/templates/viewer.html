@@ -1,4 +1,3 @@
-Description
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
@@ -9,6 +8,9 @@ Description
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
 
   <!-- App-specific CSS -->
   <!-- <link rel="stylesheet" th:href="@{/css/viewer.css}" href="/css/viewer.css" /> -->
@@ -74,6 +76,9 @@ Description
       </div>
       <div class="form-text mt-2" th:if="${hasFile}" role="status" aria-live="polite">
         <span class="badge rounded-pill text-bg-primary fs-5 py-2 px-4" th:text="${filename}"> yourfile.dat </span>
+        <span class="badge rounded-pill text-bg-secondary fs-6 py-2 px-3 ms-2"
+          th:if="${s3Enabled and s3Key != null and !#strings.isEmpty(s3Key)}"
+          th:text="${s3Key}">s3/key.dat</span>
         <span class="visually-hidden"> is cached for this session.</span>
       </div>
 
@@ -306,6 +311,8 @@ filtered records as ZIP containing CSV files per record type. </span>
     <form id="saveForm" th:action="@{/viewer/save}" method="post" enctype="application/x-www-form-urlencoded">
       <input type="hidden" id="horizontalPage" name="page" th:value="${horizontalPage}"> <input type="hidden"
         id="viewMode" name="viewMode" th:value="${viewMode}">
+      <input type="hidden" id="currentRecordNo" name="currentRecordNo" th:value="${currentRecordNo}">
+      <input type="hidden" id="editingRecordNo" name="editingRecordNo" th:value="${selectedEditRecord}">
       <div class="record-container">
 
         <!-- VERTICAL -->
@@ -328,14 +335,20 @@ filtered records as ZIP containing CSV files per record type. </span>
         </div>
 
       </div>
-      <a class="btn btn-primary mt-2" th:if="${editMode!=true}"
+      <a id="verticalEditButton" class="btn btn-primary mt-2" th:if="${editMode!=true}"
+        th:style="${viewMode=='horizontal'} ? 'display:none;' : ''"
         th:href="@{/viewer/edit(page=${horizontalPage})}">Edit</a>
+      <button id="verticalDeleteButton" type="button" class="btn btn-danger mt-2 ms-2" th:if="${editMode!=true}"
+        th:style="${viewMode=='horizontal'} ? 'display:none;' : ''"
+        onclick="deleteCurrentRecord()">Delete</button>
 
-      <button id="btnSave" class="btn btn-success mt-2" type="submit" th:if="${editMode==true}">Save</button>
+      <button id="verticalSaveButton" class="btn btn-success mt-2" type="submit"
+        th:if="${editMode==true and selectedEditRecord == null}"
+        th:style="${viewMode=='horizontal'} ? 'display:none;' : ''">Save</button>
 
-
-
-      <a class="btn btn-secondary mt-2" th:if="${editMode==true}" th:href="@{/viewer/view}">Cancel</a>
+      <a id="verticalCancelButton" class="btn btn-secondary mt-2" th:if="${editMode==true and selectedEditRecord == null}"
+        th:style="${viewMode=='horizontal'} ? 'display:none;' : ''"
+        th:href="@{/viewer/view(page=${horizontalPage})}">Cancel</a>
 
     </form>
 
@@ -387,6 +400,23 @@ filtered records as ZIP containing CSV files per record type. </span>
       if (el) el.style.setProperty("display", "none", "important");
     }
 
+    function updateActiveInputs() {
+      const vertical = document.getElementById("verticalView");
+      const horizontal = document.getElementById("horizontalView");
+      if (!vertical || !horizontal) return;
+
+      const verticalInputs = vertical.querySelectorAll("input, textarea, select");
+      const horizontalInputs = horizontal.querySelectorAll("input, textarea, select");
+      const verticalVisible = !isHorizontal;
+
+      verticalInputs.forEach((input) => {
+        input.disabled = !verticalVisible;
+      });
+      horizontalInputs.forEach((input) => {
+        input.disabled = verticalVisible;
+      });
+    }
+
     /*switch btn by default vertical view*/
     let isHorizontal = false;
     function updateViewMode(mode) {
@@ -405,6 +435,11 @@ filtered records as ZIP containing CSV files per record type. </span>
       const horizontalNavTop = document.getElementById("horizontalNavTop");
       const horizontalNavBottom = document.getElementById("horizontalNavBottom");
 
+      const verticalEditBtn = document.getElementById("verticalEditButton");
+      const verticalDeleteBtn = document.getElementById("verticalDeleteButton");
+      const verticalSaveBtn = document.getElementById("verticalSaveButton");
+      const verticalCancelBtn = document.getElementById("verticalCancelButton");
+
       if (isHorizontal) {
         updateViewMode("horizontal");
         //SHOW HORIZONTAL TABLE
@@ -421,8 +456,12 @@ filtered records as ZIP containing CSV files per record type. </span>
         show(horizontalNavTop);
         show(horizontalNavBottom);
 
-      } else {
+        hide(verticalEditBtn);
+        hide(verticalDeleteBtn);
+        hide(verticalSaveBtn);
+        hide(verticalCancelBtn);
 
+      } else {
 
         updateViewMode("vertical");
 
@@ -439,7 +478,14 @@ filtered records as ZIP containing CSV files per record type. </span>
 
         hide(horizontalNavTop);
         hide(horizontalNavBottom);
+
+        show(verticalEditBtn, "inline-block");
+        show(verticalDeleteBtn, "inline-block");
+        show(verticalSaveBtn, "inline-block");
+        show(verticalCancelBtn, "inline-block");
       }
+
+      updateActiveInputs();
     }
     // HORIZONTAL PAGINATION FIX
 
@@ -843,6 +889,74 @@ filtered records as ZIP containing CSV files per record type. </span>
         });
       }
     })
+
+    function setDownloadEnabled(enabled) {
+      const btn = document.getElementById("btnDownload");
+      if (!btn) return;
+      if (enabled) {
+        btn.classList.remove("disabled");
+        btn.removeAttribute("aria-disabled");
+      } else {
+        btn.classList.add("disabled");
+        btn.setAttribute("aria-disabled", "true");
+      }
+    }
+
+    function deleteRecord(recordNo, viewMode) {
+      if (!confirm("Are you sure you want to delete this record?")) {
+        return;
+      }
+
+      const formBody = new URLSearchParams();
+      formBody.append("recordNo", recordNo);
+      if (viewMode) {
+        formBody.append("viewMode", viewMode);
+      }
+
+      fetch("/viewer/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formBody.toString()
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Delete request failed");
+          }
+          return response.json();
+        })
+        .then(data => {
+          setDownloadEnabled(true);
+          const currentPage = document.getElementById("horizontalPage")?.value || "1";
+          window.location.href = "/viewer/current?page=" + encodeURIComponent(currentPage);
+        })
+        .catch(err => console.error("Error deleting record:", err));
+    }
+
+    function deleteHorizontalRecord(recordNo) {
+      deleteRecord(recordNo, "horizontal");
+    }
+
+    function deleteCurrentRecord() {
+      const currentRecordNoInput = document.getElementById("currentRecordNo");
+      const recordNo = currentRecordNoInput ? parseInt(currentRecordNoInput.value, 10) : NaN;
+      if (!recordNo || Number.isNaN(recordNo)) {
+        return;
+      }
+      deleteRecord(recordNo, "vertical");
+    }
+
+    // Edit record in horizontal view
+    function editHorizontalRecord(recordNo) {
+      const pageInput = document.getElementById("horizontalPage");
+      const pager = document.getElementById("horizontalPagerData");
+      const page = pageInput?.value || pager?.dataset.currentPage || "1";
+      sessionStorage.setItem("viewMode", "horizontal");
+      window.location.href = "/viewer/edit?recordNo=" + encodeURIComponent(recordNo) +
+        "&page=" + encodeURIComponent(page) +
+        "&viewMode=horizontal";
+    }
 
   </script>
 

@@ -63,3 +63,12 @@ viewer:
 
     # Startup cleanup: delete session dirs older than this
     startup-cleanup-minutes: 30
+
+aws:
+  s3:
+    enabled: ${AWS_S3_ENABLED:false}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    region: ${AWS_REGION:us-east-1}
+    bucket-name: ${AWS_S3_BUCKET:}
+    key-prefix: ${AWS_S3_KEY_PREFIX:uploads}

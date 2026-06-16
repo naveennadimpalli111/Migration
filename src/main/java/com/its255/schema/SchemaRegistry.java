@@ -1,11 +1,5 @@
 package com.its255.schema;
 
-import static com.its255.schema.CapitatedBillingSchemas.FM35A;
-import static com.its255.schema.CapitatedBillingSchemas.FM36A;
-import static com.its255.schema.CapitatedBillingSchemas.FM36B;
-import static com.its255.schema.CapitatedBillingSchemas.FM37A;
-import static com.its255.schema.CapitatedBillingSchemas.FM37B;
-import static com.its255.schema.CapitatedBillingSchemas.FM39A;
 import static com.its255.schema.DispositionSchemas.FM21A;
 import static com.its255.schema.DispositionSchemas.FM22A;
 import static com.its255.schema.DispositionSchemas.FM22B;

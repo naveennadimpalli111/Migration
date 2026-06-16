@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.its255.app.Parse255ToCsv.CsvSink;
 import com.its255.io.Fixed255Parser;
 import com.its255.schema.FieldSpec;
 import com.its255.schema.RecordType;
