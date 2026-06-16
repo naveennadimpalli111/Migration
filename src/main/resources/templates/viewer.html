@@ -76,6 +76,9 @@
       </div>
       <div class="form-text mt-2" th:if="${hasFile}" role="status" aria-live="polite">
         <span class="badge rounded-pill text-bg-primary fs-5 py-2 px-4" th:text="${filename}"> yourfile.dat </span>
+        <span class="badge rounded-pill text-bg-secondary fs-6 py-2 px-3 ms-2"
+          th:if="${s3Enabled and s3Key != null and !#strings.isEmpty(s3Key)}"
+          th:text="${s3Key}">s3/key.dat</span>
         <span class="visually-hidden"> is cached for this session.</span>
       </div>
 

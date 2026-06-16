@@ -10,4 +10,8 @@ public class LoggingUtil {
 	    System.out.println(" ERROR MESSAGE: " + e.getMessage());
 	}
 
+	public static void error(String message, Exception e) {
+	    System.out.println(" ERROR MESSAGE: " + message + " - " + e.getMessage());
+	}
+
 }

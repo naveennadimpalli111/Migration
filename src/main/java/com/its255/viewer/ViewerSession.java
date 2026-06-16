@@ -26,6 +26,8 @@ public class ViewerSession implements AutoCloseable {
     public String transactionType;         // selected transaction type for Horizontal rendering
     public String selectedRecordType;      // selected record type for horizontal rendering
     public Path sessionDir; // per-session temp directory
+    public String s3Key; // S3 object key when S3 storage is enabled
+    public boolean s3Enabled; // whether this session is backed by S3
     public  boolean editMode=false;  // whether we're in edit mode (vs. view-only)
     public Integer selectedEditRecord; // currently edited horizontal record
     public boolean hasCommittedChanges = false; // saved changes are baked into filePath and can be downloaded

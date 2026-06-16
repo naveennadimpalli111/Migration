@@ -44,6 +44,7 @@ import com.its255.viewer.ViewerSession;
 import com.its255.web.cleanup.CleanupScheduler;
 import com.its255.web.service.CsvExportService;
 import com.its255.web.service.EditedFileDownloadService;
+import com.its255.web.storage.S3FileStorageService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -56,11 +57,14 @@ public class FastViewerController {
 	private final ViewerConfig cfg;
 	private final CleanupScheduler cleanupScheduler;
 	private final EditedFileDownloadService editedFileDownloadService;
+	private final S3FileStorageService s3FileStorageService;
 
-	public FastViewerController(ViewerConfig cfg, CleanupScheduler cleanupScheduler) {
+	public FastViewerController(ViewerConfig cfg, CleanupScheduler cleanupScheduler,
+			S3FileStorageService s3FileStorageService) {
 		this.cfg = cfg;
 		this.cleanupScheduler = cleanupScheduler;
 		this.editedFileDownloadService = new EditedFileDownloadService();
+		this.s3FileStorageService = s3FileStorageService;
 	}
 
 	private Charset cs() {
@@ -80,6 +84,8 @@ public class FastViewerController {
 
 		// NEW: show uploaded filename
 		model.addAttribute("filename", vs.originalFilename);
+		model.addAttribute("s3Enabled", vs.s3Enabled);
+		model.addAttribute("s3Key", vs.s3Key);
 		model.addAttribute("html", "");
 		model.addAttribute("hasEdits", hasPendingChanges(vs));
 
@@ -112,6 +118,8 @@ public class FastViewerController {
 		vs.editOverlay.clear();
 		vs.deletedRecords.clear();
 		vs.hasCommittedChanges = false;
+		vs.s3Enabled = s3FileStorageService.isEnabled();
+		vs.s3Key = null;
 
 		// clean old store if present
 		if (vs.store instanceof AutoCloseable ac) {
@@ -131,11 +139,19 @@ public class FastViewerController {
 		Path uploadedFile = sessionDir.resolve("uploaded.dat");
 
 		file.transferTo(uploadedFile.toFile());
+		String s3Key = null;
+		if (s3FileStorageService.isEnabled()) {
+			s3FileStorageService.verifyConnection();
+			s3Key = s3FileStorageService.uploadNewFile(uploadedFile, file.getOriginalFilename());
+			s3FileStorageService.downloadToFile(s3Key, uploadedFile);
+		}
 
 		// save paths in session
 		vs.sessionDir = sessionDir;
 		vs.filePath = uploadedFile;
 		vs.originalFilename = file.getOriginalFilename();
+		vs.s3Enabled = s3FileStorageService.isEnabled();
+		vs.s3Key = s3Key;
 		vs.progress = 0.0;
 
 		long windowBytes = Math.max(1, cfg.getWindowSizeMB()) * 1024L * 1024L;
@@ -144,8 +160,8 @@ public class FastViewerController {
 
 		vs.store = new ChunkedMMapRecordStore(uploadedFile, cs(), recordLength, windowBytes, transactionType);
 
-		// TEMP debug print (remove later)
-		LoggingUtil.debug("Viewer upload: sessionDir=" + sessionDir + ", filePath=" + uploadedFile);
+		LoggingUtil.debug("Viewer upload: sessionDir=" + sessionDir + ", filePath=" + uploadedFile
+				+ ", s3Enabled=" + vs.s3Enabled + ", s3Key=" + vs.s3Key);
 
 		int workers = Math.min(cfg.getIndexWorkers(), (int) getRecordCount(vs.store));
 		ParallelPrefixIndexBuilder builder = new ParallelPrefixIndexBuilder(vs.store, cfg.getPrefixIndexLength(),
@@ -276,6 +292,8 @@ public class FastViewerController {
 		// Model attributes (unchanged)
 		model.addAttribute("hasFile", true);
 		model.addAttribute("filename", vs.originalFilename);
+		model.addAttribute("s3Enabled", vs.s3Enabled);
+		model.addAttribute("s3Key", vs.s3Key);
 		model.addAttribute("count", vs.nav.size());
 		model.addAttribute("position", vs.nav.position());
 		model.addAttribute("hasPrev", vs.nav.hasPrev());
@@ -408,6 +426,28 @@ public class FastViewerController {
 
 	}
 
+	@ResponseBody
+	@GetMapping("/storage/status")
+	public Map<String, Object> storageStatus() {
+		Map<String, Object> result = new HashMap<>();
+		result.put("enabled", s3FileStorageService.isEnabled());
+		result.put("bucket", s3FileStorageService.bucketName());
+		if (!s3FileStorageService.isEnabled()) {
+			result.put("connected", false);
+			result.put("message", "AWS S3 storage is disabled.");
+			return result;
+		}
+		try {
+			s3FileStorageService.verifyConnection();
+			result.put("connected", true);
+			result.put("message", "AWS S3 bucket connection verified.");
+		} catch (RuntimeException ex) {
+			result.put("connected", false);
+			result.put("message", ex.getMessage());
+		}
+		return result;
+	}
+
 	private ViewerSession getSession(HttpSession session) {
 		ViewerSession vs = (ViewerSession) session.getAttribute("VIEWER_SESSION");
 		if (vs == null) {
@@ -449,7 +489,7 @@ public class FastViewerController {
 
 	@PostMapping("/save")
 
-	public String save(HttpServletRequest request, HttpSession session, Model model) {
+	public String save(HttpServletRequest request, HttpSession session, Model model) throws Exception {
 		ViewerSession vs = getSession(session);
 		String viewMode = request.getParameter("viewMode");
 	if (viewMode != null && !viewMode.isBlank()) {
@@ -487,15 +527,9 @@ public class FastViewerController {
 		});
 		vs.editMode = false;
 		vs.selectedEditRecord = null;
-		try {
-
-			Path outputPath = buildEditedFileSnapshot(vs);
-			writeLegacyEditedFileCopy(outputPath);
-			commitUpdatedFile(vs, outputPath);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		Path outputPath = buildEditedFileSnapshot(vs);
+		persistEditedFileSnapshot(vs, outputPath);
+		commitUpdatedFile(vs, outputPath);
 		String redirectViewMode = request.getParameter("viewMode");
 		if (redirectViewMode != null) {
 			session.setAttribute("viewMode", redirectViewMode);
@@ -527,6 +561,14 @@ public class FastViewerController {
 		Files.copy(updatedFile, legacyOutputPath, StandardCopyOption.REPLACE_EXISTING);
 	}
 
+	private void persistEditedFileSnapshot(ViewerSession vs, Path snapshot) throws IOException {
+		if (vs != null && vs.s3Enabled) {
+			s3FileStorageService.uploadUpdatedFile(snapshot, vs.s3Key);
+			return;
+		}
+		writeLegacyEditedFileCopy(snapshot);
+	}
+
 	private void commitUpdatedFile(ViewerSession vs, Path updatedFile) throws Exception {
 		if (vs == null || updatedFile == null || vs.transactionType == null || vs.transactionType.isBlank()) {
 			return;
@@ -546,6 +588,7 @@ public class FastViewerController {
 		long windowBytes = Math.max(1, cfg.getWindowSizeMB()) * 1024L * 1024L;
 		int recordLength = SchemaRegistry.getRecordLength(vs.transactionType);
 		vs.filePath = updatedFile;
+		vs.s3Enabled = s3FileStorageService.isEnabled();
 		vs.store = new ChunkedMMapRecordStore(updatedFile, cs(), recordLength, windowBytes, vs.transactionType);
 
 		int workers = Math.min(cfg.getIndexWorkers(), (int) getRecordCount(vs.store));
@@ -677,7 +720,7 @@ public class FastViewerController {
 		}
 		try {
 			Path snapshot = buildEditedFileSnapshot(vs);
-			writeLegacyEditedFileCopy(snapshot);
+			persistEditedFileSnapshot(vs, snapshot);
 		} catch (IOException ex) {
 			LoggingUtil.error(ex);
 		}
@@ -883,7 +926,18 @@ public class FastViewerController {
 
 		boolean hasPendingChanges = !vs.editOverlay.isEmpty() || !vs.deletedRecords.isEmpty();
 		Path downloadPath = hasPendingChanges ? buildEditedFileSnapshot(vs) : vs.filePath;
-		writeLegacyEditedFileCopy(downloadPath);
+		if (vs.s3Enabled) {
+			if (hasPendingChanges) {
+				s3FileStorageService.uploadUpdatedFile(downloadPath, vs.s3Key);
+			}
+			Path s3DownloadPath = vs.sessionDir != null
+					? Files.createTempFile(vs.sessionDir, "s3_download_", ".dat")
+					: Files.createTempFile(getAppTempRoot(), "s3_download_", ".dat");
+			s3FileStorageService.downloadToFile(vs.s3Key, s3DownloadPath);
+			downloadPath = s3DownloadPath;
+		} else {
+			writeLegacyEditedFileCopy(downloadPath);
+		}
 
 		resp.setContentType("application/octet-stream");
 		resp.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
